@@ -205,9 +205,9 @@ Plain stereo in/out, no sidechain bus.
 - **Icon**: `design/icon/` holds a hand-tuned optical ramp — three cuts, not one artwork scaled, with
   the 32/64 px versions dropping the glow because it turns to mush below 48 px. `ICON_BIG`/`ICON_SMALL`
   point at the 1024 and 256 px cuts and JUCE generates the `.icns` from those two; don't hand-maintain
-  an icon bundle. **Known gap**: JUCE only embeds the two sizes it is given, so macOS downscales the
-  256 px cut for 16/32 px display rather than using the design's small cut. Closing that would mean
-  a post-build `iconutil` step over all five PNGs, which is macOS-only and fights the generator —
-  left open deliberately.
+  an icon bundle. JUCE embeds only the two sizes it is given, so macOS downscales the 256 px cut for
+  16/32 px display rather than using the design's small cut. **Settled: leave it.** Closing it would
+  need a post-build `iconutil` step over all five PNGs — macOS-only, and it fights the generator.
+  Don't re-raise this.
 - **Not yet done**: registration in `../manifest/suite.toml`, which needs a public repo and a tagged
   release first, plus a freshly generated `windows_appid` GUID. Nothing has been committed yet.
