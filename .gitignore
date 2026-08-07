@@ -1,0 +1,12 @@
+build/
+build-*/
+Builds/
+cmake-build-*/
+.xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+.DS_Store
+
+# Designer hand-off archives dropped into design/ - the extracted contents are tracked, the
+# zip itself is not.
+design/*.zip

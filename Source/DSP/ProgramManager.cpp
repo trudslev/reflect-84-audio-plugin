@@ -1,0 +1,302 @@
+#include "ProgramManager.h"
+
+#include "../Parameters.h"
+
+#include <algorithm>
+#include <cmath>
+
+#if ! defined (NF_COMPANY_NAME) || ! defined (NF_PRODUCT_NAME)
+ #error "NF_COMPANY_NAME and NF_PRODUCT_NAME must come from CMake. They cannot be read from \
+JucePlugin_* here: those macros only exist in the plugin target's generated header, and this file \
+is also compiled into the Tests console app. CHORUS-60's CMakeLists records what a hand-synced \
+copy costs - it drifted from the real company name and quietly pointed saved Programs at a \
+directory nothing was writing to."
+#endif
+
+namespace
+{
+    /** A parameter is "moved" once it differs by more than this from the loaded Program. Loose
+        enough to absorb the float round-trip through a user Program's XML, so a freshly loaded
+        Program never reads as dirty; far tighter than the smallest movement any control can make. */
+    constexpr float modifiedEpsilon = 1.0e-4f;
+}
+
+//==============================================================================
+ProgramManager::ProgramManager (juce::AudioProcessorValueTreeState& state,
+                                juce::File userDirectoryOverride)
+    : apvts (state),
+      userDirectory (userDirectoryOverride == juce::File() ? getDefaultUserProgramDirectory()
+                                                           : userDirectoryOverride)
+{
+    refreshUserProgramList();
+}
+
+ProgramManager::~ProgramManager()
+{
+    cancelPendingUpdate();
+}
+
+void ProgramManager::initialise()
+{
+    applyProgramByIndex (defaultFactoryProgramIndex);
+}
+
+//==============================================================================
+juce::File ProgramManager::getUserProgramDirectory() const
+{
+    return userDirectory;
+}
+
+juce::File ProgramManager::getDefaultUserProgramDirectory()
+{
+   #if JUCE_WINDOWS || JUCE_LINUX
+    // userApplicationDataDirectory resolves to %APPDATA% on Windows and ~/.config on Linux.
+    return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
+               .getChildFile (NF_COMPANY_NAME)
+               .getChildFile (NF_PRODUCT_NAME)
+               .getChildFile ("Programs");
+   #else
+    // "Presets" is Apple's own scanned folder name, not a lapse in BRAND.md's terminology rule -
+    // the things inside it are still called Programs everywhere the user can see them.
+    return juce::File::getSpecialLocation (juce::File::userHomeDirectory)
+               .getChildFile ("Library/Audio/Presets")
+               .getChildFile (NF_COMPANY_NAME)
+               .getChildFile (NF_PRODUCT_NAME);
+   #endif
+}
+
+void ProgramManager::refreshUserProgramList()
+{
+    userProgramFiles.clear();
+
+    const auto dir = getUserProgramDirectory();
+
+    if (dir.isDirectory())
+        for (const auto& entry : juce::RangedDirectoryIterator (dir, false, "*" + getProgramFileExtension()))
+            userProgramFiles.add (entry.getFile());
+
+    // Alphabetical by filename, deliberately not by modification time: the menu's order has to be
+    // the same every launch.
+    std::sort (userProgramFiles.begin(), userProgramFiles.end(),
+               [] (const juce::File& a, const juce::File& b)
+               {
+                   return a.getFileName().compareIgnoreCase (b.getFileName()) < 0;
+               });
+}
+
+//==============================================================================
+int ProgramManager::getNumPrograms() const
+{
+    return kNumFactoryPrograms + userProgramFiles.size();
+}
+
+juce::String ProgramManager::getProgramName (int index) const
+{
+    if (isFactoryProgram (index))
+        return kFactoryPrograms[(size_t) index].name;
+
+    const int userIndex = index - kNumFactoryPrograms;
+
+    if (juce::isPositiveAndBelow (userIndex, userProgramFiles.size()))
+        return userProgramFiles.getReference (userIndex).getFileNameWithoutExtension();
+
+    return {};
+}
+
+//==============================================================================
+void ProgramManager::requestProgramChange (int index)
+{
+    if (! juce::isPositiveAndBelow (index, getNumPrograms()))
+        return;
+
+    pendingProgramIndex.store (index, std::memory_order_relaxed);
+    triggerAsyncUpdate();
+}
+
+void ProgramManager::cancelPendingChange()
+{
+    pendingProgramIndex.store (-1, std::memory_order_relaxed);
+    cancelPendingUpdate();
+}
+
+void ProgramManager::handleAsyncUpdate()
+{
+    const int index = pendingProgramIndex.exchange (-1, std::memory_order_relaxed);
+
+    if (index >= 0)
+        applyProgramByIndex (index);
+}
+
+void ProgramManager::setCurrentProgramIndexWithoutApplying (int index)
+{
+    currentProgramIndex.store (juce::isPositiveAndBelow (index, getNumPrograms())
+                                   ? index
+                                   : defaultFactoryProgramIndex,
+                               std::memory_order_relaxed);
+
+    // The restored session IS its own baseline. The accepted consequence is that SAVE starts
+    // disabled after reopening a session that had unsaved edits.
+    captureCleanSnapshot();
+
+    if (onProgramListChanged)
+        onProgramListChanged();
+}
+
+//==============================================================================
+void ProgramManager::applyProgramByIndex (int index)
+{
+    if (! juce::isPositiveAndBelow (index, getNumPrograms()))
+        return;
+
+    if (isFactoryProgram (index))
+    {
+        applyFactoryProgram (kFactoryPrograms[(size_t) index]);
+    }
+    else
+    {
+        const int userIndex = index - kNumFactoryPrograms;
+        std::unique_ptr<juce::XmlElement> xml (
+            juce::XmlDocument::parse (userProgramFiles.getReference (userIndex)));
+
+        if (xml == nullptr || ! xml->hasTagName (apvts.state.getType()))
+            return;
+
+        apvts.replaceState (juce::ValueTree::fromXml (*xml));
+    }
+
+    currentProgramIndex.store (index, std::memory_order_relaxed);
+    captureCleanSnapshot();
+
+    if (onProgramListChanged)
+        onProgramListChanged();
+}
+
+void ProgramManager::applyFactoryProgram (const FactoryProgram& program)
+{
+    // Assigning through JUCE's typed parameter operator= runs setValueNotifyingHost internally,
+    // which is why applying has to happen on the message thread.
+    const auto setNormalised = [this] (const char* id, float value)
+    {
+        if (auto* p = dynamic_cast<juce::AudioParameterFloat*> (apvts.getParameter (id)))
+            *p = juce::jlimit (0.0f, 1.0f, value);
+        else
+            jassertfalse;   // id is not a float parameter, or does not exist
+    };
+
+    const auto setChoice = [this] (const char* id, int value)
+    {
+        if (auto* p = dynamic_cast<juce::AudioParameterChoice*> (apvts.getParameter (id)))
+            *p = juce::jlimit (0, p->choices.size() - 1, value);
+        else
+            jassertfalse;
+    };
+
+    setChoice     (ParamIDs::algorithm,  program.algorithm);
+    setNormalised (ParamIDs::size,       program.size);
+    setNormalised (ParamIDs::decay,      program.decay);
+    setNormalised (ParamIDs::preDelay,   program.preDelay);
+    setNormalised (ParamIDs::density,    program.density);
+    setNormalised (ParamIDs::dampHF,     program.dampHF);
+    setNormalised (ParamIDs::dampLF,     program.dampLF);
+    setNormalised (ParamIDs::modulation, program.modulation);
+    setNormalised (ParamIDs::grain,      program.grain);
+    setNormalised (ParamIDs::width,      program.width);
+    setNormalised (ParamIDs::mix,        program.mix);
+    setNormalised (ParamIDs::trim,       program.trim);
+
+    // Every APVTS parameter is listed above. A new parameter that is NOT added here would keep
+    // whatever the previously-loaded Program left behind - silently, and differently depending on
+    // which Program you came from. Tests/FactoryProgramsTests.cpp asserts the counts match.
+}
+
+//==============================================================================
+void ProgramManager::captureCleanSnapshot()
+{
+    const auto& params = apvts.processor.getParameters();
+
+    cleanSnapshot.resize ((size_t) params.size());
+
+    for (int i = 0; i < params.size(); ++i)
+        cleanSnapshot[(size_t) i] = params[i]->getValue();
+}
+
+bool ProgramManager::isModifiedFromLoadedProgram() const
+{
+    const auto& params = apvts.processor.getParameters();
+
+    if (cleanSnapshot.size() != (size_t) params.size())
+        return false;
+
+    for (int i = 0; i < params.size(); ++i)
+        if (std::abs (params[i]->getValue() - cleanSnapshot[(size_t) i]) > modifiedEpsilon)
+            return true;
+
+    return false;
+}
+
+//==============================================================================
+void ProgramManager::saveNewUserProgram (const juce::String& requestedName)
+{
+    juce::String name = requestedName.trim().toUpperCase();
+
+    if (name.isEmpty())
+        name = "NEW PROGRAM";
+
+    if (name.length() > maxProgramNameLength)
+        name = name.substring (0, maxProgramNameLength);
+
+    const auto dir = getUserProgramDirectory();
+
+    if (! dir.isDirectory())
+        dir.createDirectory();
+
+    auto state = apvts.copyState();
+    std::unique_ptr<juce::XmlElement> xml (state.createXml());
+    xml->setAttribute (LegacyMigration::stateSchemaVersionAttribute,
+                       LegacyMigration::currentStateSchemaVersion);
+
+    juce::File file = dir.getChildFile (juce::File::createLegalFileName (name) + getProgramFileExtension());
+
+    // Save always creates a NEW Program. Both sibling castings write straight to this path, which
+    // means reusing an existing name silently replaces that Program's contents - the one way their
+    // "never overwrites" guarantee could actually be broken. getNonexistentSibling appends a
+    // counter instead, so the older Program survives and the new one is distinct.
+    if (file.existsAsFile())
+        file = file.getNonexistentSibling();
+
+    xml->writeTo (file);
+
+    refreshUserProgramList();
+
+    const int newIndex = kNumFactoryPrograms + userProgramFiles.indexOf (file);
+    currentProgramIndex.store (newIndex, std::memory_order_relaxed);
+
+    // The just-saved Program IS the current parameter state, so it becomes the new clean baseline
+    // and SAVE goes straight back to disabled until something moves again.
+    captureCleanSnapshot();
+
+    if (onProgramListChanged)
+        onProgramListChanged();
+}
+
+void ProgramManager::deleteUserProgram (int index)
+{
+    // Gated here as well as at the button, so no code path can delete a factory Program.
+    if (isFactoryProgram (index))
+        return;
+
+    const int userIndex = index - kNumFactoryPrograms;
+
+    if (! juce::isPositiveAndBelow (userIndex, userProgramFiles.size()))
+        return;
+
+    const bool wasCurrent = getCurrentProgram() == index;
+
+    userProgramFiles.getReference (userIndex).deleteFile();
+    refreshUserProgramList();
+
+    if (wasCurrent)
+        requestProgramChange (defaultFactoryProgramIndex);   // which fires the callback itself
+    else if (onProgramListChanged)
+        onProgramListChanged();
+}

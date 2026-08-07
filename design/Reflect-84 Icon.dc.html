@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body { margin:0; background:#2a2723; }
+a { color:#c8b177; }
+a:hover { color:#f0e2ba; }
+</style>
+</helmet>
+
+<section style="padding:56px 60px; display:flex; flex-direction:column; gap:34px; font-family:'IBM Plex Mono',monospace;">
+
+  <div style="display:flex; flex-direction:column; gap:6px;">
+    <div style="font-size:11px; letter-spacing:.3em; color:#8d8375;">REFLECT-84 — PRODUCT ICON (1b, DECAY STEPS)</div>
+    <div style="font-size:13px; color:#6f675c; letter-spacing:.06em; max-width:720px; text-wrap:pretty;">Three optical cuts. Detail is dropped and stroke weight raised as the icon shrinks — this is a hand-tuned ramp, not one artwork scaled.</div>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:48px; align-items:flex-start;">
+
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <div style="font-size:10px; letter-spacing:.22em; color:#8d8375;">FULL — 256px AND UP</div>
+      <div id="icon-full" style="width:256px; height:256px; border-radius:56px; background:linear-gradient(180deg,#22304c,#1a2740 55%,#141f34); box-shadow:inset 0 2px 0 rgba(255,255,255,.16), inset 0 -8px 22px rgba(0,0,0,.5), 0 16px 36px rgba(0,0,0,.55); position:relative; overflow:hidden;">
+        <div style="position:absolute; inset:0; background:linear-gradient(90deg, rgba(120,160,200,.09) 1px, transparent 1px) 0 0/32px 32px, linear-gradient(180deg, rgba(120,160,200,.09) 1px, transparent 1px) 0 0/32px 32px;"></div>
+        <div style="position:absolute; inset:0; background:radial-gradient(120% 90% at 22% 0%, rgba(255,255,255,.10), transparent 62%);"></div>
+        <svg viewBox="0 0 256 256" style="position:relative; width:256px; height:256px;">
+          <defs>
+            <filter id="fx-full" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="5" result="b"></feGaussianBlur>
+              <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+            </filter>
+            <linearGradient id="fill-full" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#5ce07a" stop-opacity=".22"></stop>
+              <stop offset="1" stop-color="#5ce07a" stop-opacity="0"></stop>
+            </linearGradient>
+          </defs>
+          <path d="M48 184 L48 66 L80 66 L80 96 L112 96 L112 128 L144 128 L144 151 L176 151 L176 168 L208 168 L208 184 Z" fill="url(#fill-full)"></path>
+          <line x1="42" y1="192" x2="214" y2="192" stroke="rgba(190,205,225,.3)" stroke-width="2"></line>
+          <polyline points="48,184 48,66 80,66 80,96 112,96 112,128 144,128 144,151 176,151 176,168 208,168 208,184" fill="none" stroke="#5ce07a" stroke-width="7" stroke-linejoin="miter" opacity=".8" filter="url(#fx-full)"></polyline>
+          <polyline points="48,184 48,66 80,66 80,96 112,96 112,128 144,128 144,151 176,151 176,168 208,168 208,184" fill="none" stroke="#a6f5b6" stroke-width="3" stroke-linejoin="miter"></polyline>
+        </svg>
+      </div>
+      <div style="font-size:11px; color:#6f675c; letter-spacing:.04em; width:256px; text-wrap:pretty;">Grid, bloom, baseline, gradient fill. Six decay steps.</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <div style="font-size:10px; letter-spacing:.22em; color:#8d8375;">MID — 64 TO 128px</div>
+      <div id="icon-mid" style="width:128px; height:128px; border-radius:28px; background:linear-gradient(180deg,#22304c,#141f34); box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 10px 22px rgba(0,0,0,.5); position:relative; overflow:hidden;">
+        <svg viewBox="0 0 128 128" style="width:128px; height:128px;">
+          <defs>
+            <filter id="fx-mid" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="b"></feGaussianBlur>
+              <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+            </filter>
+          </defs>
+          <line x1="22" y1="98" x2="106" y2="98" stroke="rgba(190,205,225,.28)" stroke-width="2"></line>
+          <polyline points="26,92 26,34 46,34 46,54 66,54 66,72 86,72 86,84 106,84 106,92" fill="none" stroke="#5ce07a" stroke-width="7" stroke-linejoin="miter" opacity=".75" filter="url(#fx-mid)"></polyline>
+          <polyline points="26,92 26,34 46,34 46,54 66,54 66,72 86,72 86,84 106,84 106,92" fill="none" stroke="#a6f5b6" stroke-width="4" stroke-linejoin="miter"></polyline>
+        </svg>
+      </div>
+      <div style="font-size:11px; color:#6f675c; letter-spacing:.04em; width:128px; text-wrap:pretty;">Grid and fill dropped. Four steps, heavier stroke.</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <div style="font-size:10px; letter-spacing:.22em; color:#8d8375;">SMALL — 32 TO 48px</div>
+      <div id="icon-small" style="width:64px; height:64px; border-radius:14px; background:linear-gradient(180deg,#22304c,#141f34); box-shadow:0 6px 14px rgba(0,0,0,.5); position:relative; overflow:hidden;">
+        <svg viewBox="0 0 64 64" style="width:64px; height:64px;">
+          <polyline points="14,48 14,17 27,17 27,29 40,29 40,40 50,40 50,48" fill="none" stroke="#8ff2a4" stroke-width="5" stroke-linejoin="miter"></polyline>
+        </svg>
+      </div>
+      <div style="font-size:11px; color:#6f675c; letter-spacing:.04em; width:150px; text-wrap:pretty;">Trace only, three steps, no glow — glow turns to mush below 48px.</div>
+    </div>
+
+  </div>
+
+  <div style="display:flex; align-items:flex-end; gap:26px; padding-top:8px; border-top:1px solid rgba(120,98,55,.25);">
+    <div style="display:flex; flex-direction:column; gap:10px; padding-top:20px;">
+      <div style="font-size:10px; letter-spacing:.22em; color:#8d8375;">IN SITU</div>
+      <div style="display:flex; align-items:flex-end; gap:18px;">
+        <div style="width:48px; height:48px; border-radius:11px; background:linear-gradient(180deg,#22304c,#141f34); box-shadow:0 4px 10px rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center;">
+          <svg viewBox="0 0 64 64" style="width:48px; height:48px;"><polyline points="14,48 14,17 27,17 27,29 40,29 40,40 50,40 50,48" fill="none" stroke="#8ff2a4" stroke-width="5" stroke-linejoin="miter"></polyline></svg>
+        </div>
+        <div style="width:32px; height:32px; border-radius:7px; background:linear-gradient(180deg,#22304c,#141f34); box-shadow:0 3px 8px rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center;">
+          <svg viewBox="0 0 64 64" style="width:32px; height:32px;"><polyline points="14,48 14,17 27,17 27,29 40,29 40,40 50,40 50,48" fill="none" stroke="#8ff2a4" stroke-width="6" stroke-linejoin="miter"></polyline></svg>
+        </div>
+        <div style="width:20px; height:20px; border-radius:5px; background:linear-gradient(180deg,#22304c,#141f34); display:flex; align-items:center; justify-content:center;">
+          <svg viewBox="0 0 64 64" style="width:20px; height:20px;"><polyline points="14,48 14,17 27,17 27,29 40,29 40,40 50,40 50,48" fill="none" stroke="#8ff2a4" stroke-width="7" stroke-linejoin="miter"></polyline></svg>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px; color:#6f675c; letter-spacing:.04em; max-width:420px; padding-bottom:4px; text-wrap:pretty;">Corner radius is 22% of the icon box at every size. Accent stays the panel's phosphor green — if the accent changes, the trace changes with it.</div>
+  </div>
+
+</section>
+</x-dc>
+</body>
+</html>
