@@ -1,6 +1,7 @@
 #include "TestUtils.h"
 
 #include "../Source/DSP/FactoryPrograms.h"
+#include "../Source/Parameters.h"
 
 #include <juce_core/juce_core.h>
 
@@ -114,6 +115,63 @@ public:
                     expect (! identical (kFactoryPrograms[i], kFactoryPrograms[j]),
                             juce::String (kFactoryPrograms[i].name) + " and "
                                 + kFactoryPrograms[j].name + " are the same Program");
+        }
+
+        beginTest ("every Program's damping still lands on the frequency it was authored at");
+        {
+            // The guard on the log-taper change. This bank is stored normalised but was AUTHORED in
+            // hertz - the per-row comments in FactoryPrograms.h are the source of truth - so the
+            // stored numbers are only correct relative to a particular curve. Changing the curve
+            // without re-deriving them moves every Program silently: nothing fails to compile,
+            // nothing throws, the reverb just damps somewhere else.
+            //
+            // Asserting the authored hertz rather than the stored normals is the point. A test that
+            // checked the normals would pass through exactly the change it exists to catch.
+            struct Authored { const char* name; float hf; float lf; };
+
+            constexpr std::array<Authored, 12> authored { {
+                { "RAIN ALL DAY",    9000.0f, 150.0f }, { "SO LONG",         6000.0f, 200.0f },
+                { "QUIET VIOLENCE",  5000.0f, 300.0f }, { "SAIL AWAY",      12000.0f, 100.0f },
+                { "ON THE MOON",    10000.0f,  80.0f }, { "A PRAYER",        8000.0f, 120.0f },
+                { "BROTHERS",        7000.0f, 180.0f }, { "HEAVEN",         11000.0f,  90.0f },
+                { "COLD ATMOSPHERE", 4000.0f, 400.0f }, { "THE MOORS",       9000.0f, 110.0f },
+                { "SECOND NATURE",   8000.0f, 160.0f }, { "WORLD GONE MAD", 10000.0f, 140.0f },
+            } };
+
+            expectEquals ((int) authored.size(), (int) kFactoryPrograms.size(),
+                          "the authored table has drifted from the bank");
+
+            for (size_t i = 0; i < kFactoryPrograms.size(); ++i)
+            {
+                const auto& p = kFactoryPrograms[i];
+                const auto& a = authored[i];
+
+                expectEquals (juce::String (p.name), juce::String (a.name),
+                              "bank order changed - the authored table is indexed by position");
+
+                // 0.5% covers the 4-decimal rounding the stored normals carry, and nothing wider.
+                expectWithinAbsoluteError (ParamFormat::dampHFHz (p.dampHF), a.hf, a.hf * 0.005f,
+                                           juce::String (p.name) + ": damping HF moved");
+                expectWithinAbsoluteError (ParamFormat::dampLFHz (p.dampLF), a.lf, a.lf * 0.005f,
+                                           juce::String (p.name) + ": damping LF moved");
+            }
+        }
+
+        beginTest ("the damping curves are the ones the printed scales legend");
+        {
+            // BRAND.md: printed scales and actual mappings must agree exactly. The scale prints
+            // 2/4/8/16 kHz and 40/80/160/320/500 Hz at the fractions GUI-SPEC.md section 7 states,
+            // so those fractions have to produce those frequencies.
+            expectWithinAbsoluteError (ParamFormat::dampHFHz (0.0f),     2000.0f, 1.0f);
+            expectWithinAbsoluteError (ParamFormat::dampHFHz (0.3333f),  4000.0f, 4.0f);
+            expectWithinAbsoluteError (ParamFormat::dampHFHz (0.6667f),  8000.0f, 8.0f);
+            expectWithinAbsoluteError (ParamFormat::dampHFHz (1.0f),    16000.0f, 1.0f);
+
+            expectWithinAbsoluteError (ParamFormat::dampLFHz (0.0f),       40.0f, 0.1f);
+            expectWithinAbsoluteError (ParamFormat::dampLFHz (0.2744f),    80.0f, 0.2f);
+            expectWithinAbsoluteError (ParamFormat::dampLFHz (0.5489f),   160.0f, 0.4f);
+            expectWithinAbsoluteError (ParamFormat::dampLFHz (0.8233f),   320.0f, 0.8f);
+            expectWithinAbsoluteError (ParamFormat::dampLFHz (1.0f),      500.0f, 0.5f);
         }
     }
 

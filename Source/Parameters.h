@@ -69,8 +69,19 @@ namespace ParamFormat
     inline float decaySeconds  (float v) noexcept { return 0.4f + v * 7.6f; }        // 0.4 .. 8.0 s
     inline float preDelayMs    (float v) noexcept { return v * 180.0f; }             // 0 .. 180 ms
     inline float densityPercent(float v) noexcept { return v * 100.0f; }             // 0 .. 100 %
-    inline float dampHFHz      (float v) noexcept { return (2.0f + v * 14.0f) * 1000.0f; }  // 2 .. 16 kHz
-    inline float dampLFHz      (float v) noexcept { return 40.0f + v * 460.0f; }     // 40 .. 500 Hz
+    // The two damping controls are LOG, not affine - GUI-SPEC.md section 7. Linear in Hz put
+    // DAMPING HF's midpoint at 9 kHz, so half the travel covered 9-16 kHz where the audible
+    // difference is slight while the useful region was compressed below it. Log makes HF's marks
+    // exact octaves over an exact three-octave range.
+    //
+    // The curve lives here rather than as a skew on the parameter's NormalisableRange, because the
+    // range is 0-1 for every parameter in this plugin and ParamFormat is the single place a
+    // normalised position becomes a physical value. A skew would split that in two.
+    //
+    // Inverse, for anything that needs a rotation fraction from a frequency:
+    //     f = log (hz / min) / log (max / min)
+    inline float dampHFHz      (float v) noexcept { return 2000.0f * std::pow (8.0f, v); }    // 2 .. 16 kHz
+    inline float dampLFHz      (float v) noexcept { return 40.0f * std::pow (12.5f, v); }     // 40 .. 500 Hz
     inline float modPercent    (float v) noexcept { return v * 100.0f; }             // 0 .. 100 %
     inline float widthPercent  (float v) noexcept { return v * 200.0f; }             // 0 .. 200 %
     inline float mixPercent    (float v) noexcept { return v * 100.0f; }             // 0 .. 100 %
@@ -80,13 +91,18 @@ namespace ParamFormat
     inline juce::String decayText   (float v) { return juce::String (decaySeconds (v), 1) + " s"; }
     inline juce::String preDelayText(float v) { return juce::String (juce::roundToInt (preDelayMs (v))) + " ms"; }
     inline juce::String densityText (float v) { return juce::String (juce::roundToInt (densityPercent (v))) + "%"; }
-    inline juce::String dampHFText  (float v) { return juce::String (dampHFHz (v) * 0.001f, 1) + " k"; }
+    inline juce::String dampHFText  (float v) { return juce::String (dampHFHz (v) * 0.001f, 1) + " kHz"; }
     inline juce::String dampLFText  (float v) { return juce::String (juce::roundToInt (dampLFHz (v))) + " Hz"; }
     inline juce::String modText     (float v) { return juce::String (juce::roundToInt (modPercent (v))) + "%"; }
     inline juce::String grainText   (float v) { return juce::String (juce::roundToInt (v * 100.0f)); }
     inline juce::String widthText   (float v) { return juce::String (juce::roundToInt (widthPercent (v))) + "%"; }
     inline juce::String mixText     (float v) { return juce::String (juce::roundToInt (mixPercent (v))) + "%"; }
-    inline juce::String trimText    (float v) { return juce::String (trimDb (v), 1); }
+    // Explicit sign, so 0 dB reads "+0.0 dB" rather than an ambiguous "0.0" - GUI-SPEC.md section 8.
+    inline juce::String trimText    (float v)
+    {
+        const float db = trimDb (v);
+        return (db < 0.0f ? juce::String() : juce::String ("+")) + juce::String (db, 1) + " dB";
+    }
 }
 
 namespace ParamDefaults
@@ -96,6 +112,14 @@ namespace ParamDefaults
     inline constexpr float decay      = 0.58f;
     inline constexpr float preDelay   = 0.22f;
     inline constexpr float density    = 0.72f;
+    // **These two were NOT re-derived when the damping taper went log, and that is deliberate.**
+    // They keep their normalised positions and now mean 4.8 kHz / 81 Hz rather than the 7.9 kHz /
+    // 169 Hz they meant under the affine mapping. GUI-SPEC.md section 13 lists exactly those new
+    // figures as the intended defaults, and the reference render is shot with them.
+    //
+    // FactoryPrograms.h does the opposite and re-derives, because that bank was authored in hertz
+    // while these were authored as normalised positions in the design's own state table. Each keeps
+    // its own authoring intent; that is why the two files' damping numbers no longer look alike.
     inline constexpr float dampHF     = 0.42f;
     inline constexpr float dampLF     = 0.28f;
     inline constexpr float modulation = 0.34f;
