@@ -51,6 +51,17 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
     // it becomes unreachable.
     panelReadouts.setBounds (getLocalBounds());
     addAndMakeVisible (panelReadouts);
+
+    // After panelReadouts, because the Program list has to sit above the live numbers as well as
+    // the panel. It opens inside this, so it can neither move its top edge nor grow past the panel.
+    // A SIBLING of programHeader, never a child: that component covers only the header strip, so a
+    // list parented there would be clipped to a 432x42 box.
+    const int hostTop = ProgramHeader::menuHostTop();
+    menuHost.setBounds (0, hostTop, getWidth(), getHeight() - hostTop);
+    menuHost.setInterceptsMouseClicks (false, true);
+    addAndMakeVisible (menuHost);
+    menuHost.toFront (false);
+    programHeader.setMenuParent (&menuHost);
 }
 
 ReflectEditorContent::~ReflectEditorContent()

@@ -239,12 +239,51 @@ void ProgramHeader::showProgramMenu()
 
     const juce::Component::SafePointer<ProgramHeader> safeThis { this };
 
-    menu.showMenuAsync (juce::PopupMenu::Options()
-                            .withTargetComponent (this)
-                            .withTargetScreenArea (localAreaToGlobal (displayArea().getSmallestIntegerContainer())),
+    const auto well = displayArea().getSmallestIntegerContainer();
+
+    auto options = juce::PopupMenu::Options()
+                       .withTargetComponent (this)
+                       .withTargetScreenArea (localAreaToGlobal (well))
+                       .withMaximumNumColumns (1);
+
+    if (menuParent != nullptr)
+    {
+        // The list is laid out INSIDE menuHost rather than as its own desktop window. JUCE fits a
+        // menu to its parent area, so an area running from the well's bottom edge to the panel's
+        // gives both guarantees at once: the top cannot move and the height cannot exceed the
+        // panel. A bank too long to fit scrolls. See ../../CLAUDE.md, "The Program dropdown".
+        //
+        // Anchor to a 1px strip on the well's bottom EDGE, not the well. With a parent, JUCE first
+        // does constrainedWithin(parentArea), which slides the whole 42px well down into the host
+        // before measuring and opens the list 42px too low. 1px and not zero: a zero-height
+        // rectangle is isEmpty(), which drops the list out of align-to-rectangle into the sideways
+        // placement meant for submenus.
+        //
+        // Built in LOCAL coordinates - this component's origin is the well's own top-left, so the
+        // well's bottom edge is simply well.getBottom(). menuAnchorY() is the canvas-space twin of
+        // the same row, for menuHost.
+        const juce::Rectangle<int> anchor { well.getX(), well.getBottom() - 1, well.getWidth(), 1 };
+
+        options = options.withTargetScreenArea (localAreaToGlobal (anchor))
+                         .withParentComponent (menuParent)
+                         .withMinimumWidth (well.getWidth());
+    }
+
+    menuOpen = true;
+    repaint();
+
+    menu.showMenuAsync (options,
                         [safeThis] (int result)
                         {
-                            if (safeThis == nullptr || result == 0)
+                            if (safeThis == nullptr)
+                                return;
+
+                            // Cleared here rather than on selection: JUCE runs this callback on a
+                            // dismissal too, so clicking away cannot leave the mark inverted.
+                            safeThis->menuOpen = false;
+                            safeThis->repaint();
+
+                            if (result == 0)
                                 return;
 
                             // No forced refresh: the async apply plus the 20 Hz poll handle it.
@@ -422,10 +461,16 @@ void ProgramHeader::paint (juce::Graphics& g)
         const float x = display.getRight() - Layout::chevronInsetX - s;
         const float y = display.getCentreY() - s * 0.3f;
 
+        // It inverts while the list is open, mirrored about the mark's own centre line rather than
+        // rotated, so the apex stays on one vertical axis and it reads as flipping in place.
+        // Without it the mark still points down at a list that is already down.
+        const float outerY = menuOpen ? y + s * 0.55f : y;
+        const float apexY = menuOpen ? y : y + s * 0.55f;
+
         juce::Path chevron;
-        chevron.startNewSubPath (x, y);
-        chevron.lineTo (x + s * 0.5f, y + s * 0.55f);
-        chevron.lineTo (x + s, y);
+        chevron.startNewSubPath (x, outerY);
+        chevron.lineTo (x + s * 0.5f, apexY);
+        chevron.lineTo (x + s, outerY);
 
         g.setColour (Colour::bezelGoldBright);
         g.strokePath (chevron, { 1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::square });

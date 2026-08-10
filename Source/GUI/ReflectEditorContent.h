@@ -48,6 +48,11 @@ private:
 
     TankScope tankScope;
     ProgramHeader programHeader;
+
+    /** Paints nothing and claims no clicks of its own; it exists so the Program list has a parent
+        area to be laid out in. Its bounds are what stop the list moving or overflowing the panel -
+        see the constructor, and ../../CLAUDE.md's "The Program dropdown". */
+    juce::Component menuHost;
     PanelReadouts panelReadouts;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ReflectEditorContent)

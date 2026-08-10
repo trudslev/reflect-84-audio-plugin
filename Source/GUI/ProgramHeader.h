@@ -44,7 +44,37 @@ public:
 
     static juce::Rectangle<int> canvasBounds();
 
+    /** The component the Program list is laid out inside. Its bounds become the list's parent area,
+        which is what fixes the list's top edge and caps its height - layout, not plumbing. Passing
+        nullptr returns the list to being a free desktop window sized to its own content, which for
+        a long bank overhangs the panel. See ../../CLAUDE.md, "The Program dropdown". */
+    void setMenuParent (juce::Component* parent) noexcept { menuParent = parent; }
+
+    /** The row the list's top edge lands on, in CANVAS coordinates - the well's own bottom edge, so
+        the two read as one object rather than a bar with a list floating under it.
+
+        Canvas, not local: unlike the siblings this component covers only the header strip, so its
+        own origin is the well's top-left. The anchor rectangle inside showProgramMenu is therefore
+        built in local coordinates while menuHost, which lives in the editor, needs canvas ones. */
+    static int menuAnchorY() noexcept
+    {
+        return (int) std::floor (ReflectTheme::Layout::programWellY
+                                 + ReflectTheme::Layout::programWellH);
+    }
+
+    /** Where menuHost has to start, and it is NOT the anchor: JUCE clamps a menu to
+        `jmax (parentArea.getY() + 1, ...)`, so a host beginning exactly at the anchor can only open
+        one pixel below it, leaving a hairline of panel between the bar and its list.
+
+        The lead has a floor and a ceiling. Too small and the clamp bites again; too large and the
+        list can grow past the panel, because JUCE sizes it to `parentArea.getHeight() - 24` while
+        the room actually below the anchor is the well's own height less than that. */
+    static int menuHostTop() noexcept { return menuAnchorY() - 8; }
+
 private:
+    juce::Component* menuParent = nullptr;
+    bool menuOpen = false;
+
     enum class Region { none, display, save, deleteOrCancel };
 
     void timerCallback() override;
