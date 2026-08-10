@@ -16,9 +16,11 @@ namespace
 
 juce::Rectangle<int> TankScope::canvasBounds()
 {
-    return { (int) Layout::centreColumnX,
+    // Column 3 spans the scope AND the two CHARACTER knobs below it; the scope component only owns
+    // the header row plus the bezel, so it is sized from the bezel rather than the column.
+    return { (int) Layout::scopeBezelX,
              (int) Layout::scopeHeaderY,
-             (int) Layout::centreColumnW,
+             (int) Layout::scopeBezelW,
              (int) (Layout::scopeBezelY + Layout::scopeBezelH - Layout::scopeHeaderY) };
 }
 

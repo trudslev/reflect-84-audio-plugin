@@ -337,9 +337,12 @@ namespace Layout
         you look for it. */
     inline constexpr juce::uint32 lcdReadoutHoldMs = 900;
 
-    inline constexpr float saveButtonX = 959.0f;
+    // Measured off 01-panel.png rather than derived from the header's padding, and the measurement
+    // reproduces section 9's stated 16px DELETE-to-IN gap exactly (1123 - 1107), which is the check
+    // that the whole row is right rather than merely plausible.
+    inline constexpr float saveButtonX = 954.0f;
     inline constexpr float saveButtonW = 64.0f;
-    inline constexpr float deleteButtonX = 1033.0f;
+    inline constexpr float deleteButtonX = 1029.0f;
     inline constexpr float deleteButtonW = 78.0f;
     inline constexpr float headerButtonY = programWellY;
     inline constexpr float headerButtonH = programWellH;
@@ -359,8 +362,8 @@ namespace Layout
     inline constexpr float meterWellY = 61.0f;
     inline constexpr float meterWellW = 84.0f;
     inline constexpr float meterWellH = 33.0f;
-    inline constexpr float meterInX = 985.0f;
-    inline constexpr float meterOutX = 1079.0f;
+    inline constexpr float meterInX = 1123.0f;
+    inline constexpr float meterOutX = 1217.0f;
 
     // --- Body row ------------------------------------------------------------
     // Panel padding box minus the body row's own `padding: 20px 4px 6px`.
@@ -380,7 +383,11 @@ namespace Layout
     //   Col 4  OUTPUT                1146 .. 1322
     inline constexpr float col1X = 18.0f;
     inline constexpr float col1W = 300.0f;
-    inline constexpr float col1Centre = col1X + col1W * 0.5f;           // 168
+    // Column 1's CONTENT centre is 158, not the column's geometric 168: the ALGORITHM rotary and
+    // the damping pair are both centred there (the two damping dials at 94 and 222 have their
+    // midpoint at 158), and the DAMPING pill sits on the same axis. Measured off 01-panel.png.
+    inline constexpr float col1Centre = 158.0f;
+    inline constexpr float col1GeometricCentre = col1X + col1W * 0.5f;  // 168, the box, not the content
 
     inline constexpr float col2X = 319.0f;
     inline constexpr float col2W = 290.0f;
@@ -437,7 +444,10 @@ namespace Layout
     inline constexpr float algoPointerTopInset = 9.0f;
     inline constexpr float algoPointerWidth = 3.0f;
     inline constexpr float algoPointerLengthFraction = 0.36f;   // of the radius
-    inline constexpr float algoCaptionY = 290.0f;
+    // Below the rotary's own tick ring, measured off 01-panel.png. It moved with the knob when
+    // ALGORITHM's centre went to 275.6, and was left behind at the v1.0 value - which is why the
+    // caption vanished off the bottom of column 1 rather than landing somewhere obviously wrong.
+    inline constexpr float algoCaptionY = 336.0f;
     inline constexpr float algoLabelSize = 10.0f;
 
     // Printed scales, GUI-SPEC.md section 7. 10px is the floor for functional text (BRAND.md's
@@ -601,12 +611,16 @@ namespace Layout
     inline constexpr float pillTextSize = 9.0f;
     inline constexpr float pillTracking = 0.26f;
 
-    inline constexpr float tankPillY = 362.0f;
-    inline constexpr float characterPillY = 370.0f;
-    inline constexpr float outputPillY = 139.0f;
+    inline constexpr float tankPillY = 229.0f;
+    inline constexpr float characterPillY = 360.0f;
+    inline constexpr float outputPillY = 137.0f;
 
     // The horizontal rule inside col 1, separating ALGORITHM from DAMPING (section 1: y 269,
     // x 18 -> 300).
+    // DAMPING is a section PILL in v1.1, on column 1's content axis - not the 9px label set to the
+    // left of the pair that v1.0 had. Measured at y 383, centre 158.
+    inline constexpr float dampingPillY = 383.0f;
+
     inline constexpr float leftDividerY = 269.0f;           // engraved line + 1px white below
 
     // DAMPING is set to the LEFT of its knob pair, not above it:
@@ -617,22 +631,26 @@ namespace Layout
     inline constexpr float dampingLabelTracking = 0.24f;
 
     // --- TANK LIVE scope (measured: screen border box x 407..953, y 174..344) -
-    inline constexpr float ledX = 401.0f;
-    inline constexpr float ledY = 139.0f;
+    inline constexpr float ledX = 632.0f;
+    inline constexpr float ledY = 136.6f;
     inline constexpr float ledSize = 15.0f;
     inline constexpr float ledGlowRadius = 26.0f;
     inline constexpr float ledLabelX = 427.0f;              // 11px gap after the lamp
     inline constexpr float ledLabelSize = 11.0f;
     inline constexpr float ledLabelTracking = 0.26f;
-    inline constexpr float scopeHeaderY = 139.0f;
+    inline constexpr float scopeHeaderY = 136.6f;
     inline constexpr float scopeHeaderH = 15.0f;
+
+    /** The TANK LIVE lamp - the plugin's ONE LED, per BRAND.md's one-accent rule. Section 11 puts
+        it at x 632, the scope column's left edge, on the header row. */
+
     inline constexpr float scopeHeaderTextSize = 10.0f;
     inline constexpr float scopeHeaderTracking = 0.20f;
     inline constexpr float scopeHeaderGap = 18.0f;
 
-    inline constexpr float scopeBezelX = 401.0f;
-    inline constexpr float scopeBezelY = 168.0f;
-    inline constexpr float scopeBezelW = 558.0f;
+    inline constexpr float scopeBezelX = 632.0f;
+    inline constexpr float scopeBezelY = 163.6f;
+    inline constexpr float scopeBezelW = 491.0f;
     inline constexpr float scopeBezelH = 182.0f;
     inline constexpr float scopeBezelRadius = 4.0f;
     inline constexpr float scopeBezelPadding = 6.0f;

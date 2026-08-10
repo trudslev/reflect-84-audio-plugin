@@ -150,6 +150,7 @@ void PanelBackground::paintDividers (juce::Graphics& g)
 void PanelBackground::paintSectionLabels (juce::Graphics& g)
 {
     Paint::drawSectionPill (g, "REVERB TANK", Layout::col2Centre, Layout::tankPillY);
+    Paint::drawSectionPill (g, "DAMPING",     Layout::col1Centre, Layout::dampingPillY);
     Paint::drawSectionPill (g, "CHARACTER",   Layout::col3Centre, Layout::characterPillY);
     Paint::drawSectionPill (g, "OUTPUT",      Layout::col4Centre, Layout::outputPillY);
 
@@ -159,16 +160,10 @@ void PanelBackground::paintSectionLabels (juce::Graphics& g)
                        { Layout::col1X, Layout::algoCaptionY, Layout::col1W, 12.0f },
                        juce::Justification::centred, Colour::textMuted);
 
-    // DAMPING sits to the LEFT of its knob pair rather than above it.
-    {
-        const auto font = Font::mono (Layout::dampingLabelSize);
-        const float tracking = Font::trackingPx (Layout::dampingLabelTracking, Layout::dampingLabelSize);
-        const float width = Text::trackedWidth ("DAMPING", font, tracking);
-
-        Text::drawTracked (g, "DAMPING", font, tracking,
-                           { Layout::dampingLabelRight - width, Layout::dampingLabelY, width, 12.0f },
-                           juce::Justification::centredLeft, Colour::textMuted);
-    }
+    // DAMPING is drawn as a section pill above, alongside the other three. In v1.0 it was a 9px
+    // label set to the LEFT of its knob pair, because the pair lived inside the tank column and had
+    // no room above them; giving damping its own column in v1.1 removed that constraint, so it now
+    // reads as the section it always was.
 
     // Version stamp, bottom-right of the OUTPUT column - BRAND.md's "came with a printed manual"
     // detail.
