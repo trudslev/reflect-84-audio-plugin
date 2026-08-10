@@ -46,12 +46,29 @@ namespace Colour
     inline const juce::Colour panelInnerShade  { juce::Colour::fromRGBA ( 90,  70,  40,  46) }; // .18
     inline const juce::Colour scanline         { juce::Colour::fromRGBA ( 80,  60,  25,   9) }; // .035
 
-    inline const juce::Colour textPrimary      { 0xFF4A4132 };
-    inline const juce::Colour textSecondary    { 0xFF5C5241 };
-    inline const juce::Colour textTertiary     { 0xFF7D7159 };
-    inline const juce::Colour textMuted        { 0xFF6D6148 };
-    inline const juce::Colour textFaint        { 0xFF9A8E74 };
-    inline const juce::Colour labelSelected    { 0xFF2F2718 };
+    // GUI-SPEC.md section 4's corrected palette. Ratios are WCAG relative-luminance contrast against
+    // the DARKEST point of the fascia gradient, #d8cdb0 - not the #efe6d0 top. Measuring against the
+    // light end is what let the old values look compliant: #4a4132 reads 8.07:1 there and 6.34:1
+    // where the text actually has to survive.
+    //
+    // Retired, and not to be reinstated: #4a4132 (6.34:1) and #5c5241 (4.85:1) both failed the
+    // functional floor, and #9a8e74 measured 2.04:1 - the worst on the panel, used for the
+    // unselected algorithm labels, i.e. text carrying real state.
+    //
+    // Verified independently rather than taken from the table: every value below measures within
+    // 0.01 of its stated ratio except textPrimary, which the spec calls 9.07 and measures 8.82.
+    // Still comfortably functional, so it stands; noted because deltas get measured, not read.
+    inline const juce::Colour textPrimary      { 0xFF332B1E };   // 8.82:1 functional
+    inline const juce::Colour textSecondary    { 0xFF3E3527 };   // 7.62:1 functional
+    inline const juce::Colour scaleNumeral     { 0xFF3E3527 };   // 7.62:1 functional - printed scales
+    inline const juce::Colour textTertiary     { 0xFF5E5440 };   // 4.71:1 flavour
+    inline const juce::Colour textMuted        { 0xFF5E5440 };   // 4.71:1 flavour
+    // textFaint (#9a8e74, 2.04:1) is RETIRED. It carried the unselected algorithm labels - text
+    // reporting real state at barely twice the contrast of the fascia itself - and the version
+    // stamp. Both now use textTertiary. Anything reaching for a fainter tone should ask whether the
+    // text is needed at all: BRAND.md's Legibility says below the flavour floor it is "decoration
+    // pretending to be information".
+    inline const juce::Colour labelSelected    { 0xFF332B1E };   // 8.82:1 functional
 
     // --- Bezel / dark plate --------------------------------------------------
     inline const juce::Colour bezelTop         { 0xFF22304C };
@@ -330,12 +347,30 @@ namespace Layout
     inline constexpr float algoCentreY = 213.0f;
     inline constexpr float algoRadius = 52.0f;
     inline constexpr float algoTickInset = -15.0f;          // ring outer radius = 67
-    inline constexpr float algoTickStartDegrees = 224.45f;
+
+    /** Detent angles, and the ticks are drawn CENTRED on them.
+
+        GUI-SPEC.md section 6 states them this way now, which ends a 0.55 degree error: the old
+        `224.45` was the LEADING EDGE of the design's 1.1 degree-wide wedge, and reading it as a
+        centre drew every tick just counter-clockwise of the position it marks. The pointer detents
+        sit at -45 / +45 / +135 / +225, so the wedge centre is 225.0.
+
+        Not derived from a start angle plus a step, deliberately: the four positions are a property
+        of the switch, and writing them out means the next person reads angles rather than
+        reconstructing them. */
+    inline constexpr std::array<float, 4> algoDetentDegrees { { -45.0f, 45.0f, 135.0f, 225.0f } };
     inline constexpr float algoPointerTopInset = 9.0f;
     inline constexpr float algoPointerWidth = 3.0f;
     inline constexpr float algoPointerLengthFraction = 0.36f;   // of the radius
     inline constexpr float algoCaptionY = 290.0f;
     inline constexpr float algoLabelSize = 10.0f;
+
+    // Printed scales, GUI-SPEC.md section 7. 10px is the floor for functional text (BRAND.md's
+    // Legibility) and these are functional now that the standing readouts are gone - they are the
+    // only at-rest value reference on the panel. The unit is the same size for the same reason:
+    // "kHz" tells you what the numerals mean, so it is not decoration.
+    inline constexpr float scaleNumeralSize = 10.0f;
+    inline constexpr float scaleUnitSize = 10.0f;
     inline constexpr float algoCaptionSize = 9.0f;
 
     /** Corner label placement. design/README.md section 2 is explicit that the visual arrangement

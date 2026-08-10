@@ -173,7 +173,7 @@ void PanelBackground::paintSectionLabels (juce::Graphics& g)
 
         Text::drawTracked (g, "v" NF_VERSION_SHORT, font, tracking,
                            { Layout::versionRight - 100.0f, Layout::versionY, 100.0f, 13.0f },
-                           juce::Justification::right, Colour::textFaint);
+                           juce::Justification::right, Colour::textTertiary);
     }
 }
 
@@ -182,6 +182,47 @@ void PanelBackground::paintKnobLabels (juce::Graphics& g)
     for (const auto& spec : Layout::knobs)
     {
         const auto& v = Layout::variantFor (spec.size);
+
+        // --- Printed scale: one numeral per tick, plus the unit ------------------------------
+        //
+        // These replace the standing readouts, which makes them functional text rather than
+        // decoration - 10px at 7.62:1, per GUI-SPEC.md section 7 and BRAND.md's Legibility floor.
+        //
+        // Each numeral is centred on the point at the numeral radius and its own tick angle, then
+        // centred on its own box. Drawing them here rather than in the knob component keeps them
+        // out of the repaint that follows the pointer: a printed scale never changes.
+        {
+            const auto scaleFont = Font::mono (Layout::scaleNumeralSize);
+
+            for (int i = 0; i < spec.scale.count; ++i)
+            {
+                const auto& mark = spec.scale.marks[i];
+                const float angle = Layout::knobArcStartDegrees
+                                  + mark.f * (Layout::knobArcEndDegrees - Layout::knobArcStartDegrees);
+
+                const auto at = Geometry::pointOnCircle ({ spec.centreX, spec.centreY },
+                                                         v.numeralRadius, angle);
+
+                g.setFont (scaleFont);
+                g.setColour (Colour::scaleNumeral);
+                g.drawText (mark.printed,
+                            juce::Rectangle<float> (at.x - 30.0f, at.y - 8.0f, 60.0f, 16.0f),
+                            juce::Justification::centred, false);
+            }
+
+            // The unit prints ONCE, in the 90-degree gap at the bottom of the arc between the two
+            // end numerals - never appended to the control name, and never repeated on every
+            // numeral. SIZE and DIGITAL GRAIN carry none by design.
+            if (spec.scale.unit != nullptr)
+            {
+                g.setFont (Font::mono (Layout::scaleUnitSize));
+                g.setColour (Colour::scaleNumeral);
+                g.drawText (spec.scale.unit,
+                            juce::Rectangle<float> (spec.centreX - 30.0f,
+                                                    spec.centreY + v.unitDrop - 7.0f, 60.0f, 14.0f),
+                            juce::Justification::centred, false);
+            }
+        }
 
         const auto labelFont = Font::mono (v.labelSize);
         const float labelTracking = Font::trackingPx (v.labelTracking, v.labelSize);

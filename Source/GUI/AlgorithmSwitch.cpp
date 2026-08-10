@@ -139,7 +139,6 @@ void AlgorithmSwitch::paint (juce::Graphics& g)
 
     // --- Corner labels -------------------------------------------------------
     {
-        const auto font = Font::mono (Layout::algoLabelSize);
         const float tracking = Font::trackingPx (0.18f, Layout::algoLabelSize);
 
         for (size_t i = 0; i < Layout::algorithmCorners.size(); ++i)
@@ -147,8 +146,14 @@ void AlgorithmSwitch::paint (juce::Graphics& g)
             const auto& corner = Layout::algorithmCorners[i];
             const auto& hit = labelHits[i];
 
+            // Selected/unselected is encoded TWICE - value and weight - per GUI-SPEC.md section 4.
+            // Value alone is what put the unselected labels at 2.04:1; they now clear the flavour
+            // floor and stay visibly secondary because 500 reads heavier than 400 at the same tone.
+            // BRAND.md: hierarchy comes from size and weight, never from opacity.
             const bool isSelected = corner.index == selected;
-            const auto colour = isSelected ? Colour::labelSelected : Colour::textFaint;
+            const auto colour = isSelected ? Colour::labelSelected : Colour::textTertiary;
+            const auto font = isSelected ? Font::monoMedium (Layout::algoLabelSize)
+                                         : Font::mono (Layout::algoLabelSize);
 
             const bool onLeft = corner.corner == Layout::Corner::topLeft
                              || corner.corner == Layout::Corner::bottomLeft;
@@ -163,7 +168,7 @@ void AlgorithmSwitch::paint (juce::Graphics& g)
         }
     }
 
-    // --- Detent ticks, `inset: -15px`, starting at 224.45 degrees -------------
+    // --- Detent ticks, `inset: -15px`, centred on each detent -----------------
     // Four of them, one per detent, NOT a dense ring. The design doc's prose calls these "dense
     // conic ticks", but its own CSS repeats the 1.1-degree tick every 90 degrees
     // (`repeating-conic-gradient(from 224.45deg, <tick> 0deg 1.1deg, transparent 1.1deg 90deg)`)
@@ -175,12 +180,13 @@ void AlgorithmSwitch::paint (juce::Graphics& g)
 
         g.setColour (Colour::tick.withAlpha (0.85f));
 
-        for (int i = 0; i < numAlgorithms; ++i)
-        {
-            const float angle = Layout::algoTickStartDegrees + (float) i * (360.0f / (float) numAlgorithms);
+        // Centred on the detent angles, not stepped from a start angle. The CSS's `from 224.45deg`
+        // is the wedge's leading edge; its centre is 225.0, and reading the edge as a centre drew
+        // every tick 0.55 degrees counter-clockwise of the detent it marks. Small, but it is a mark
+        // pointing at a position it does not sit on.
+        for (const float angle : Layout::algoDetentDegrees)
             g.drawLine ({ Geometry::pointOnCircle (centre, inner, angle),
                           Geometry::pointOnCircle (centre, outer, angle) }, 1.6f);
-        }
     }
 
     // --- Body: dark, matching the header bezel -------------------------------
