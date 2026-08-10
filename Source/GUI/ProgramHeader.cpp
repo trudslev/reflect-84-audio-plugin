@@ -262,16 +262,24 @@ void ProgramHeader::showProgramMenu()
                       true,
                       i == current);
 
+    // **Both groups are always present, and the USER header is never hidden** - section 9. An empty
+    // User bank shows one non-selectable row instead of the group vanishing, so the menu's shape
+    // does not change the first time something is saved, and so the bank is discoverable before it
+    // has anything in it.
+    menu.addSeparator();
+    menu.addSectionHeader ("User");
+
     if (total > kNumFactoryPrograms)
     {
-        menu.addSeparator();
-        menu.addSectionHeader ("User");
-
         for (int i = kNumFactoryPrograms; i < total; ++i)
             menu.addItem (i + 1,
                           juce::String (i + 1).paddedLeft ('0', 2) + " " + manager.getProgramName (i),
                           true,
                           i == current);
+    }
+    else
+    {
+        menu.addItem (-1, Text::emDash() + juce::String (" none saved ") + Text::emDash(), false, false);
     }
 
     const juce::Component::SafePointer<ProgramHeader> safeThis { this };
@@ -435,22 +443,35 @@ void ProgramHeader::paint (juce::Graphics& g)
 
     Paint::drawLcdWell (g, display, displayHovered);
 
-    // --- FACT / USER badge ---------------------------------------------------
+    // --- FACT / USER, printed ON the glass -----------------------------------
     // Derived, never stored. It flips to USER the moment naming starts, because what is about to
     // be written is a User Program regardless of what was loaded.
+    //
+    // **Not a badge.** Section 9 makes it printed text in the SAME face and size as the program
+    // name - no border, no fill, no radius - separated from the name by a 1px rule. A bordered chip
+    // reads as a control you could press; this reads as what it is, a legend on the display. There
+    // is no separate bank control anywhere on the panel, so nothing here should look like one.
+    float nameCellLeft = 0.0f;
     {
         const bool showUser = namingMode || ! displayedIsFactory;
 
-        const juce::Rectangle<float> badge { Layout::badgeInsetX,
-                                             (display.getHeight() - Layout::badgeH) * 0.5f,
-                                             Layout::badgeW, Layout::badgeH };
+        const auto font = Font::mono (Layout::lcdTextSize);
+        const float tracking = Font::trackingPx (Layout::lcdTextTracking, Layout::lcdTextSize);
+        const juce::String bank = showUser ? "USER" : "FACT";
 
-        g.setColour (Colour::phosphor.withAlpha (0.4f));
-        g.drawRoundedRectangle (badge, 2.0f, 1.0f);
+        const float textW = Text::trackedWidth (bank, font, tracking);
+        const float cellW = Layout::lcdBankPadX * 2.0f + textW;
 
-        Text::drawTracked (g, showUser ? "USER" : "FACT",
-                           Font::mono (11.0f), Font::trackingPx (0.16f, 11.0f),
-                           badge, juce::Justification::centred, Colour::phosphor);
+        Text::drawTracked (g, bank, font, tracking,
+                           { Layout::lcdBankPadX, 0.0f, textW, display.getHeight() },
+                           juce::Justification::centredLeft, Colour::phosphor);
+
+        // The 1px rule, inset 7px top and bottom - furniture on the glass, not a border round a box.
+        g.setColour (Colour::phosphor.withAlpha (0.35f));
+        g.fillRect (cellW, Layout::lcdRuleInsetY, 1.0f,
+                    display.getHeight() - Layout::lcdRuleInsetY * 2.0f);
+
+        nameCellLeft = cellW + 1.0f;
     }
 
     // --- Name, or the text field while naming --------------------------------
@@ -471,8 +492,8 @@ void ProgramHeader::paint (juce::Graphics& g)
         if (namingMode)
         {
             // Left-aligned while typing, so the caret does not jump about as the name grows.
-            const auto field = display.withTrimmedLeft (Layout::badgeInsetX + Layout::badgeW + 16.0f)
-                                      .withTrimmedRight (Layout::chevronInsetX + 12.0f);
+            const auto field = display.withTrimmedLeft (nameCellLeft + 16.0f)
+                                      .withTrimmedRight (Layout::lcdChevronInsetRight + 18.0f);
 
             const auto caret = juce::String::charToString ((juce::juce_wchar) 0x2588);   // U+2588 FULL BLOCK
             drawPhosphor (typedName + (caretVisible ? caret : juce::String()),
@@ -490,8 +511,8 @@ void ProgramHeader::paint (juce::Graphics& g)
                                  : juce::String (displayedIndex + 1).paddedLeft ('0', 2) + " " + displayedName;
 
             drawPhosphor (label,
-                          display.withTrimmedLeft (Layout::badgeInsetX + Layout::badgeW)
-                                 .withTrimmedRight (30.0f),
+                          display.withTrimmedLeft (nameCellLeft)
+                                 .withTrimmedRight (Layout::lcdChevronInsetRight + 18.0f),
                           juce::Justification::centred);
         }
     }

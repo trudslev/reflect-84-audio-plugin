@@ -84,6 +84,12 @@ public:
         the room actually below the anchor is the well's own height less than that. */
     static int menuHostTop() noexcept { return menuAnchorY() - 8; }
 
+    /** The host's HEIGHT is what caps the list at section 9's 260px - JUCE has no max-height option,
+        but it sizes a menu to `parentArea.getHeight() - 24` and clamps it there, so 260 + 24 plus
+        the 8px anchor lead gives exactly that. Beyond it the list scrolls, which is what the
+        twelve-Program bank plus two group headers does. */
+    static int menuHostHeight() noexcept { return 8 + 260 + 24; }
+
 private:
     juce::Component* menuParent = nullptr;
     bool menuOpen = false;

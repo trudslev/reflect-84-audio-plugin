@@ -64,7 +64,8 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
     // A SIBLING of programHeader, never a child: that component covers only the header strip, so a
     // list parented there would be clipped to a 432x42 box.
     const int hostTop = ProgramHeader::menuHostTop();
-    menuHost.setBounds (0, hostTop, getWidth(), getHeight() - hostTop);
+    menuHost.setBounds (0, hostTop, getWidth(),
+                        juce::jmin (ProgramHeader::menuHostHeight(), getHeight() - hostTop));
     menuHost.setInterceptsMouseClicks (false, true);
     addAndMakeVisible (menuHost);
     menuHost.toFront (false);

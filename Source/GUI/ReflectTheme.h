@@ -199,6 +199,12 @@ namespace Text
         Built from a codepoint for the same reason middleDot() is: juce::String's const char*
         constructor decodes as LATIN-1, not UTF-8, so a "\xe2\x88\x92" literal renders as three
         stray glyphs on the panel. */
+    /** U+2014 EM DASH, from a codepoint for the same Latin-1 reason as the others. */
+    inline juce::String emDash()
+    {
+        return juce::String::charToString ((juce::juce_wchar) 0x2014);
+    }
+
     inline juce::String minusSign()
     {
         return juce::String::charToString ((juce::juce_wchar) 0x2212);
