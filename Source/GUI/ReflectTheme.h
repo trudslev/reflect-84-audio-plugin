@@ -736,8 +736,12 @@ namespace Layout
     inline constexpr float scopeTraceWidth = 1.6f;
 
     // --- Version stamp -------------------------------------------------------
-    inline constexpr float versionRight = 1182.0f;
-    inline constexpr float versionY = 583.0f;
+    // Measured off 01-panel.png: the stamp's ink runs to x 1320 with its cap band centred on
+    // y 619.2, so the 13px line it is drawn in starts at 613. It had been left at the v1.0
+    // coordinates, which on the wider panel put it beside OUTPUT TRIM's label rather than in the
+    // panel's own bottom-right corner.
+    inline constexpr float versionRight = 1320.0f;
+    inline constexpr float versionY = 613.0f;
     inline constexpr float versionSize = 10.0f;
     inline constexpr float versionTracking = 0.10f;
 }
