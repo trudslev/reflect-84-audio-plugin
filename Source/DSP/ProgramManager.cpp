@@ -49,20 +49,23 @@ juce::File ProgramManager::getUserProgramDirectory() const
 
 juce::File ProgramManager::getDefaultUserProgramDirectory()
 {
-   #if JUCE_WINDOWS || JUCE_LINUX
-    // userApplicationDataDirectory resolves to %APPDATA% on Windows and ~/.config on Linux.
+    // **Application data on every platform - no macOS special case.** This used to branch, putting
+    // macOS Programs under ~/Library/Audio/Presets. That is Apple's location for the AU PRESET
+    // FORMAT: .aupreset files the AU system itself scans, reads and writes. Our user Programs are
+    // not those - they are application-owned data in our own XML format - so they belong where an
+    // application keeps its data, and the AU folder should hold only what AU understands.
+    //
+    // The "Application Support" segment is JUCE's, not ours, and must never be hard-coded:
+    // userApplicationDataDirectory resolves to ~/Library/Application Support on macOS, %APPDATA% on
+    // Windows and ~/.config on Linux. A shared literal path would be wrong on two of the three.
+    //
+    // No migration from the old location: nothing has shipped at a released version, so no
+    // installed build has ever written a Program there for anyone but us. See Elmer's
+    // ProgramManager for the full reasoning - it is a decision, not an oversight.
     return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
                .getChildFile (NF_COMPANY_NAME)
                .getChildFile (NF_PRODUCT_NAME)
                .getChildFile ("Programs");
-   #else
-    // "Presets" is Apple's own scanned folder name, not a lapse in BRAND.md's terminology rule -
-    // the things inside it are still called Programs everywhere the user can see them.
-    return juce::File::getSpecialLocation (juce::File::userHomeDirectory)
-               .getChildFile ("Library/Audio/Presets")
-               .getChildFile (NF_COMPANY_NAME)
-               .getChildFile (NF_PRODUCT_NAME);
-   #endif
 }
 
 void ProgramManager::refreshUserProgramList()
