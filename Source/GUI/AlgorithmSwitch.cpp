@@ -14,9 +14,9 @@ juce::Rectangle<int> AlgorithmSwitch::canvasBounds()
 {
     // Wide enough for "DIGITAL"/"CHAMBER" on both sides and tall enough for the label rows above
     // and below, so the whole control - including its clickable legends - is one component.
-    return juce::Rectangle<float> (Layout::leftColumnX,
+    return juce::Rectangle<float> (Layout::col1X,
                                    Layout::algoCentreY - Layout::algoRadius - 34.0f,
-                                   Layout::leftColumnW,
+                                   Layout::col1W,
                                    (Layout::algoRadius + 34.0f) * 2.0f).getSmallestIntegerContainer();
 }
 

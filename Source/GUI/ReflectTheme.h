@@ -370,26 +370,56 @@ namespace Layout
 
     // Columns. Widths include each column's own padding, because the design's inner elements are
     // content-box: `width: 336px; padding-right: 22px` occupies 358px.
-    inline constexpr float leftColumnX = 18.0f;
-    inline constexpr float leftColumnW = 336.0f;            // content, excluding the 22px padding
-    inline constexpr float leftColumnCentre = leftColumnX + leftColumnW * 0.5f;   // 186
+    // GUI-SPEC.md section 1's region table. FOUR columns in v1.1, not three: DAMPING was lifted out
+    // of the tank column and given its own home alongside ALGORITHM, which is what let the pair be
+    // promoted from 44px to 52px and keep their full mark sets.
+    //
+    //   Col 1  ALGORITHM + DAMPING     18 .. 318
+    //   Col 2  REVERB TANK            319 .. 609
+    //   Col 3  TANK LIVE + CHARACTER  610 .. 1145
+    //   Col 4  OUTPUT                1146 .. 1322
+    inline constexpr float col1X = 18.0f;
+    inline constexpr float col1W = 300.0f;
+    inline constexpr float col1Centre = col1X + col1W * 0.5f;           // 168
 
-    inline constexpr float divider1X = 376.0f;
-    inline constexpr float divider2X = 983.0f;
-    inline constexpr float dividerTop = 139.0f;
-    inline constexpr float dividerBottom = 601.0f;
+    inline constexpr float col2X = 319.0f;
+    inline constexpr float col2W = 290.0f;
+    inline constexpr float col2Centre = col2X + col2W * 0.5f;           // 464
 
-    inline constexpr float centreColumnX = 401.0f;          // content box
-    inline constexpr float centreColumnW = 558.0f;
-    inline constexpr float centreColumnCentre = centreColumnX + centreColumnW * 0.5f;   // 680
+    inline constexpr float col3X = 610.0f;
+    inline constexpr float col3W = 535.0f;
+    inline constexpr float col3Centre = col3X + col3W * 0.5f;           // 877.5
 
-    inline constexpr float rightColumnX = 1006.0f;
-    inline constexpr float rightColumnW = 176.0f;
-    inline constexpr float rightColumnCentre = rightColumnX + rightColumnW * 0.5f;      // 1094
+    inline constexpr float col4X = 1146.0f;
+    inline constexpr float col4W = 176.0f;
+    inline constexpr float col4Centre = col4X + col4W * 0.5f;           // 1234
+
+    inline constexpr float divider1X = 318.0f;
+    inline constexpr float divider2X = 609.0f;
+    inline constexpr float divider3X = 1145.0f;
+    inline constexpr float dividerTop = 137.0f;
+    inline constexpr float dividerBottom = 626.0f;                      // 137 + 489
+
+    // Kept as aliases so the many call sites reading "left/centre/right column" still compile and
+    // still mean something with four columns: the tank column is the one they referred to as the
+    // left, CHARACTER shares col 3 with the scope, and OUTPUT is still the rightmost.
+    inline constexpr float leftColumnX = col2X;
+    inline constexpr float leftColumnW = col2W;
+    inline constexpr float leftColumnCentre = col2Centre;
+
+    inline constexpr float centreColumnX = col3X;
+    inline constexpr float centreColumnW = col3W;
+    inline constexpr float centreColumnCentre = col3Centre;
+
+    inline constexpr float rightColumnX = col4X;
+    inline constexpr float rightColumnW = col4W;
+    inline constexpr float rightColumnCentre = col4Centre;
 
     // --- ALGORITHM rotary (measured: body x 134..238, y 161..265) -------------
-    inline constexpr float algoCentreX = 186.0f;
-    inline constexpr float algoCentreY = 213.0f;
+    // GUI-SPEC.md section 5's dial-centre table - a tick-arc centre like the knobs, and the rotary
+    // is 104px so the radius stays 52.
+    inline constexpr float algoCentreX = 158.0f;
+    inline constexpr float algoCentreY = 275.6f;
     inline constexpr float algoRadius = 52.0f;
     inline constexpr float algoTickInset = -15.0f;          // ring outer radius = 67
 
@@ -575,7 +605,9 @@ namespace Layout
     inline constexpr float characterPillY = 370.0f;
     inline constexpr float outputPillY = 139.0f;
 
-    inline constexpr float leftDividerY = 343.0f;           // engraved line + 1px white below
+    // The horizontal rule inside col 1, separating ALGORITHM from DAMPING (section 1: y 269,
+    // x 18 -> 300).
+    inline constexpr float leftDividerY = 269.0f;           // engraved line + 1px white below
 
     // DAMPING is set to the LEFT of its knob pair, not above it:
     // `right: calc(50% + 70px); top: 18px` within the damping block.

@@ -137,21 +137,26 @@ void PanelBackground::paintHeader (juce::Graphics& g)
 
 void PanelBackground::paintDividers (juce::Graphics& g)
 {
+    // Three vertical dividers now, for four columns.
     Paint::drawVerticalDivider (g, Layout::divider1X, Layout::dividerTop, Layout::dividerBottom);
     Paint::drawVerticalDivider (g, Layout::divider2X, Layout::dividerTop, Layout::dividerBottom);
-    Paint::drawHorizontalDivider (g, Layout::leftColumnX, Layout::leftDividerY, Layout::leftColumnW);
+    Paint::drawVerticalDivider (g, Layout::divider3X, Layout::dividerTop, Layout::dividerBottom);
+
+    // The horizontal rule lives in COLUMN 1 now, separating ALGORITHM from the damping pair that
+    // moved in beside it - not in the tank column where it used to sit.
+    Paint::drawHorizontalDivider (g, Layout::col1X, Layout::leftDividerY, Layout::col1W);
 }
 
 void PanelBackground::paintSectionLabels (juce::Graphics& g)
 {
-    Paint::drawSectionPill (g, "REVERB TANK", Layout::leftColumnCentre,   Layout::tankPillY);
-    Paint::drawSectionPill (g, "CHARACTER",   Layout::centreColumnCentre, Layout::characterPillY);
-    Paint::drawSectionPill (g, "OUTPUT",      Layout::rightColumnCentre,  Layout::outputPillY);
+    Paint::drawSectionPill (g, "REVERB TANK", Layout::col2Centre, Layout::tankPillY);
+    Paint::drawSectionPill (g, "CHARACTER",   Layout::col3Centre, Layout::characterPillY);
+    Paint::drawSectionPill (g, "OUTPUT",      Layout::col4Centre, Layout::outputPillY);
 
     // ALGORITHM caption, 16px below the rotary.
     Text::drawTracked (g, "ALGORITHM", Font::mono (Layout::algoCaptionSize),
                        Font::trackingPx (0.26f, Layout::algoCaptionSize),
-                       { Layout::leftColumnX, Layout::algoCaptionY, Layout::leftColumnW, 12.0f },
+                       { Layout::col1X, Layout::algoCaptionY, Layout::col1W, 12.0f },
                        juce::Justification::centred, Colour::textMuted);
 
     // DAMPING sits to the LEFT of its knob pair rather than above it.
