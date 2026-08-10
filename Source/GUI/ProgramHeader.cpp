@@ -79,7 +79,14 @@ bool ProgramHeader::isRegionEnabled (Region region) const
     switch (region)
     {
         case Region::display:        return true;
+
+        // **SAVE is gated on modification, and GUI-SPEC.md section 9 disagrees - the code is
+        // right.** The spec says "SAVE is never disabled" while also saying the flow follows
+        // TapeRot, which gates it; the two cannot both hold. Gating was a decision taken on this
+        // side that never made it back to the designer, so the spec is describing an earlier
+        // state rather than a newer intent. Raised with them; do not "fix" this to match §9.
         case Region::save:           return displayedIsModified;   // nothing moved, nothing to save
+
         case Region::deleteOrCancel: return ! displayedIsFactory;  // factory Programs are read-only
         case Region::none:           break;
     }
