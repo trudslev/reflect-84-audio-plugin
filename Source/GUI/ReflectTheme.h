@@ -632,7 +632,7 @@ namespace Layout
     inline constexpr float pillTextSize = 9.0f;
     inline constexpr float pillTracking = 0.26f;
 
-    inline constexpr float tankPillY = 229.0f;
+    inline constexpr float tankPillY = 221.0f;
     inline constexpr float characterPillY = 360.0f;
     inline constexpr float outputPillY = 137.0f;
 
@@ -642,7 +642,12 @@ namespace Layout
     // left of the pair that v1.0 had. Measured at y 383, centre 158.
     inline constexpr float dampingPillY = 383.0f;
 
-    inline constexpr float leftDividerY = 269.0f;           // engraved line + 1px white below
+    // **Measured at 368, not section 1's stated 269.** The rotary's body spans y 224..328, so 269
+    // draws this rule straight through the middle of the ALGORITHM knob - which is what it did.
+    // 368 is the gap between the knob's bottom and the DAMPING pill at 383, the only place a
+    // separator between those two groups can sit. The artwork outranks the prose, and its dip at
+    // 368 (169.7 against a 210 surround, with the groove's white highlight at 369) is unambiguous.
+    inline constexpr float leftDividerY = 368.0f;           // engraved line + 1px white below
 
     // DAMPING is set to the LEFT of its knob pair, not above it:
     // `right: calc(50% + 70px); top: 18px` within the damping block.
@@ -865,7 +870,13 @@ namespace Paint
         g.setGradientFill (verticalGradient (r, Colour::pillTop, Colour::pillBottom));
         g.fillRoundedRectangle (r, Layout::pillRadius);
 
-        Text::drawTracked (g, text, font, tracking, r,
+        // Nudged down by half the descent so the CAP INK is centred, not the font box.
+        //
+        // Every pill label is all-caps and has no descenders, but vertical centring works on the
+        // font's full height - ascent plus descent - so the empty descender space pushes the visible
+        // glyphs up by half of it. It reads as the label sitting high in its pill, which is exactly
+        // what it was doing.
+        Text::drawTracked (g, text, font, tracking, r.translated (0.0f, font.getDescent() * 0.5f),
                            juce::Justification::centred, Colour::bezelGoldBright);
     }
 
