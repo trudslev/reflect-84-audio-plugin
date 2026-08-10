@@ -239,8 +239,11 @@ namespace Text
 namespace Layout
 {
     // --- Canvas --------------------------------------------------------------
-    inline constexpr float canvasWidth  = 1200.0f;
-    inline constexpr float canvasHeight = 615.0f;
+    // GUI-SPEC.md section 1. Confirmed against all three v1.1 screenshots, which are 2680 x 1290 -
+    // the artwork's own figure, not the doc's prose. v1.0's 1200 x 615 is retired along with its
+    // three-column body; v1.1 is four columns.
+    inline constexpr float canvasWidth  = 1340.0f;
+    inline constexpr float canvasHeight = 645.0f;
     inline constexpr float panelRadius  = 10.0f;
     inline constexpr float panelPadding = 14.0f;
 
@@ -362,36 +365,82 @@ namespace Layout
     inline constexpr float knobArcStartDegrees = -135.0f;
     inline constexpr float knobArcEndDegrees   =  135.0f;
 
-    enum class KnobSize { large, medium, small, tiny };
+    // Three variants, not four. GUI-SPEC.md section 2 retires the 44px tiny knob from this panel:
+    // five 10px numerals will not clear a 29px tick radius, and shrinking type below the 10px floor
+    // is not available (BRAND.md's Legibility floor). The damping pair is promoted to small, which
+    // also lets both keep their full mark set rather than dropping to three marks.
+    enum class KnobSize { large, medium, small };
 
     struct KnobVariant
     {
-        float radius;
-        float tickInset;            // negative: the ring sits outside the body
-        float tickStepDegrees;      // one tick every N degrees across the 270-degree arc
+        float radius;               // body radius; spec states diameter
+        float tickArcRadius;        // r - where the printed ticks sit, measured from the dial centre
+        float tickLength;           // drawn from tickArcRadius INWARD
+        float numeralRadius;        // R - centre of each scale numeral
         float tickWidth;
         float pointerWidth;
         float pointerLengthFraction;// of the body diameter, from near the top edge inward
         float pointerTopInset;
         float labelSize;
         float labelTracking;        // em
-        float readoutSize;
+        float unitDrop;             // unit string sits at cy + this, inside the arc's bottom gap
         float innerCapInset;        // 0 = no inner cap
     };
 
-    // design/README.md section 4's variant table.
-    inline constexpr KnobVariant largeKnob  { 49.0f, -13.0f, 22.5f,  1.0f, 3.0f, 0.30f, 8.0f, 11.0f, 0.22f, 11.0f, 15.0f };
-    inline constexpr KnobVariant mediumKnob { 30.0f,  -9.0f, 27.0f,  1.2f, 2.0f, 0.38f, 6.0f,  9.0f, 0.18f, 10.0f,  0.0f };
-    inline constexpr KnobVariant smallKnob  { 26.0f,  -8.0f, 33.75f, 1.3f, 2.0f, 0.37f, 5.0f,  9.0f, 0.16f, 10.0f,  0.0f };
-    inline constexpr KnobVariant tinyKnob   { 22.0f,  -7.0f, 45.0f,  1.4f, 2.0f, 0.36f, 5.0f,  9.0f, 0.16f, 10.0f,  0.0f };
+    // GUI-SPEC.md section 5's variant table. Body diameters 98 / 60 / 52 -> radii 49 / 30 / 26.
+    // readoutSize is gone with the standing readouts (section 2 of the brief); unitDrop replaces it,
+    // because a unit now prints once in the scale area rather than being appended to every value.
+    inline constexpr KnobVariant largeKnob  { 49.0f, 62.0f, 8.0f, 80.0f, 2.0f, 3.0f, 0.30f, 8.0f, 11.0f, 0.22f, 74.0f, 15.0f };
+    inline constexpr KnobVariant mediumKnob { 30.0f, 39.0f, 6.0f, 55.0f, 2.0f, 2.0f, 0.38f, 6.0f,  9.0f, 0.18f, 52.0f,  0.0f };
+    inline constexpr KnobVariant smallKnob  { 26.0f, 35.0f, 6.0f, 50.0f, 2.0f, 2.0f, 0.37f, 5.0f,  9.0f, 0.16f, 44.0f,  0.0f };
 
     inline constexpr const KnobVariant& variantFor (KnobSize s) noexcept
     {
         return s == KnobSize::large  ? largeKnob
              : s == KnobSize::medium ? mediumKnob
-             : s == KnobSize::small  ? smallKnob
-                                     : tinyKnob;
+                                     : smallKnob;
     }
+
+    /** One printed numeral on a knob's scale.
+
+        `f` is the ROTATION FRACTION, not the physical value - 0 at -135 degrees, 1 at +135. Storing
+        the fraction rather than the value is what makes a log control come out right: the tick angle
+        is `-135 + f * 270` with no inverse mapping in the drawing code, so a taper change cannot
+        leave the ring pointing somewhere the pointer never reaches. BRAND.md requires the printed
+        scale and the actual mapping to agree exactly, and this is the form that cannot drift.
+
+        `printed` is the literal string, so OUTPUT TRIM keeps its explicit "+6" and DECAY prints
+        "0.4" rather than a rounded "0". */
+    struct ScaleMark
+    {
+        float f;
+        const char* printed;
+    };
+
+    struct KnobScale
+    {
+        const ScaleMark* marks;
+        int count;
+        const char* unit;       // nullptr = bare numbers (SIZE, DIGITAL GRAIN)
+    };
+
+    // GUI-SPEC.md section 7, transcribed. The spec supplies both the fractions and the resulting
+    // tick angles, so these are copied rather than derived - and the tick-angle column is what the
+    // PrintedScaleTests assert against.
+    //
+    // Every linear control lands on quarters and so comes out evenly spaced. Two do not, and both
+    // are correct:
+    //   DECAY is linear in SECONDS over 0.4-8.0, so round numbers give uneven spacing.
+    //   DAMPING LF is log, and 500 is not an octave above 320, so its last interval is short.
+    // Neither may be evened out.
+    inline constexpr ScaleMark sizeMarks[]    { {0.0f,"0.2"},{0.25f,"0.4"},{0.5f,"0.6"},{0.75f,"0.8"},{1.0f,"1.0"} };
+    inline constexpr ScaleMark decayMarks[]   { {0.0f,"0.4"},{0.2105f,"2"},{0.4737f,"4"},{0.7368f,"6"},{1.0f,"8"} };
+    inline constexpr ScaleMark preDelayMarks[]{ {0.0f,"0"},{0.25f,"45"},{0.5f,"90"},{0.75f,"135"},{1.0f,"180"} };
+    inline constexpr ScaleMark percentMarks[] { {0.0f,"0"},{0.25f,"25"},{0.5f,"50"},{0.75f,"75"},{1.0f,"100"} };
+    inline constexpr ScaleMark widthMarks[]   { {0.0f,"0"},{0.25f,"50"},{0.5f,"100"},{0.75f,"150"},{1.0f,"200"} };
+    inline constexpr ScaleMark trimMarks[]    { {0.0f,"-12"},{0.25f,"-6"},{0.5f,"0"},{0.75f,"+6"},{1.0f,"+12"} };
+    inline constexpr ScaleMark dampHFMarks[]  { {0.0f,"2"},{0.3333f,"4"},{0.6667f,"8"},{1.0f,"16"} };
+    inline constexpr ScaleMark dampLFMarks[]  { {0.0f,"40"},{0.2744f,"80"},{0.5489f,"160"},{0.8233f,"320"},{1.0f,"500"} };
 
     struct KnobSpec
     {
@@ -400,24 +449,32 @@ namespace Layout
         float centreX;
         float centreY;
         KnobSize size;
+        KnobScale scale;
     };
 
-    // Centres measured from design/screenshots/01-panel.png. The four REVERB TANK knobs sit on a
-    // 4-column grid across the left column (78px columns, 8px gaps); CHARACTER's two are centred
-    // in the centre column but not symmetrically about it, because the flex row sizes each child
-    // to its label and "DIGITAL GRAIN" is wider than its 98px knob.
+    // GUI-SPEC.md section 5's dial-centre table, transcribed.
+    //
+    // **These are tick-arc centres, not cell centres.** BRAND.md's "Stating coordinates" is explicit
+    // that a rotary's centre is the point the needle pivots about, and the spec states them that
+    // way. The control label sits BELOW the arc, so the whole control cell is not centred on the
+    // dial - measuring a pivot off the cell is what shipped TapeRot 7.27px out and made its needle
+    // run past the printed end mark.
+    //
+    // The four-column body means every one of these moved; none is a nudge of the v1.0 figure.
+    // Display names come from the spec too: PRE-DELAY and STEREO WIDTH are no longer abbreviated,
+    // and the damping pair carries its own column rather than sitting under a shared caption.
     inline constexpr std::array<KnobSpec, 11> knobs { {
-        { "size",       "SIZE",           57.0f,  432.0f,   KnobSize::medium },
-        { "decay",      "DECAY",         143.0f,  432.0f,   KnobSize::medium },
-        { "preDelay",   "PRE-DLY",       229.0f,  432.0f,   KnobSize::medium },
-        { "density",    "DENSITY",       315.0f,  432.0f,   KnobSize::medium },
-        { "dampHF",     "HF",            154.0f,  539.0f,   KnobSize::tiny   },
-        { "dampLF",     "LF",            218.0f,  539.0f,   KnobSize::tiny   },
-        { "modulation", "MODULATION",    586.0f,  455.5f,   KnobSize::large  },
-        { "grain",      "DIGITAL GRAIN", 764.0f,  455.5f,   KnobSize::large  },
-        { "width",      "WIDTH",        1094.0f,  203.0f,   KnobSize::small  },
-        { "mix",        "MIX",          1094.0f,  310.0f,   KnobSize::small  },
-        { "trim",       "TRIM",         1094.0f,  417.0f,   KnobSize::small  },
+        { "dampHF",     "HF",              94.0f,  475.6f,   KnobSize::small,  { dampHFMarks,   4, "kHz" } },
+        { "dampLF",     "LF",             222.0f,  475.6f,   KnobSize::small,  { dampLFMarks,   5, "Hz"  } },
+        { "size",       "SIZE",           398.0f,  310.6f,   KnobSize::medium, { sizeMarks,     5, nullptr } },
+        { "decay",      "DECAY",          530.0f,  310.6f,   KnobSize::medium, { decayMarks,    5, "s"   } },
+        { "preDelay",   "PRE-DELAY",      398.0f,  461.1f,   KnobSize::medium, { preDelayMarks, 5, "ms"  } },
+        { "density",    "DENSITY",        530.0f,  461.1f,   KnobSize::medium, { percentMarks,  5, "%"   } },
+        { "modulation", "MODULATION",     773.5f,  480.1f,   KnobSize::large,  { percentMarks,  5, "%"   } },
+        { "grain",      "DIGITAL GRAIN",  981.5f,  480.1f,   KnobSize::large,  { percentMarks,  5, nullptr } },
+        { "width",      "STEREO WIDTH",  1244.0f,  225.1f,   KnobSize::small,  { widthMarks,    5, "%"   } },
+        { "mix",        "MIX",           1244.0f,  373.6f,   KnobSize::small,  { percentMarks,  5, "%"   } },
+        { "trim",       "OUTPUT TRIM",   1244.0f,  522.1f,   KnobSize::small,  { trimMarks,     5, "dB"  } },
     } };
 
     /** Gap from the knob's bottom edge down to its label, and from the label to its readout.
@@ -645,31 +702,40 @@ namespace Paint
         g.fillRect (x, y + 1.0f, width, 1.0f);
     }
 
-    /** Tick ring around a knob's travel arc. The design draws these as a conic gradient masked to
-        a ring; design/README.md's Assets section says to draw them in JUCE as a loop of short line
-        segments instead, which is what this does. */
+    /** Tick ring around a knob's travel arc - one tick per printed numeral, at that numeral's
+        angle. The design draws these as a conic gradient masked to a ring; GUI-SPEC.md's assets
+        note says to draw them in JUCE as short line segments instead, which is what this does. */
     inline void drawTickRing (juce::Graphics& g,
                               juce::Point<float> centre,
                               float bodyRadius,
                               const Layout::KnobVariant& v,
+                              const Layout::KnobScale& scale,
                               juce::Colour colour)
     {
-        // `inset: -Npx` grows the ring box by N on every side, and its radial mask keeps only the
-        // outer ~12% of that box - so the ticks are a short stroke just outside the body.
-        const float outer = bodyRadius - v.tickInset;
-        const float inner = outer - (outer * 0.115f);
+        // GUI-SPEC.md section 5: ticks run from the tick-arc radius INWARD by the tick length, and
+        // are centred on the tick's angle. Section 7 puts one at every printed numeral and nowhere
+        // else - no minor ticks, no even-angle ring.
+        //
+        // This replaced a fixed `one tick every N degrees` loop. Even spacing is only ever right by
+        // coincidence: it holds for the linear controls because their marks are quarters, and it is
+        // wrong for DECAY (linear in seconds, round numbers) and for both damping knobs (log). A
+        // numeral sitting visibly off its nearest tick reads as an error even when the numeral is
+        // correct - BRAND.md's "Ticks sit at the labelled values".
+        const float outer = v.tickArcRadius;
+        const float inner = outer - v.tickLength;
 
         g.setColour (colour);
 
-        const float span = Layout::knobArcEndDegrees - Layout::knobArcStartDegrees;
-        const int steps = juce::roundToInt (span / v.tickStepDegrees);
-
-        for (int i = 0; i <= steps; ++i)
+        for (int i = 0; i < scale.count; ++i)
         {
-            const float angle = Layout::knobArcStartDegrees + (float) i * v.tickStepDegrees;
+            const float angle = Layout::knobArcStartDegrees
+                              + scale.marks[i].f * (Layout::knobArcEndDegrees - Layout::knobArcStartDegrees);
+
             g.drawLine ({ Geometry::pointOnCircle (centre, inner, angle),
                           Geometry::pointOnCircle (centre, outer, angle) }, v.tickWidth);
         }
+
+        juce::ignoreUnused (bodyRadius);
     }
 }
 

@@ -32,27 +32,26 @@ namespace
                                           juce::Colour (0xFF9F8A55), 0.82f,
                                           juce::Colour (0xFF77653C));
 
-            case Layout::KnobSize::tiny:
-                break;
         }
 
+        // Unreachable: the enum has exactly three members since GUI-SPEC.md section 2 retired the
+        // tiny variant. Kept so the function has a return on every path.
         return Paint::radialFace (box, 0.5f, 0.24f,
-                                  juce::Colour (0xFFF7EFD6),
-                                  juce::Colour (0xFFD2BF8C), 0.58f,
-                                  juce::Colour (0xFF9D8853), 0.82f,
-                                  juce::Colour (0xFF75633A));
+                                  juce::Colour (0xFFF9F1D8),
+                                  juce::Colour (0xFFD4C18E), 0.58f,
+                                  juce::Colour (0xFF9F8A55), 0.82f,
+                                  juce::Colour (0xFF77653C));
     }
 
     float tickAlphaFor (Layout::KnobSize size)
     {
-        // design/README.md section 4: the tick rings are quoted at .7 / .6 / .55 / .55 alpha,
-        // largest to smallest - bigger knobs carry slightly firmer ticks.
+        // Tick rings are quoted at .7 / .6 / .55 alpha, largest to smallest - bigger knobs carry
+        // slightly firmer ticks. The retired tiny variant shared small's .55.
         switch (size)
         {
             case Layout::KnobSize::large:  return 0.70f;
             case Layout::KnobSize::medium: return 0.60f;
-            case Layout::KnobSize::small:
-            case Layout::KnobSize::tiny:   break;
+            case Layout::KnobSize::small:  break;
         }
 
         return 0.55f;
@@ -88,6 +87,7 @@ juce::Font ReflectLookAndFeel::getPopupMenuFont()
 void ReflectLookAndFeel::paintKnob (juce::Graphics& g,
                                     juce::Point<float> centre,
                                     Layout::KnobSize size,
+                                    const Layout::KnobScale& scale,
                                     float value01)
 {
     const auto& v = Layout::variantFor (size);
@@ -95,7 +95,7 @@ void ReflectLookAndFeel::paintKnob (juce::Graphics& g,
     const juce::Rectangle<float> body { centre.x - r, centre.y - r, r * 2.0f, r * 2.0f };
 
     // 1. Tick ring, behind the body.
-    Paint::drawTickRing (g, centre, r, v, Colour::tick.withAlpha (tickAlphaFor (size)));
+    Paint::drawTickRing (g, centre, r, v, scale, Colour::tick.withAlpha (tickAlphaFor (size)));
 
     // 2. Contact shadow. The design quotes `0 Npx Mpx rgba(45,33,12,.4-.45)` - a soft, slightly
     //    dropped shadow that reads as the cap sitting proud of the fascia.
@@ -154,15 +154,17 @@ void ReflectLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int 
     // Geometry::knobAngleForValue is the single place that mapping lives.
     const auto* knob = dynamic_cast<const ReflectKnob*> (&slider);
     const auto size = knob != nullptr ? knob->size() : Layout::KnobSize::medium;
+    const auto scale = knob != nullptr ? knob->scale() : Layout::KnobScale { nullptr, 0, nullptr };
 
     const juce::Rectangle<float> bounds { (float) x, (float) y, (float) width, (float) height };
-    paintKnob (g, bounds.getCentre(), size, sliderPosProportional);
+    paintKnob (g, bounds.getCentre(), size, scale, sliderPosProportional);
 }
 
 //==============================================================================
-ReflectKnob::ReflectKnob (Layout::KnobSize sizeVariant)
+ReflectKnob::ReflectKnob (Layout::KnobSize sizeVariant, Layout::KnobScale scaleForKnob)
     : juce::Slider (juce::Slider::RotaryVerticalDrag, juce::Slider::NoTextBox),
-      knobSize (sizeVariant)
+      knobSize (sizeVariant),
+      knobScale (scaleForKnob)
 {
     setRotaryParameters (juce::degreesToRadians (Layout::knobArcStartDegrees),
                          juce::degreesToRadians (Layout::knobArcEndDegrees),
@@ -176,7 +178,9 @@ void ReflectKnob::setCentrePosition (juce::Point<float> centre)
 {
     // The hit area covers the tick ring as well as the body, so the whole visual control is
     // grabbable and the ring is inside this component's clip region rather than a neighbour's.
-    const float half = variant().radius - variant().tickInset + 2.0f;
+    // Sized to the NUMERAL radius, not the body or the tick ring: the printed scale sits outside
+    // both, and a component sized to the ticks silently clips its own numerals away.
+    const float half = variant().numeralRadius + variant().labelSize;
     setBounds (juce::Rectangle<float> (centre.x - half, centre.y - half, half * 2.0f, half * 2.0f)
                    .getSmallestIntegerContainer());
 }

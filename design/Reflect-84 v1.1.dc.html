@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #201d19; }
+  a { color: #b99a4e; }
+  a:hover { color: #d9bd75; }
+</style>
+</helmet>
+<div style="width: 1340px; padding: 16px; box-sizing: border-box; background: linear-gradient(#efe6d0, #e2d8bd 60%, #d8cdb0); border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.75), inset 0 -2px 6px rgba(90,70,40,.18); font-family: 'IBM Plex Mono', monospace; color: #332b1e; position: relative; overflow: hidden;">
+
+  <div style="position: absolute; inset: 0; pointer-events: none; z-index: 3; background: repeating-linear-gradient(0deg, rgba(80,60,25,.035) 0 1px, rgba(255,255,255,0) 1px 3px), radial-gradient(120% 90% at 20% 0%, rgba(255,255,255,.5), rgba(255,255,255,0) 60%);"></div>
+
+  <div style="position: absolute; inset: 0; pointer-events: none; z-index: 4; background: #808080; mix-blend-mode: multiply; display: {{ bypassDisplay }};"></div>
+
+  <div style="display: flex; align-items: stretch; gap: 16px; padding: 13px 22px; background: linear-gradient(#22304c, #1a2740 55%, #142036); border: 1px solid rgba(0,0,0,.5); border-radius: 6px; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -3px 8px rgba(0,0,0,.45), 0 2px 4px rgba(60,45,20,.35); position: relative; z-index: 2;">
+
+    <div style="display: flex; flex-direction: column; justify-content: center; gap: 8px; min-width: 292px; margin-right: 10px;">
+      <div style="font-family: 'Jost', sans-serif; font-weight: 500; font-size: 42px; line-height: .92; letter-spacing: .10em; color: #f0e2ba; text-shadow: 0 1px 0 rgba(0,0,0,.65), 0 -1px 0 rgba(255,255,255,.18), 0 2px 10px rgba(0,0,0,.4);">REFLECT-84</div>
+      <div style="display: flex; flex-direction: column; gap: 3px; font-size: 10px; letter-spacing: .30em; color: #a9b6cd;">
+        <div>REVERB PROCESSOR</div>
+        <div>MODEL RF-84 · STEREO</div>
+      </div>
+    </div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 7px; position: relative;">
+      <div style="font-size: 10px; letter-spacing: .30em; color: #c8b177;">PROGRAM</div>
+      <div style="display: flex; align-items: stretch; gap: 10px;">
+        <div style="flex: 1; position: relative;">
+          <div onClick="{{ onProgramClick }}" style="display: flex; align-items: stretch; background: linear-gradient(#0a0f18, #060a11); border: 1px solid rgba(0,0,0,.7); border-radius: 3px; box-shadow: inset 0 2px 7px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.12); cursor: pointer; overflow: hidden; position: relative;" style-hover="background: linear-gradient(#0e1522, #080d16);">
+            <div style="display: flex; align-items: center; padding: 5px 16px; font-size: 16px; letter-spacing: .13em; color: #f2e6c2; text-shadow: 0 0 9px rgba(242,230,194,.3);">{{ bankBadge }}</div>
+            <div style="width: 1px; margin: 5px 0; background: rgba(242,230,194,.35);"></div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 5px 32px 5px 12px; font-size: 16px; letter-spacing: .13em; color: #f2e6c2; text-shadow: 0 0 9px rgba(242,230,194,.3); white-space: nowrap; overflow: hidden;">{{ lcdText }}</div>
+            <div style="position: absolute; right: 12px; top: 50%; width: 9px; height: 9px; margin-top: -6px; border-right: 1.6px solid #d8c18a; border-bottom: 1.6px solid #d8c18a; transform: rotate(45deg);"></div>
+          </div>
+
+          <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20; max-height: 260px; overflow: auto; background: linear-gradient(#0d1420, #080d16); border: 1px solid rgba(0,0,0,.75); border-radius: 3px; box-shadow: 0 10px 28px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08); padding: 4px 0;">
+              <sc-for list="{{ menuRows }}" as="r" hint-placeholder-count="6">
+                <div onClick="{{ r.onClick }}" style="display: flex; align-items: center; gap: 10px; padding: {{ r.pad }}; font-size: {{ r.size }}; letter-spacing: {{ r.track }}; color: {{ r.color }}; cursor: {{ r.cursor }};" style-hover="background: rgba(120,160,200,.10);">
+                  <div style="width: 12px; text-align: center;">{{ r.tick }}</div>
+                  <div>{{ r.text }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+
+        <div onClick="{{ onSave }}" style="padding: 0 15px; display: flex; align-items: center; font-size: 10px; letter-spacing: .20em; color: #14192a; background: linear-gradient(#ded0a6, #bda979); border: 1px solid rgba(0,0,0,.5); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 1px 2px rgba(0,0,0,.4); cursor: pointer;" style-hover="background: linear-gradient(#eadcb4, #cbb787);">SAVE</div>
+        <div onClick="{{ onDelete }}" title="{{ deleteTitle }}" style="padding: 0 15px; display: flex; align-items: center; font-size: 10px; letter-spacing: .20em; color: {{ deleteColor }}; background: {{ deleteBg }}; border: 1px solid rgba(0,0,0,.45); border-radius: 3px; box-shadow: inset 0 1px 3px rgba(0,0,0,.5); cursor: {{ deleteCursor }};">DELETE</div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: stretch; gap: 10px;">
+      <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 7px;">
+        <div style="font-size: 10px; letter-spacing: .28em; color: #a9b6cd;">IN</div>
+        <div style="padding: 5px 12px; min-width: 58px; text-align: center; font-size: 16px; color: #e8dcba; background: linear-gradient(#0a0f18, #060a11); border: 1px solid rgba(0,0,0,.7); border-radius: 3px; box-shadow: inset 0 2px 6px rgba(0,0,0,.75);">-3.2</div>
+      </div>
+      <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 7px;">
+        <div style="font-size: 10px; letter-spacing: .28em; color: #a9b6cd;">OUT</div>
+        <div style="padding: 5px 12px; min-width: 58px; text-align: center; font-size: 16px; color: #e8dcba; background: linear-gradient(#0a0f18, #060a11); border: 1px solid rgba(0,0,0,.7); border-radius: 3px; box-shadow: inset 0 2px 6px rgba(0,0,0,.75);">-0.8</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; padding: 18px 2px 4px; align-items: stretch; position: relative; z-index: 1;">
+
+    <div style="width: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding-right: 20px; box-sizing: border-box;">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 18px;">
+        <div style="position: relative; width: 104px; height: 104px;">
+          <div onClick="{{ aPlate.select }}" style="position: absolute; right: calc(100% + 6px); bottom: calc(100% - 2px); text-align: right; white-space: nowrap; font-size: 11px; line-height: 1.25; letter-spacing: .16em; cursor: pointer; color: {{ aPlate.color }}; font-weight: {{ aPlate.weight }};">PLATE</div>
+          <div onClick="{{ aRoom.select }}" style="position: absolute; left: calc(100% + 6px); bottom: calc(100% - 2px); text-align: left; white-space: nowrap; font-size: 11px; line-height: 1.25; letter-spacing: .16em; cursor: pointer; color: {{ aRoom.color }}; font-weight: {{ aRoom.weight }};">DIGITAL<br>ROOM</div>
+          <div onClick="{{ aHall.select }}" style="position: absolute; right: calc(100% + 6px); top: calc(100% - 2px); text-align: right; white-space: nowrap; font-size: 11px; line-height: 1.25; letter-spacing: .16em; cursor: pointer; color: {{ aHall.color }}; font-weight: {{ aHall.weight }};">HALL</div>
+          <div onClick="{{ aChamber.select }}" style="position: absolute; left: calc(100% + 6px); top: calc(100% - 2px); text-align: left; white-space: nowrap; font-size: 11px; line-height: 1.25; letter-spacing: .16em; cursor: pointer; color: {{ aChamber.color }}; font-weight: {{ aChamber.weight }};">CHAMBER</div>
+          <sc-for list="{{ algoTicks }}" as="t" hint-placeholder-count="4">
+            <div style="position: absolute; left: 51px; top: -13px; width: 2px; height: 9px; background: #7a6b4c; transform-origin: 50% 65px; transform: {{ t.rot }};"></div>
+          </sc-for>
+          <div onPointerDown="{{ onAlgoDown }}" style="position: absolute; inset: 0; border-radius: 50%; cursor: grab; background: radial-gradient(circle at 50% 26%, #1f2b44, #16223a 52%, #0d1526 80%, #070c15); box-shadow: 0 5px 12px rgba(45,33,12,.45), inset 0 1px 1px rgba(255,255,255,.16), inset 0 -6px 12px rgba(0,0,0,.6);">
+            <div style="position: absolute; inset: 12px; border-radius: 50%; background: radial-gradient(circle at 50% 30%, rgba(255,255,255,.08), rgba(0,0,0,.25));"></div>
+            <div style="position: absolute; inset: 0; transform: {{ algoRot }};">
+              <div style="position: absolute; left: calc(50% - 1.5px); top: 9px; width: 3px; height: 36%; border-radius: 2px; background: linear-gradient(#f4e8c4, #cdb989);"></div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size: 10px; letter-spacing: .26em; color: #3e3527;">ALGORITHM</div>
+      </div>
+
+      <div style="width: 100%; height: 1px; background: linear-gradient(90deg, rgba(120,98,55,.35), rgba(120,98,55,0)); box-shadow: 0 1px 0 rgba(255,255,255,.6);"></div>
+
+      <div style="padding: 4px 11px; border-radius: 3px; background: linear-gradient(#22304c, #16223a); font-size: 10px; letter-spacing: .24em; color: #d8c18a;">DAMPING</div>
+
+      <div style="display: flex; gap: 16px;">
+        <sc-for list="{{ dampKnobs }}" as="k" hint-placeholder-count="2">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+            <div style="position: relative; width: 112px; height: 124px;">
+              <sc-for list="{{ k.ticks }}" as="t" hint-placeholder-count="4">
+                <div style="position: absolute; left: 55px; top: 23px; width: 2px; height: 6px; background: #7a6b4c; transform-origin: 50% 35px; transform: {{ t.rot }};"></div>
+              </sc-for>
+              <sc-for list="{{ k.marks }}" as="m" hint-placeholder-count="4">
+                <div style="position: absolute; left: {{ m.x }}px; top: {{ m.y }}px; transform: translate(-50%, -50%); font-size: 10px; letter-spacing: .02em; color: #3e3527; white-space: nowrap;">{{ m.t }}</div>
+              </sc-for>
+              <div style="position: absolute; left: 0; right: 0; top: 106px; text-align: center; font-size: 10px; letter-spacing: .14em; color: #3e3527;">{{ k.unit }}</div>
+              <div onPointerDown="{{ k.onDown }}" style="position: absolute; left: 30px; top: 32px; width: 52px; height: 52px; border-radius: 50%; cursor: grab; background: radial-gradient(circle at 50% 24%, #f9f1d8, #d4c18e 58%, #9f8a55 82%, #77653c); box-shadow: 0 3px 8px rgba(45,33,12,.38), inset 0 1px 1px rgba(255,255,255,.68);">
+                <div style="position: absolute; inset: 0; transform: {{ k.rot }};">
+                  <div style="position: absolute; left: calc(50% - 1px); top: 5px; width: 2px; height: 37%; border-radius: 1px; background: #33291a;"></div>
+                </div>
+              </div>
+            </div>
+            <div style="font-size: 10px; letter-spacing: .16em; color: #3e3527;">{{ k.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="width: 1px; background: linear-gradient(180deg, rgba(120,98,55,0), rgba(120,98,55,.4) 20%, rgba(120,98,55,.4) 80%, rgba(120,98,55,0)); box-shadow: 1px 0 0 rgba(255,255,255,.65);"></div>
+
+    <div style="width: 290px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 0 20px; box-sizing: border-box;">
+      <div style="padding: 4px 11px; border-radius: 3px; background: linear-gradient(#22304c, #16223a); font-size: 10px; letter-spacing: .24em; color: #d8c18a;">REVERB TANK</div>
+      <div style="display: grid; grid-template-columns: repeat(2, 118px); gap: 4px 14px;">
+        <sc-for list="{{ tankKnobs }}" as="k" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+            <div style="position: relative; width: 118px; height: 132px;">
+              <sc-for list="{{ k.ticks }}" as="t" hint-placeholder-count="5">
+                <div style="position: absolute; left: 58px; top: 23px; width: 2px; height: 6px; background: #7a6b4c; transform-origin: 50% 39px; transform: {{ t.rot }};"></div>
+              </sc-for>
+              <sc-for list="{{ k.marks }}" as="m" hint-placeholder-count="5">
+                <div style="position: absolute; left: {{ m.x }}px; top: {{ m.y }}px; transform: translate(-50%, -50%); font-size: 10px; letter-spacing: .02em; color: #3e3527; white-space: nowrap;">{{ m.t }}</div>
+              </sc-for>
+              <div style="position: absolute; left: 0; right: 0; top: 114px; text-align: center; font-size: 10px; letter-spacing: .14em; color: #3e3527;">{{ k.unit }}</div>
+              <div onPointerDown="{{ k.onDown }}" style="position: absolute; left: 29px; top: 32px; width: 60px; height: 60px; border-radius: 50%; cursor: grab; background: radial-gradient(circle at 50% 24%, #fbf3da, #d6c391 55%, #a58f58 80%, #7a6738); box-shadow: 0 4px 9px rgba(45,33,12,.4), inset 0 1px 1px rgba(255,255,255,.7), inset 0 -5px 10px rgba(90,70,30,.35);">
+                <div style="position: absolute; inset: 0; transform: {{ k.rot }};">
+                  <div style="position: absolute; left: calc(50% - 1px); top: 6px; width: 2px; height: 38%; border-radius: 1px; background: #33291a;"></div>
+                </div>
+              </div>
+            </div>
+            <div style="font-size: 10px; letter-spacing: .18em; color: #3e3527;">{{ k.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="width: 1px; background: linear-gradient(180deg, rgba(120,98,55,0), rgba(120,98,55,.4) 20%, rgba(120,98,55,.4) 80%, rgba(120,98,55,0)); box-shadow: 1px 0 0 rgba(255,255,255,.65);"></div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 0 22px; box-sizing: border-box;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 11px;">
+          <div style="width: 15px; height: 15px; border-radius: 50%; background: radial-gradient(circle at 40% 32%, {{ lampCore }}, {{ lampEdge }} 70%, #2a3a24); box-shadow: 0 0 14px 3px {{ lampGlow }}, inset 0 1px 1px rgba(255,255,255,.5);"></div>
+          <div style="font-size: 11px; letter-spacing: .26em; color: #332b1e;">TANK LIVE</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 18px; font-size: 10px; letter-spacing: .18em; color: #3e3527;">
+          <div>DECAY TAIL</div>
+          <div>RT60 {{ rt60 }}</div>
+          <div>200 ms / DIV</div>
+        </div>
+      </div>
+
+      <div style="position: relative; padding: 6px; background: linear-gradient(#c9bd9c, #b8aa87); border-radius: 4px; box-shadow: inset 0 2px 4px rgba(70,54,25,.4), 0 1px 0 rgba(255,255,255,.6);">
+        <div style="position: relative; height: 168px; background: linear-gradient(#080d16, #050810); border: 1px solid rgba(0,0,0,.7); border-radius: 2px; overflow: hidden; box-shadow: inset 0 3px 12px rgba(0,0,0,.85);">
+          <svg viewBox="0 0 600 168" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%;">
+            <sc-for list="{{ gridV }}" as="g" hint-placeholder-count="12">
+              <line x1="{{ g.x }}" y1="20" x2="{{ g.x }}" y2="168" stroke="rgba(120,160,200,.10)" stroke-width="1"></line>
+            </sc-for>
+            <sc-for list="{{ gridH }}" as="g" hint-placeholder-count="4">
+              <line x1="0" y1="{{ g.y }}" x2="520" y2="{{ g.y }}" stroke="rgba(120,160,200,.10)" stroke-width="1"></line>
+            </sc-for>
+            <line x1="0" y1="20" x2="600" y2="20" stroke="rgba(120,160,200,.20)" stroke-width="1"></line>
+            <line x1="520" y1="20" x2="520" y2="168" stroke="rgba(120,160,200,.20)" stroke-width="1"></line>
+            <line x1="520" y1="26" x2="532" y2="26" stroke="rgba(142,160,188,.85)" stroke-width="1.5"></line>
+            <line x1="520" y1="156" x2="532" y2="156" stroke="rgba(142,160,188,.85)" stroke-width="1.5"></line>
+            <defs>
+              <filter id="rf84bloom11" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3.2" result="b"></feGaussianBlur>
+                <feMerge>
+                  <feMergeNode in="b"></feMergeNode>
+                  <feMergeNode in="b"></feMergeNode>
+                </feMerge>
+              </filter>
+            </defs>
+            <path d="{{ tailPath }}" fill="rgba(190,205,225,.16)"></path>
+            <path d="{{ curveFill }}" fill="{{ traceFill }}"></path>
+            <polyline points="{{ curveLine }}" fill="none" stroke="{{ accentColor }}" stroke-width="2.6" stroke-linejoin="miter" opacity=".75" filter="url(#rf84bloom11)"></polyline>
+            <polyline points="{{ curveLine }}" fill="none" stroke="{{ accentColor }}" stroke-width="1.6" stroke-linejoin="miter"></polyline>
+          </svg>
+          <div style="position: absolute; left: 9px; top: 0; height: 20px; display: flex; align-items: center; font-size: 10px; letter-spacing: .18em; color: #8ea0bc;">DCY ENV</div>
+          <div style="position: absolute; right: 9px; top: 0; height: 20px; display: flex; align-items: center; font-size: 10px; letter-spacing: .18em; color: #8ea0bc;">{{ grainState }}</div>
+          <div style="position: absolute; left: 88.67%; top: 15.48%; transform: translateY(-50%); font-size: 10px; letter-spacing: .18em; color: #8ea0bc;">0 dB</div>
+          <div style="position: absolute; left: 88.67%; top: 92.86%; transform: translateY(-50%); font-size: 10px; letter-spacing: .18em; color: #8ea0bc;">&#8722;60 dB</div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: center; padding-top: 2px;">
+        <div style="padding: 4px 11px; border-radius: 3px; background: linear-gradient(#22304c, #16223a); font-size: 10px; letter-spacing: .24em; color: #d8c18a;">CHARACTER</div>
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 40px;">
+        <sc-for list="{{ charKnobs }}" as="k" hint-placeholder-count="2">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+            <div style="position: relative; width: 168px; height: 180px;">
+              <sc-for list="{{ k.ticks }}" as="t" hint-placeholder-count="5">
+                <div style="position: absolute; left: 83px; top: 26px; width: 2px; height: 8px; background: #7a6b4c; transform-origin: 50% 62px; transform: {{ t.rot }};"></div>
+              </sc-for>
+              <sc-for list="{{ k.marks }}" as="m" hint-placeholder-count="5">
+                <div style="position: absolute; left: {{ m.x }}px; top: {{ m.y }}px; transform: translate(-50%, -50%); font-size: 10px; letter-spacing: .02em; color: #3e3527; white-space: nowrap;">{{ m.t }}</div>
+              </sc-for>
+              <div style="position: absolute; left: 0; right: 0; top: 162px; text-align: center; font-size: 10px; letter-spacing: .14em; color: #3e3527;">{{ k.unit }}</div>
+              <div onPointerDown="{{ k.onDown }}" style="position: absolute; left: 35px; top: 39px; width: 98px; height: 98px; border-radius: 50%; cursor: grab; background: radial-gradient(circle at 50% 22%, #fdf6e0, #ddcb98 52%, #b09a61 76%, #7d6a3b); box-shadow: 0 6px 14px rgba(45,33,12,.45), inset 0 2px 2px rgba(255,255,255,.75), inset 0 -8px 14px rgba(90,70,30,.35);">
+                <div style="position: absolute; inset: 15px; border-radius: 50%; background: radial-gradient(circle at 50% 28%, rgba(255,255,255,.5), rgba(120,98,55,.18)); box-shadow: inset 0 1px 2px rgba(255,255,255,.6), 0 1px 2px rgba(90,70,30,.25);"></div>
+                <div style="position: absolute; inset: 0; transform: {{ k.rot }};">
+                  <div style="position: absolute; left: calc(50% - 1.5px); top: 8px; width: 3px; height: 30%; border-radius: 2px; background: #2f2617;"></div>
+                </div>
+              </div>
+            </div>
+            <div style="font-size: 11px; letter-spacing: .20em; color: #332b1e;">{{ k.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="width: 1px; background: linear-gradient(180deg, rgba(120,98,55,0), rgba(120,98,55,.4) 20%, rgba(120,98,55,.4) 80%, rgba(120,98,55,0)); box-shadow: 1px 0 0 rgba(255,255,255,.65);"></div>
+
+    <div style="width: 176px; display: flex; flex-direction: column; align-items: center; gap: 10px; padding-left: 20px; box-sizing: border-box;">
+      <div style="padding: 4px 11px; border-radius: 3px; background: linear-gradient(#22304c, #16223a); font-size: 10px; letter-spacing: .24em; color: #d8c18a;">OUTPUT</div>
+      <sc-for list="{{ outKnobs }}" as="k" hint-placeholder-count="3">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <div style="position: relative; width: 112px; height: 124px;">
+            <sc-for list="{{ k.ticks }}" as="t" hint-placeholder-count="5">
+              <div style="position: absolute; left: 55px; top: 23px; width: 2px; height: 6px; background: #7a6b4c; transform-origin: 50% 35px; transform: {{ t.rot }};"></div>
+            </sc-for>
+            <sc-for list="{{ k.marks }}" as="m" hint-placeholder-count="5">
+              <div style="position: absolute; left: {{ m.x }}px; top: {{ m.y }}px; transform: translate(-50%, -50%); font-size: 10px; letter-spacing: .02em; color: #3e3527; white-space: nowrap;">{{ m.t }}</div>
+            </sc-for>
+            <div style="position: absolute; left: 0; right: 0; top: 106px; text-align: center; font-size: 10px; letter-spacing: .14em; color: #3e3527;">{{ k.unit }}</div>
+            <div onPointerDown="{{ k.onDown }}" style="position: absolute; left: 30px; top: 32px; width: 52px; height: 52px; border-radius: 50%; cursor: grab; background: radial-gradient(circle at 50% 24%, #f9f1d8, #d4c18e 58%, #9f8a55 82%, #77653c); box-shadow: 0 3px 8px rgba(45,33,12,.38), inset 0 1px 1px rgba(255,255,255,.68);">
+              <div style="position: absolute; inset: 0; transform: {{ k.rot }};">
+                <div style="position: absolute; left: calc(50% - 1px); top: 5px; width: 2px; height: 37%; border-radius: 1px; background: #33291a;"></div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 10px; letter-spacing: .16em; color: #3e3527;">{{ k.label }}</div>
+        </div>
+      </sc-for>
+      <div style="align-self: flex-end; margin-top: auto; font-size: 10px; letter-spacing: .1em; color: #5e5440;">v1.1</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1352,&quot;height&quot;:650},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5ce07a&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#5ce07a&quot;,&quot;#ffb02e&quot;,&quot;#4ec9ff&quot;,&quot;#ff5c5c&quot;],&quot;section&quot;:&quot;Identity&quot;},&quot;algorithm&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;PLATE&quot;,&quot;options&quot;:[&quot;PLATE&quot;,&quot;DIGITAL ROOM&quot;,&quot;CHAMBER&quot;,&quot;HALL&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;State&quot;},&quot;digitalGrain&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:46,&quot;min&quot;:0,&quot;max&quot;:100,&quot;step&quot;:1,&quot;unit&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;State&quot;},&quot;bypassed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;State&quot;}}">
+const GEOM = {
+  large: { cx: 84, cy: 88, R: 80, rOut: 62 },
+  med:   { cx: 59, cy: 62, R: 55, rOut: 39 },
+  small: { cx: 56, cy: 58, R: 50, rOut: 35 }
+};
+
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = {
+      vals: { size: 0.55, decay: 0.58, predly: 0.22, density: 0.72, hf: 0.42, lf: 0.28, mod: 0.34, grain: null, width: 0.7, mix: 0.55, trim: 0.5 },
+      algo: null, phase: 0, program: 0, bank: 'FACT',
+      users: [], menuOpen: false, live: null
+    };
+    this.factory = ['01 RAIN ALL DAY', '02 SO LONG', '03 COLD ATMOSPHERE', '04 WORLD GONE MAD'];
+    this.noise = Array.from({ length: 240 }, () => 0.35 + Math.random() * 0.65);
+  }
+
+  componentDidMount() {
+    let last = performance.now();
+    const loop = (t) => {
+      if (t - last > 40) { last = t; this.setState(s => ({ phase: (s.phase + 0.016) % 1 })); }
+      this._raf = requestAnimationFrame(loop);
+    };
+    this._raf = requestAnimationFrame(loop);
+  }
+  componentWillUnmount() { cancelAnimationFrame(this._raf); clearTimeout(this._liveT); }
+
+  get grain() {
+    const v = this.state.vals.grain;
+    return v == null ? Math.min(1, Math.max(0, (this.props.digitalGrain ?? 46) / 100)) : v;
+  }
+  get algoIndex() {
+    if (this.state.algo != null) return this.state.algo;
+    const names = ['PLATE', 'DIGITAL ROOM', 'CHAMBER', 'HALL'];
+    const i = names.indexOf(String(this.props.algorithm || 'PLATE').toUpperCase());
+    return i < 0 ? 0 : i;
+  }
+  get accent() { return this.props.accentColor || '#5ce07a'; }
+  get bypassed() { return !!this.props.bypassed; }
+
+  showLive(text) {
+    clearTimeout(this._liveT);
+    this.setState({ live: text });
+    this._liveT = setTimeout(() => this.setState({ live: null }), 900);
+  }
+
+  drag(key, e, lcd) {
+    e.preventDefault();
+    const startY = e.clientY;
+    const start = key === 'grain' ? this.grain : this.state.vals[key];
+    this.showLive(lcd(start));
+    const move = (ev) => {
+      const v = Math.min(1, Math.max(0, start + (startY - ev.clientY) / 180));
+      this.setState(s => ({ vals: Object.assign({}, s.vals, { [key]: v }) }));
+      this.showLive(lcd(v));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      this.showLive(lcd(key === 'grain' ? this.grain : this.state.vals[key]));
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  knob(key, label, variant, unit, pairs, fmt, lcdName) {
+    const g = GEOM[variant];
+    const v = key === 'grain' ? this.grain : this.state.vals[key];
+    const marks = pairs.map(p => {
+      const a = (-135 + p[0] * 270) * Math.PI / 180;
+      return { t: p[1], x: (g.cx + g.R * Math.sin(a)).toFixed(1), y: (g.cy - g.R * Math.cos(a)).toFixed(1) };
+    });
+    const ticks = pairs.map(p => ({ rot: 'rotate(' + (-135 + p[0] * 270).toFixed(2) + 'deg)' }));
+    const lcd = (x) => lcdName + ': ' + fmt(x);
+    return {
+      label, unit, marks, ticks,
+      rot: 'rotate(' + (-135 + v * 270).toFixed(1) + 'deg)',
+      onDown: (e) => this.drag(key, e, lcd)
+    };
+  }
+
+  even(labels) { return labels.map((t, i) => [i / (labels.length - 1), t]); }
+
+  selectProgram(bank, i) { this.setState({ bank, program: i, menuOpen: false }); }
+
+  renderVals() {
+    const v = this.state.vals;
+    const g = this.grain;
+    const W = 520, TOP = 26, BASE = 156, FS = BASE - TOP;
+
+    const decaySec = 0.4 + v.decay * 7.6;
+    const preMs = Math.round(v.predly * 180);
+    const preX = (preMs / 1000) * (W / 2.4);
+    const tau = decaySec / 6.0;
+    const sweep = 52 + this.state.phase * (W + 225);
+
+    const levels = g > 0.03 ? Math.max(3, Math.round(30 - g * 26)) : 0;
+    const stepX = g > 0.03 ? 3 + g * 24 : 3;
+
+    const pts = [[0, BASE], [preX, BASE]];
+    for (let x = preX; x <= W; x += stepX) {
+      const tt = ((x - preX) / W) * 2.4;
+      let env = Math.exp(-tt / (tau * 1.6));
+      env *= 1 + v.mod * 0.10 * Math.sin(x * 0.075 + this.state.phase * 12);
+      env *= 0.55 + v.density * 0.45;
+      if (levels) env = Math.round(env * levels) / levels;
+      env = Math.max(0, Math.min(1, env));
+      const y = BASE - env * FS;
+      if (levels && pts.length > 2) pts.push([x, pts[pts.length - 1][1]]);
+      pts.push([x, y]);
+    }
+    const visible = pts.filter(p => p[0] <= sweep);
+    if (visible.length < 2) visible.push([preX, BASE]);
+    const line = visible.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    const lastX = visible[visible.length - 1][0];
+
+    let tail = '';
+    for (let i = 0; i < this.noise.length; i++) {
+      const x = (i / this.noise.length) * W;
+      if (x < preX || x > Math.min(sweep, W)) continue;
+      const tt = ((x - preX) / W) * 2.4;
+      const env = Math.exp(-tt / (tau * 1.6)) * this.noise[i] * (0.5 + v.density * 0.5);
+      const y = BASE - Math.min(1, env) * (FS - 4);
+      tail += 'M' + x.toFixed(1) + ',' + BASE + 'L' + x.toFixed(1) + ',' + y.toFixed(1);
+    }
+
+    const ai = this.algoIndex;
+    const algoNames = ['PLATE', 'DIGITAL ROOM', 'CHAMBER', 'HALL'];
+    const algoState = (i) => ({
+      color: ai === i ? '#332b1e' : '#5e5440',
+      weight: ai === i ? '500' : '400',
+      select: () => { this.setState({ algo: i }); this.showLive('ALGORITHM: ' + algoNames[i]); }
+    });
+
+    const hfKHz = 2 * Math.pow(8, v.hf);
+    const lfHz = 40 * Math.pow(12.5, v.lf);
+
+    const bank = this.state.bank;
+    const list = bank === 'FACT' ? this.factory : this.state.users;
+    const current = list[this.state.program] || this.factory[0];
+    const isUser = bank === 'USER';
+
+    const rows = [];
+    const head = (t) => ({ text: t, tick: '', pad: '9px 12px 4px', size: '10px', track: '.26em', color: '#c8b177', cursor: 'default', onClick: () => {} });
+    const item = (t, sel, onClick) => ({ text: t, tick: sel ? '\u2713' : '', pad: '6px 12px', size: '13px', track: '.10em', color: '#f2e6c2', cursor: 'pointer', onClick });
+    rows.push(head('FACTORY'));
+    this.factory.forEach((n, i) => rows.push(item(n, bank === 'FACT' && this.state.program === i, () => this.selectProgram('FACT', i))));
+    rows.push(head('USER'));
+    if (this.state.users.length === 0) {
+      rows.push({ text: '— none saved —', tick: '', pad: '6px 12px 8px', size: '12px', track: '.08em', color: '#8ea0bc', cursor: 'default', onClick: () => {} });
+    } else {
+      this.state.users.forEach((n, i) => rows.push(item(n, isUser && this.state.program === i, () => this.selectProgram('USER', i))));
+    }
+
+    return {
+      gridV: Array.from({ length: 11 }, (_, i) => ({ x: ((i + 1) * (W / 12)).toFixed(1) })),
+      gridH: Array.from({ length: 3 }, (_, i) => ({ y: (TOP + (i + 1) * (FS / 4)).toFixed(1) })),
+      bypassDisplay: this.bypassed ? 'block' : 'none',
+      accentColor: this.accent,
+      traceFill: 'color-mix(in oklab, ' + this.accent + ' 16%, transparent)',
+      lampCore: 'color-mix(in oklab, ' + this.accent + ' 85%, white)',
+      lampEdge: this.accent,
+      lampGlow: 'color-mix(in oklab, ' + this.accent + ' 45%, transparent)',
+      curveLine: line,
+      curveFill: 'M0,' + BASE + ' L' + visible.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L') + ' L' + lastX.toFixed(1) + ',' + BASE + ' Z',
+      tailPath: tail || 'M0,' + BASE,
+      rt60: decaySec.toFixed(1) + ' s',
+      grainState: g > 0.03 ? 'GRAIN ' + Math.round(g * 100) + ' · ' + levels + ' STEP' : 'GRAIN OFF · SMOOTH',
+
+      algoRot: 'rotate(' + (-45 + ai * 90) + 'deg)',
+      algoTicks: [-45, 45, 135, 225].map(a => ({ rot: 'rotate(' + a + 'deg)' })),
+      aPlate: algoState(0), aRoom: algoState(1), aChamber: algoState(2), aHall: algoState(3),
+
+      tankKnobs: [
+        this.knob('size', 'SIZE', 'med', '', this.even(['0.2', '0.4', '0.6', '0.8', '1.0']), x => (0.2 + x * 0.8).toFixed(2), 'SIZE'),
+        this.knob('decay', 'DECAY', 'med', 's', [[0, '0.4'], [0.2105, '2'], [0.4737, '4'], [0.7368, '6'], [1, '8']], x => (0.4 + x * 7.6).toFixed(1) + ' s', 'DECAY'),
+        this.knob('predly', 'PRE-DELAY', 'med', 'ms', this.even(['0', '45', '90', '135', '180']), x => Math.round(x * 180) + ' ms', 'PRE-DELAY'),
+        this.knob('density', 'DENSITY', 'med', '%', this.even(['0', '25', '50', '75', '100']), x => Math.round(x * 100) + ' %', 'DENSITY')
+      ],
+      dampKnobs: [
+        this.knob('hf', 'HF', 'small', 'kHz', [[0, '2'], [1 / 3, '4'], [2 / 3, '8'], [1, '16']], x => (2 * Math.pow(8, x)).toFixed(1) + ' kHz', 'DAMPING HF'),
+        this.knob('lf', 'LF', 'small', 'Hz', [[0, '40'], [0.2744, '80'], [0.5489, '160'], [0.8233, '320'], [1, '500']], x => Math.round(40 * Math.pow(12.5, x)) + ' Hz', 'DAMPING LF')
+      ],
+      charKnobs: [
+        this.knob('mod', 'MODULATION', 'large', '%', this.even(['0', '25', '50', '75', '100']), x => Math.round(x * 100) + ' %', 'MODULATION'),
+        this.knob('grain', 'DIGITAL GRAIN', 'large', '', this.even(['0', '25', '50', '75', '100']), x => String(Math.round(x * 100)), 'DIGITAL GRAIN')
+      ],
+      outKnobs: [
+        this.knob('width', 'STEREO WIDTH', 'small', '%', this.even(['0', '50', '100', '150', '200']), x => Math.round(x * 200) + ' %', 'STEREO WIDTH'),
+        this.knob('mix', 'MIX', 'small', '%', this.even(['0', '25', '50', '75', '100']), x => Math.round(x * 100) + ' %', 'MIX'),
+        this.knob('trim', 'OUTPUT TRIM', 'small', 'dB', this.even(['\u221212', '\u22126', '0', '+6', '+12']), x => { const d = (x - 0.5) * 24; return (d >= 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + ' dB'; }, 'OUTPUT TRIM')
+      ],
+
+      lcdText: this.state.live || current,
+      bankBadge: bank,
+      menuOpen: this.state.menuOpen,
+      menuRows: rows,
+      onProgramClick: () => this.setState(s => ({ menuOpen: !s.menuOpen })),
+      onSave: () => {
+        const n = this.state.users.length + 1;
+        const name = String(n).padStart(2, '0') + ' USER PROGRAM';
+        this.setState(s => ({ users: s.users.concat([name]), bank: 'USER', program: s.users.length, menuOpen: false }));
+      },
+      deleteTitle: isUser ? 'Delete this User Program' : 'Enabled only on a User Program',
+      deleteColor: isUser ? '#14192a' : '#8090ae',
+      deleteBg: isUser ? 'linear-gradient(#ded0a6, #bda979)' : 'linear-gradient(#232f49, #1b2640)',
+      deleteCursor: isUser ? 'pointer' : 'not-allowed',
+      onDelete: () => {
+        if (!isUser) return;
+        this.setState(s => {
+          const u = s.users.slice(); u.splice(s.program, 1);
+          return { users: u, bank: 'FACT', program: 0 };
+        });
+      },
+
+      onAlgoDown: (e) => { e.preventDefault(); const n = (ai + 1) % 4; this.setState({ algo: n }); this.showLive('ALGORITHM: ' + algoNames[n]); }
+    };
+  }
+}
+</script>
+</body>
+</html>

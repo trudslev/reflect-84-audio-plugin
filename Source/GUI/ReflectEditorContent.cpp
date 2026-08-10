@@ -21,7 +21,7 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
     {
         const auto& spec = Layout::knobs[i];
 
-        auto knob = std::make_unique<ReflectKnob> (spec.size);
+        auto knob = std::make_unique<ReflectKnob> (spec.size, spec.scale);
         knob->setName (spec.label);
         knob->setCentrePosition ({ spec.centreX, spec.centreY });
 

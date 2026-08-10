@@ -33,6 +33,7 @@ public:
     static void paintKnob (juce::Graphics& g,
                            juce::Point<float> centre,
                            ReflectTheme::Layout::KnobSize size,
+                           const ReflectTheme::Layout::KnobScale& scale,
                            float value01);
 };
 
@@ -47,7 +48,10 @@ public:
 class ReflectKnob final : public juce::Slider
 {
 public:
-    explicit ReflectKnob (ReflectTheme::Layout::KnobSize sizeVariant);
+    ReflectKnob (ReflectTheme::Layout::KnobSize sizeVariant,
+                 ReflectTheme::Layout::KnobScale scaleForKnob);
+
+    const ReflectTheme::Layout::KnobScale& scale() const noexcept { return knobScale; }
 
     ReflectTheme::Layout::KnobSize size() const noexcept { return knobSize; }
 
@@ -64,6 +68,7 @@ public:
 
 private:
     ReflectTheme::Layout::KnobSize knobSize;
+    ReflectTheme::Layout::KnobScale knobScale;
     bool fineDragActive = false;
 
     /** Full 0-1 travel in pixels of vertical drag, and the multiplier applied while shift is

@@ -90,20 +90,14 @@ void PanelReadouts::timerCallback()
 //==============================================================================
 void PanelReadouts::paint (juce::Graphics& g)
 {
-    // --- Knob readouts -------------------------------------------------------
-    for (size_t i = 0; i < Layout::knobs.size(); ++i)
-    {
-        const auto& spec = Layout::knobs[i];
-        const auto& v = Layout::variantFor (spec.size);
-
-        const float top = spec.centreY + v.radius
-                        + Layout::knobLabelGap + Layout::knobLabelLineHeight
-                        + Layout::knobReadoutGap;
-
-        Text::drawTracked (g, readouts[i], Font::mono (v.readoutSize), 0.0f,
-                           { spec.centreX - 100.0f, top, 200.0f, Layout::knobReadoutLineHeight },
-                           juce::Justification::centred, Colour::textTertiary);
-    }
+    // The standing knob readouts are GONE, deliberately - BRAND.md's "No standing numeric readouts
+    // under knobs", and GUI-SPEC.md section 7. Hardware panels print a SCALE and you read the
+    // pointer against it; the printed scales the knobs now carry are that reference, and live values
+    // appear in the PROGRAM LCD only while a control is actually being moved.
+    //
+    // What stays below is display content rather than panel text: the IN/OUT meter numerals live
+    // inside their own LCD wells, and the scope's RT60 header and grain legend belong to the scope.
+    // Those are readouts on a screen, not numbers printed on a faceplate.
 
     // --- IN / OUT wells ------------------------------------------------------
     const auto drawMeter = [&g] (float x, const juce::String& text)
