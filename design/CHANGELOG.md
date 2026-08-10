@@ -26,10 +26,20 @@ contract and supersedes `README.md` wherever they disagree.
 - Bypass state added — 0.50 multiply, host-driven, no caption. § 10.
 - `fonts/README.md` added (no binaries — sources and licence only).
 
+**Corrections since first delivery (spec only, no design change):**
+
+- § 4 — `#332b1e` restated 9.07:1 → **8.82:1**; retired `#4a4132` 6.53:1 → **6.34:1**.
+  Both were transcription errors on our side; the build's measurements are correct
+  and no classification changes. The measurement basis is now stated in § 4.
+- § 13 — SIZE default restated in physical units, **0.71** (stored 0.64), matching
+  every other row and the § 9 readout example.
+- § 12 — factory bank is **twelve** Programs from the build, not the four
+  illustrative names carried over from v1.0.
+
 Prototype: `Reflect-84 v1.1.dc.html`.
 
 ## v1.0 — initial handoff
 
 Panel 1200 × 530, three body columns. `README.md` only, no `GUI-SPEC.md`.
-Prototype `Reflect-84.dc.html` — **superseded, and no longer shipped in this
-bundle.**
+Prototype `Reflect-84.dc.html` — **superseded.** Still shipped alongside v1.1 as a
+reference for the diff; do not build from it.

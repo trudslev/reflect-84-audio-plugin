@@ -114,12 +114,16 @@ of the gradient, not the `#efe6d0` top. Functional text targets 7:1; flavour tex
 
 | Hex | Ratio | Class | Used for |
 |---|---|---|---|
-| `#332b1e` | **9.07:1** | functional | TANK LIVE, CHARACTER labels, selected algorithm label |
+| `#332b1e` | **8.82:1** | functional | TANK LIVE, CHARACTER labels, selected algorithm label |
 | `#3e3527` | **7.62:1** | functional | control labels, printed scales, units, ALGORITHM caption, scope header data |
 | `#5e5440` | **4.71:1** | flavour | unselected algorithm labels, version stamp |
 | `#7a6b4c` | — | graphic | tick marks (not text; no floor applies) |
 
-The previous `#4a4132` (6.53:1) and `#5c5241` failed the functional floor and are
+Ratios are WCAG relative luminance against the darkest fascia point `#d8cdb0`,
+sRGB linearised with the 0.03928 / 12.92 threshold. Re-measure rather than
+transcribe; if a value here disagrees with yours, yours wins and tell us.
+
+The previous `#4a4132` (6.34:1) and `#5c5241` failed the functional floor and are
 retired. The previous unselected-algorithm `#9a8e74` measured **2.10:1** — it was
 the worst offender on the panel and is replaced by `#5e5440`. Unselected labels
 stay dimmer than selected on purpose (redundant encoding alongside the pointer, the
@@ -399,7 +403,12 @@ Structure and behaviour identical to TapeRot's; only the palette is Reflect-84's
 - When the User bank is empty the USER group shows a single non-selectable row `— none saved —` in 12px `#8ea0bc`. The group header is never hidden.
 - Selecting an item loads it, sets the bank badge, and closes the menu.
 
-Factory bank: `01 RAIN ALL DAY`, `02 SO LONG`, `03 COLD ATMOSPHERE`, `04 WORLD GONE MAD`.
+Factory bank: **twelve Programs, names from the build** — the bank is authored
+there, not here. The four listed in v1.0 (`01 RAIN ALL DAY`, `02 SO LONG`,
+`03 COLD ATMOSPHERE`, `04 WORLD GONE MAD`) were illustrative and the prototype
+still shows them; treat the build's twelve as authoritative and ignore the
+prototype's list. Menu geometry above is unaffected — twelve items plus two group
+headers exceed the 260px max height, so the menu scrolls, which is specified.
 
 ### SAVE / DELETE — naming flow, follows TapeRot
 
@@ -542,7 +551,7 @@ discrete choice.
 
 | ID | Display name | Min | Max | Unit | Taper | Default |
 |---|---|---|---|---|---|---|
-| `size` | SIZE | 0.2 | 1.0 | — | linear | 0.64 |
+| `size` | SIZE | 0.2 | 1.0 | — | linear | 0.71 |
 | `decay` | DECAY | 0.4 | 8.0 | s | linear | 4.8 |
 | `predly` | PRE-DELAY | 0 | 180 | ms | linear | 40 |
 | `density` | DENSITY | 0 | 100 | % | linear | 72 |
@@ -554,6 +563,13 @@ discrete choice.
 | `mix` | MIX | 0 | 100 | % | linear | 55 |
 | `trim` | OUTPUT TRIM | −12 | +12 | dB | linear | 0 |
 | `algo` | ALGORITHM | 0 | 3 | — | discrete, 4 detents | 0 (PLATE) |
+
+**Every default in this table is a physical value, in the row's own unit.** SIZE
+was the one row stating a normalised position (0.64); it now states the physical
+default **0.71**, which is where the pointer sits on the printed 0.2–1.0 scale and
+what § 9 has always shown in the readout. Normalised 0.64 is correct as the stored
+value — the two numbers describe the same knob position and both are right in
+their own frame.
 
 `phase` (scope sweep) is animation state only — **not** a parameter and not automatable.
 
