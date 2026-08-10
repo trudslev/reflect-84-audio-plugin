@@ -75,7 +75,7 @@ public:
             }
         }
 
-        beginTest ("the struct covers every automatable parameter");
+        beginTest ("the struct covers every parameter a Program owns, and nothing else");
         {
             // If a parameter is added to Parameters.h but not to FactoryProgram, loading a factory
             // Program leaves it at whatever the previous Program set - silently, and differently
@@ -83,7 +83,19 @@ public:
             TestHostProcessor host;
 
             constexpr int fieldsInFactoryProgram = 12;   // 11 normalised floats + algorithm
-            expectEquals (host.getParameters().size(), fieldsInFactoryProgram);
+
+            // Bypass is the one parameter deliberately OUTSIDE Program state, so it is subtracted
+            // rather than added to the struct. A Program that recalled "bypassed" would be a
+            // Program you cannot hear; by the suite's own rule (../../CLAUDE.md) a parameter
+            // belongs in a Program only when the Program's sound depends on it, and bypass is a
+            // state you put the plugin into rather than part of a patch.
+            //
+            // Counting it here rather than ignoring the mismatch means adding a SECOND
+            // non-Program parameter still fails this test, which is the point.
+            constexpr int parametersOutsideProgramState = 1;   // bypass
+
+            expectEquals (host.getParameters().size(),
+                          fieldsInFactoryProgram + parametersOutsideProgramState);
         }
 
         beginTest ("no Program is silent, and the default is the one the artwork shows");

@@ -560,11 +560,47 @@ namespace Layout
     inline constexpr float scopeBezelRadius = 4.0f;
     inline constexpr float scopeBezelPadding = 6.0f;
 
-    inline constexpr float scopeScreenX = 407.0f;
-    inline constexpr float scopeScreenY = 174.0f;
-    inline constexpr float scopeScreenW = 546.0f;
-    inline constexpr float scopeScreenH = 170.0f;
+    inline constexpr float scopeScreenX = 639.0f;
+    inline constexpr float scopeScreenY = 170.6f;
+    inline constexpr float scopeScreenW = 477.0f;
+    inline constexpr float scopeScreenH = 168.0f;
     inline constexpr float scopeScreenRadius = 2.0f;
+
+    /** **The screen rectangle and the plot region are two different rectangles, and the trace is
+        clamped to the PLOT REGION.** GUI-SPEC.md section 11.
+
+        Everything below is in the 600 x 168 drawing space, which maps onto the 477-wide screen
+        content box with preserveAspectRatio:none - so **x scales 477/600 = 0.795 and y scales 1.0**.
+        That asymmetry is the trap: deriving the gutter split from any other width puts the leader
+        ticks somewhere other than the labels they point at.
+
+            Screen                0,  0, 600, 168
+            Title strip (reserved) 0,  0, 600,  20     DCY ENV, grain state
+            Plot region            0, 20, 520, 148     the trace lives here and nowhere else
+            Level gutter (reserved) 520, 20, 80, 148   0 dB, -60 dB, leader ticks
+
+        Within the plot region 0 dB is y = 26 and -60 dB (the baseline) is y = 156, so full-scale
+        height is 130. The trace uses that full vertical extent - it touches 26 at peak and rests on
+        156 - and is clipped horizontally at x = 520.
+
+        **A top or bottom margin is not a substitute for the gutter.** 0 dB and -60 dB are the levels
+        being annotated, so the trace has to be able to reach them; the separation has to be
+        horizontal. The previous arrangement drew the four legends inside the plot area and let the
+        trace run underneath them, which only looked safe because the reference render happened to
+        show a short decay - at 200 ms per division a long tail reaches the right edge and settles
+        near the baseline, exactly where the -60 dB legend sat. */
+    inline constexpr float scopePlotX = 0.0f;
+    inline constexpr float scopePlotY = 20.0f;
+    inline constexpr float scopePlotW = 520.0f;
+    inline constexpr float scopePlotH = 148.0f;
+    inline constexpr float scopeTitleStripH = 20.0f;
+    inline constexpr float scopeGutterX = 520.0f;
+    inline constexpr float scopeZeroDbY = 26.0f;
+    inline constexpr float scopeMinusSixtyDbY = 156.0f;
+    inline constexpr float scopeLeaderTickX0 = 520.0f;
+    inline constexpr float scopeLeaderTickX1 = 532.0f;
+    inline constexpr float scopeGutterLabelX = 532.0f;
+    inline constexpr float scopeLeaderTickWidth = 1.5f;
 
     /** design/README.md section 6's drawing model is specified against a 600 x 168 viewBox with
         preserveAspectRatio="none", so it is stretched onto the screen's real size rather than

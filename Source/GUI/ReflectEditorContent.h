@@ -27,6 +27,11 @@ public:
     explicit ReflectEditorContent (Reflect84AudioProcessor& processor);
     ~ReflectEditorContent() override;
 
+    /** The disengaged state, GUI-SPEC.md section 10. Drawn OVER every child rather than in paint(),
+        which is why this is paintOverChildren: the multiply has to sit above the whole panel
+        including the texture overlay, and below nothing. */
+    void paintOverChildren (juce::Graphics& g) override;
+
 private:
     Reflect84AudioProcessor& processorRef;
 

@@ -9,6 +9,9 @@ Reflect84AudioProcessor::Reflect84AudioProcessor()
                           .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "PARAMETERS", createReflect84ParameterLayout())
 {
+    bypassParam = dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::bypass));
+    jassert (bypassParam != nullptr);
+
     sizeParam       = apvts.getRawParameterValue (ParamIDs::size);
     decayParam      = apvts.getRawParameterValue (ParamIDs::decay);
     preDelayParam   = apvts.getRawParameterValue (ParamIDs::preDelay);
@@ -81,6 +84,19 @@ void Reflect84AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
 
     if (numChannels == 0 || numSamples == 0)
         return;
+
+    // Bypassed: the dry signal passes untouched. Returning a bypass parameter from
+    // getBypassParameter() makes this our job - JUCE routes the host's button to the parameter but
+    // does not insert a bypassed path on our behalf.
+    //
+    // The tank is deliberately NOT reset here. Coming out of bypass should not start from silence
+    // any more than re-patching a hardware unit empties its plates; leaving the delay lines alone
+    // means the tail is already there when the signal returns.
+    if (bypassParam != nullptr && bypassParam->get())
+    {
+        updateDisplayState (buffer, buffer, numSamples);
+        return;
+    }
 
     // Every parameter is read exactly once, here, into plain locals - no DSP stage below ever
     // touches the APVTS.

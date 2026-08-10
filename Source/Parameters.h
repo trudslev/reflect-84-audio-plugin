@@ -39,6 +39,7 @@ namespace ParamIDs
 
     // ALGORITHM
     inline constexpr auto algorithm = "algorithm";
+    inline constexpr auto bypass    = "bypass";
 }
 
 /**
@@ -181,6 +182,17 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createReflect84Parame
         "Algorithm",
         juce::StringArray { "Plate", "Digital Room", "Chamber", "Hall" },
         (int) Algorithm::plate));
+
+    // The host's bypass. GUI-SPEC.md section 10 adds a disengaged state and is explicit that there
+    // is no on-panel control for it and none is being added - this exists so the HOST's bypass
+    // button has something to drive, which is what getBypassParameter() returns.
+    //
+    // Deliberately NOT Program state: FactoryProgram has no field for it and never should. A
+    // Program that recalled "bypassed" would be a Program you cannot hear, and by the suite's own
+    // rule (see ../../CLAUDE.md) a parameter belongs in a Program only when the Program's sound
+    // depends on it. Bypass is a state you put the plugin into, not part of a patch.
+    params.push_back (std::make_unique<juce::AudioParameterBool> (
+        juce::ParameterID { ParamIDs::bypass, 1 }, "Bypass", false));
 
     // New parameters are APPENDED below this line, never inserted above it - saved Programs and
     // host automation lanes are keyed by position as well as ID.

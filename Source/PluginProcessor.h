@@ -45,6 +45,11 @@ public:
 
     //==============================================================================
     juce::AudioProcessorEditor* createEditor() override;
+
+    /** Handing the host a bypass parameter is what makes its bypass button drive ours, and what
+        lets the editor paint the disengaged state (GUI-SPEC.md section 10). Returning it also makes
+        US responsible for the bypassed audio path - JUCE does not insert one on our behalf. */
+    juce::AudioParameterBool* getBypassParameter() const override { return bypassParam; }
     bool hasEditor() const override { return true; }
 
     const juce::String getName() const override { return NF_PRODUCT_NAME; }
@@ -99,6 +104,10 @@ private:
     //==============================================================================
     // Cached raw parameter pointers. Read once at the top of processBlock; never call
     // getRawParameterValue per block.
+    // Cached in the constructor like the rest, but typed rather than atomic<float>*: JUCE's
+    // getBypassParameter() contract wants the parameter object itself.
+    juce::AudioParameterBool* bypassParam = nullptr;
+
     std::atomic<float>* sizeParam       = nullptr;
     std::atomic<float>* decayParam      = nullptr;
     std::atomic<float>* preDelayParam   = nullptr;

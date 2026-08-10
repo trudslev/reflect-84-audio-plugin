@@ -194,16 +194,29 @@ void TankScope::paintScreen (juce::Graphics& g)
 
     const auto area = screenContentArea();
 
-    // --- Grid ----------------------------------------------------------------
-    // Screen pixels, not viewBox units: the grid is a CSS background on the screen element,
-    // outside the SVG that carries the trace.
-    g.setColour (Colour::scopeGrid);
+    // --- Grid, INSIDE THE PLOT REGION ONLY -----------------------------------
+    // GUI-SPEC.md section 11: the grid stops at x = 520 and does not run under the level gutter's
+    // legends. Drawn from the plot rectangle rather than the screen, so it cannot creep.
+    {
+        const auto plotTL = fromViewBox (Layout::scopePlotX, Layout::scopePlotY);
+        const auto plotBR = fromViewBox (Layout::scopePlotX + Layout::scopePlotW,
+                                         Layout::scopePlotY + Layout::scopePlotH);
+        const juce::Rectangle<float> plot { plotTL, plotBR };
 
-    for (float x = area.getX(); x < area.getRight(); x += Layout::scopeGridPitchX)
-        g.fillRect (x, area.getY(), 1.0f, area.getHeight());
+        g.setColour (Colour::scopeGrid);
 
-    for (float y = area.getY(); y < area.getBottom(); y += Layout::scopeGridPitchY)
-        g.fillRect (area.getX(), y, area.getWidth(), 1.0f);
+        for (float x = plot.getX(); x < plot.getRight(); x += Layout::scopeGridPitchX)
+            g.fillRect (x, plot.getY(), 1.0f, plot.getHeight());
+
+        for (float y = plot.getY(); y < plot.getBottom(); y += Layout::scopeGridPitchY)
+            g.fillRect (plot.getX(), y, plot.getWidth(), 1.0f);
+
+        // Reservation hairlines - they make the reserved areas read as instrument furniture rather
+        // than as empty space.
+        g.setColour (Colour::scopeGrid.withMultipliedAlpha (2.0f));
+        g.fillRect (area.getX(), plot.getY(), area.getWidth(), 1.0f);
+        g.fillRect (plot.getRight(), plot.getY(), 1.0f, plot.getHeight());
+    }
 
     // --- Parameter snapshot --------------------------------------------------
     const auto valueOf = [this] (const char* id)
@@ -221,9 +234,12 @@ void TankScope::paintScreen (juce::Graphics& g)
     const float decaySeconds = ParamFormat::decaySeconds (decayNorm);
     const float preMs = (float) juce::roundToInt (ParamFormat::preDelayMs (preNorm));
 
-    constexpr float W = Layout::scopeViewBoxW;
-    constexpr float H = Layout::scopeViewBoxH;
-    constexpr float baseline = H - Layout::scopeBaselineInset;
+    // Everything below is in the PLOT region, not the screen. -60 dB is the baseline at y = 156,
+    // 0 dB is y = 26, so full scale is 130 - and the time axis spans the plot's 520 rather than the
+    // screen's 600, or a long tail would run into the level gutter it is annotated by.
+    constexpr float W = Layout::scopePlotW;
+    constexpr float baseline = Layout::scopeMinusSixtyDbY;
+    constexpr float fullScale = Layout::scopeMinusSixtyDbY - Layout::scopeZeroDbY;
 
     const float preX = (preMs / 1000.0f) * (W / Layout::scopeTimeSpanSeconds);
     const float tau = decaySeconds / Layout::scopeTauDivisor;
@@ -253,7 +269,7 @@ void TankScope::paintScreen (juce::Graphics& g)
             const float env = std::exp (-t / (tau * Layout::scopeTauScale))
                             * noise[i] * (0.5f + densityNorm * 0.5f);
 
-            const float y = baseline - juce::jmin (1.0f, env) * (H - Layout::scopeNoiseScaleInset);
+            const float y = baseline - juce::jmin (1.0f, env) * fullScale;
 
             const auto from = fromViewBox (x, baseline);
             const auto to   = fromViewBox (x, y);
@@ -283,7 +299,7 @@ void TankScope::paintScreen (juce::Graphics& g)
         env = grain.quantizeEnvelope (env);
         env = juce::jlimit (0.0f, 1.0f, env);
 
-        const float y = baseline - env * (H - Layout::scopeFullScaleInset);
+        const float y = baseline - env * fullScale;
 
         // The extra point at the PREVIOUS height before each new x is what turns the curve into a
         // stair rather than a sloped polyline - a sample-and-hold trace, exactly what the tank's
@@ -342,31 +358,53 @@ void TankScope::paintScreen (juce::Graphics& g)
     g.setColour (Colour::accent);
     g.strokePath (trace, { Layout::scopeTraceWidth, joint, juce::PathStrokeType::butt });
 
-    // --- Corner legends ------------------------------------------------------
+    // --- Legends, in their RESERVED areas -------------------------------------
+    // GUI-SPEC.md section 11: none of these are drawn in the plot region. DCY ENV and the grain
+    // state live in the 20px title strip; the two level labels live in the 80px gutter, each
+    // vertically centred on the level it annotates and tied to it by a leader tick.
+    //
+    // They used to sit in the corners of the screen with the trace free to run underneath. That
+    // only looked safe because the reference render happened to show a short decay - at 200ms per
+    // division a long tail reaches the right edge and settles near the baseline, exactly where the
+    // -60 dB legend sat.
     {
         const auto font = Font::mono (Layout::scopeLegendSize);
         const float tracking = Font::trackingPx (Layout::scopeLegendTracking, Layout::scopeLegendSize);
         const float lineHeight = 12.0f;
 
-        const auto top = screen.getY() + Layout::scopeLegendInsetTop;
-        const auto bottom = screen.getBottom() - Layout::scopeLegendInsetBottom - lineHeight;
-        const auto left = screen.getX() + Layout::scopeLegendInsetX;
-        const auto right = screen.getRight() - Layout::scopeLegendInsetX;
+        const auto stripLeft  = fromViewBox (9.0f, Layout::scopeTitleStripH * 0.5f);
+        const auto stripRight = fromViewBox (Layout::scopeViewBoxW - 9.0f, Layout::scopeTitleStripH * 0.5f);
 
         Text::drawTracked (g, "DCY ENV", font, tracking,
-                           { left, top, 200.0f, lineHeight },
+                           { stripLeft.x, stripLeft.y - lineHeight * 0.5f, 200.0f, lineHeight },
                            juce::Justification::left, Colour::scopeLegend);
-
-        Text::drawTracked (g, "0 dB", font, tracking,
-                           { right - 200.0f, top, 200.0f, lineHeight },
-                           juce::Justification::right, Colour::scopeLegend);
-
-        Text::drawTracked (g, "-60 dB", font, tracking,
-                           { right - 200.0f, bottom, 200.0f, lineHeight },
-                           juce::Justification::right, Colour::scopeLegendDim);
 
         Text::drawTracked (g, grain.describe(), font, tracking,
-                           { left, bottom, 300.0f, lineHeight },
+                           { stripRight.x - 300.0f, stripRight.y - lineHeight * 0.5f, 300.0f, lineHeight },
+                           juce::Justification::right, Colour::scopeLegend);
+
+        // Leader ticks: a short horizontal line from the plot's edge out to the label, so each
+        // level label is visibly attached to the level it marks rather than floating near it.
+        const auto leader = [&g, this] (float viewBoxY, juce::Colour colour)
+        {
+            const auto from = fromViewBox (Layout::scopeLeaderTickX0, viewBoxY);
+            const auto to   = fromViewBox (Layout::scopeLeaderTickX1, viewBoxY);
+            g.setColour (colour);
+            g.drawLine (from.x, from.y, to.x, to.y, Layout::scopeLeaderTickWidth);
+        };
+
+        leader (Layout::scopeZeroDbY,       Colour::scopeLegend);
+        leader (Layout::scopeMinusSixtyDbY, Colour::scopeLegendDim);
+
+        const auto zeroAt  = fromViewBox (Layout::scopeGutterLabelX, Layout::scopeZeroDbY);
+        const auto minusAt = fromViewBox (Layout::scopeGutterLabelX, Layout::scopeMinusSixtyDbY);
+
+        Text::drawTracked (g, "0 dB", font, tracking,
+                           { zeroAt.x, zeroAt.y - lineHeight * 0.5f, 120.0f, lineHeight },
                            juce::Justification::left, Colour::scopeLegend);
+
+        Text::drawTracked (g, juce::String ("-60 dB"), font, tracking,
+                           { minusAt.x, minusAt.y - lineHeight * 0.5f, 120.0f, lineHeight },
+                           juce::Justification::left, Colour::scopeLegendDim);
     }
 }

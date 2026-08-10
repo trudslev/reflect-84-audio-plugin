@@ -64,6 +64,32 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
     programHeader.setMenuParent (&menuHost);
 }
 
+void ReflectEditorContent::paintOverChildren (juce::Graphics& g)
+{
+    const auto* bypass = processorRef.getBypassParameter();
+
+    if (bypass == nullptr || ! bypass->get())
+        return;
+
+    // **A multiply, not an alpha blend.** BRAND.md's Bypass section: multiplying preserves relative
+    // contrast and reads as darkness, while blending toward the panel colour reads as fog laid over
+    // it. JUCE has no multiply blend mode, but a multiply by a grey k is just "keep k of what is
+    // there", which is what drawing opaque black at (1 - k) alpha does.
+    //
+    // 0.50, matching CHORUS-60. BRAND.md records that 0.70 was tried and read as a dimmer switch
+    // rather than a light being out.
+    //
+    // Nothing else changes: no pointer moves, no control is redrawn, dimmed individually,
+    // desaturated or flattened, and the accent is not drained - the LED and the trace darken with
+    // everything else, by the same factor. The legibility floors deliberately do not apply here;
+    // the panel is not operable in this state and conveying that is the job. No caption either: if
+    // a panel needs to print "settings retained", the visual is misleading and should be fixed.
+    constexpr float multiply = 0.50f;
+
+    g.setColour (juce::Colours::black.withAlpha (1.0f - multiply));
+    g.fillRoundedRectangle (getLocalBounds().toFloat(), Layout::panelRadius);
+}
+
 ReflectEditorContent::~ReflectEditorContent()
 {
     setLookAndFeel (nullptr);
