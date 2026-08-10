@@ -24,16 +24,38 @@ void PanelBackground::buildTexture()
         g.fillRect (0, y, w, 1);
 
     // radial-gradient(120% 90% at 20% 0%, rgba(255,255,255,.5), transparent 60%)
-    // The stop at 60% is where the sheen has fully faded, so the gradient's own end point sits
-    // there rather than at the ellipse's edge.
+    //
+    // **It is an ELLIPSE, not a circle** - 120% of the width across but only 90% of the HEIGHT
+    // down, and on a 1340 x 645 panel those are wildly different distances. The stop at 60% is
+    // where the sheen has fully faded, so both radii are scaled by it:
+    //
+    //     rx = 1340 * 1.20 * 0.60 = 965      ry = 645 * 0.90 * 0.60 = 348
+    //
+    // Drawn as a circle it was 965 in both directions - the highlight reached nearly three times
+    // too far down the panel, so instead of a distinct sheen across the top the whole fascia came
+    // out uniformly lighter and read as flat. Measured against the artwork it ran +14 to +17 too
+    // bright through the middle rows while the top edge matched, which is the signature of a
+    // highlight that has not fallen off rather than one that is missing.
+    //
+    // JUCE's radial ColourGradient is circular, so the ellipse comes from drawing that circle under
+    // a y-scale about the gradient's own centre.
     const float cx = (float) w * 0.20f;
     const float cy = 0.0f;
-    const float radius = (float) w * 1.20f * 0.60f;
+    const float rx = (float) w * 1.20f * 0.60f;
+    const float ry = (float) h * 0.90f * 0.60f;
 
-    juce::ColourGradient sheen { juce::Colours::white.withAlpha (0.5f), cx, cy,
-                                 juce::Colours::white.withAlpha (0.0f), cx + radius, cy, true };
-    g.setGradientFill (sheen);
-    g.fillRect (0, 0, w, h);
+    {
+        juce::Graphics::ScopedSaveState save { g };
+        g.addTransform (juce::AffineTransform::scale (1.0f, ry / rx, cx, cy));
+
+        juce::ColourGradient sheen { juce::Colours::white.withAlpha (0.5f), cx, cy,
+                                     juce::Colours::white.withAlpha (0.0f), cx + rx, cy, true };
+        g.setGradientFill (sheen);
+
+        // Filled in the PRE-transform space, so the rect has to be tall enough that it still covers
+        // the image after the y-scale shrinks it.
+        g.fillRect (juce::Rectangle<float> (0.0f, 0.0f, (float) w, (float) h * rx / ry));
+    }
 }
 
 //==============================================================================
