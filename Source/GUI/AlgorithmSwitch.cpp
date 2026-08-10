@@ -102,19 +102,11 @@ void AlgorithmSwitch::mouseDown (const juce::MouseEvent& e)
         return;
     }
 
+    // On the body, hand off to Slider so it DRAGS like every other knob here. It used to jump to
+    // the nearest detent on mouseDown and swallow the gesture - mouseDrag and mouseUp were both
+    // overridden to do nothing - so the control could only ever be clicked, never turned.
     if (p.getDistanceFrom (knobCentre()) <= Layout::algoRadius)
-    {
-        // Click-to-nearest-detent rather than the prototype's blind advance: with four detents at
-        // the diagonals, the pointer lands where the user aimed instead of one step clockwise.
-        const auto delta = p - knobCentre();
-        const float degrees = juce::radiansToDegrees (std::atan2 (delta.x, -delta.y));
-        const float normalised = degrees < -180.0f + 45.0f ? degrees + 360.0f : degrees;
-
-        const int nearest = juce::jlimit (0, numAlgorithms - 1,
-                                          juce::roundToInt ((normalised + 45.0f) / 90.0f));
-
-        setValue ((double) nearest, juce::sendNotificationSync);
-    }
+        juce::Slider::mouseDown (e);
 }
 
 void AlgorithmSwitch::mouseMove (const juce::MouseEvent& e)
@@ -224,7 +216,9 @@ void AlgorithmSwitch::paint (juce::Graphics& g)
     // --- Pointer: brass, from 9px inside the top edge --------------------------
     {
         // Detents at the four diagonals: -45, 45, 135, 225 degrees.
-        const float angle = -45.0f + (float) selected * 90.0f;
+        // -135 is HALL bottom-left, +135 is CHAMBER bottom-right: the same 270-degree sweep every
+        // other knob on this panel uses, rather than a full circle.
+        const float angle = -135.0f + (float) rotationOf (selected) * 90.0f;
         const float outer = r - Layout::algoPointerTopInset;
         const float length = Layout::algoPointerLengthFraction * r * 2.0f;
 

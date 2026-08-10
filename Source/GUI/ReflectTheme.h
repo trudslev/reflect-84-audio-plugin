@@ -461,7 +461,7 @@ namespace Layout
         Not derived from a start angle plus a step, deliberately: the four positions are a property
         of the switch, and writing them out means the next person reads angles rather than
         reconstructing them. */
-    inline constexpr std::array<float, 4> algoDetentDegrees { { -45.0f, 45.0f, 135.0f, 225.0f } };
+    inline constexpr std::array<float, 4> algoDetentDegrees { { -135.0f, -45.0f, 45.0f, 135.0f } };
     inline constexpr float algoPointerTopInset = 9.0f;
     inline constexpr float algoPointerWidth = 3.0f;
     inline constexpr float algoPointerLengthFraction = 0.36f;   // of the radius
