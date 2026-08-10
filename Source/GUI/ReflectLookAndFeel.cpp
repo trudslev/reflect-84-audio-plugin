@@ -64,12 +64,11 @@ ReflectLookAndFeel::ReflectLookAndFeel()
     setColour (juce::ResizableWindow::backgroundColourId, Colour::fasciaMid);
     setColour (juce::Label::textColourId,                 Colour::textPrimary);
 
-    // The knob drag popup reads TooltipWindow::textColourId, not a Slider or Label colour ID.
-    setColour (juce::BubbleComponent::backgroundColourId, Colour::bezelBottom);
-    setColour (juce::BubbleComponent::outlineColourId,    Colour::bezelGold);
-    setColour (juce::TooltipWindow::textColourId,         Colour::phosphor);
-    setColour (juce::TooltipWindow::backgroundColourId,   Colour::bezelBottom);
-    setColour (juce::TooltipWindow::outlineColourId,      Colour::bezelGold);
+    // No BubbleComponent or TooltipWindow colours here. They dressed a knob drag popup that is
+    // never constructed, and the panel is not getting one: GUI-SPEC.md section 9 is explicit that
+    // the LCD does this job - "No tooltips, no floating value bubbles - the display already on the
+    // panel does this." A floating bubble also has no hardware equivalent, which is the deeper
+    // reason BRAND.md puts live values in the PROGRAM LCD.
 
     // PopupMenu: the Program menu drops out of the LCD, so it stays in the bezel's material.
     setColour (juce::PopupMenu::backgroundColourId,          Colour::bezelBottom);

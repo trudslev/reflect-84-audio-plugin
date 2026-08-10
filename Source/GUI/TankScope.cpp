@@ -403,7 +403,7 @@ void TankScope::paintScreen (juce::Graphics& g)
                            { zeroAt.x, zeroAt.y - lineHeight * 0.5f, 120.0f, lineHeight },
                            juce::Justification::left, Colour::scopeLegend);
 
-        Text::drawTracked (g, juce::String ("-60 dB"), font, tracking,
+        Text::drawTracked (g, Text::minusSign() + juce::String ("60 dB"), font, tracking,
                            { minusAt.x, minusAt.y - lineHeight * 0.5f, 120.0f, lineHeight },
                            juce::Justification::left, Colour::scopeLegendDim);
     }

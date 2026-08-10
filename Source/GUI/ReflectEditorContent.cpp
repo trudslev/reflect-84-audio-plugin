@@ -25,8 +25,15 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
         knob->setName (spec.label);
         knob->setCentrePosition ({ spec.centreX, spec.centreY });
 
+        // **Guarded on the control's own drag state, not on the attachment.** A SliderAttachment
+        // also fires when a Program is applied and on every host automation step; without this the
+        // LCD latches onto whichever parameter moved last and flickers for the length of a song.
+        // BRAND.md: "Only direct user manipulation triggers it."
         if (auto* param = processorRef.apvts.getParameter (spec.paramID))
         {
+            knob->onDragStart = [this, param] { programHeader.showParameter (*param); };
+            knob->onDragEnd   = [this]        { programHeader.releaseParameter(); };
+
             // Every parameter here is stored 0-1, so the default IS the parameter's own default
             // value - no range conversion needed for double-click-to-default.
             knob->setDoubleClickReturnValue (true, (double) param->getDefaultValue());

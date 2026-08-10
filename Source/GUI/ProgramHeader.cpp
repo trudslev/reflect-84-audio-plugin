@@ -113,9 +113,39 @@ bool ProgramHeader::refreshFromProcessor()
     return true;
 }
 
+void ProgramHeader::showParameter (const juce::RangedAudioParameter& param)
+{
+    if (namingMode)
+        return;     // the glass belongs to the name field until it commits or cancels
+
+    // Straight through the parameter's own name and JUCE's own text conversion, so the LCD and the
+    // host's automation lane cannot disagree - the same construction TapeRot uses. Section 9 wants
+    // the printed control names in full (PRE-DELAY, STEREO WIDTH, DAMPING HF), which is what the
+    // parameter names already are.
+    const auto name = param.getName (Layout::lcdCharacterBudget).toUpperCase();
+    const auto value = param.getText (param.getValue(), 0).toUpperCase();
+
+    liveReadout = name + ": " + value;
+    readoutRevertAtMs = 0;
+    repaint();
+}
+
+void ProgramHeader::releaseParameter()
+{
+    if (liveReadout.isNotEmpty())
+        readoutRevertAtMs = juce::Time::getMillisecondCounter() + Layout::lcdReadoutHoldMs;
+}
+
 void ProgramHeader::timerCallback()
 {
     bool needsRepaint = refreshFromProcessor();
+
+    if (readoutRevertAtMs != 0 && juce::Time::getMillisecondCounter() >= readoutRevertAtMs)
+    {
+        liveReadout.clear();
+        readoutRevertAtMs = 0;
+        needsRepaint = true;
+    }
 
     if (namingMode)
     {
@@ -445,7 +475,12 @@ void ProgramHeader::paint (juce::Graphics& g)
         {
             // 1-based two-digit numbering, computed here and never stored - the code's own
             // indices stay 0-based. CHORUS-60's convention, and the design mock already uses it.
-            const auto label = juce::String (displayedIndex + 1).paddedLeft ('0', 2) + " " + displayedName;
+            // The live readout takes the glass while a control is moving, then the Program name
+            // comes back 900ms after release. Naming mode already returned above, so the three
+            // states never contend for the cell.
+            const auto label = liveReadout.isNotEmpty()
+                                 ? liveReadout
+                                 : juce::String (displayedIndex + 1).paddedLeft ('0', 2) + " " + displayedName;
 
             drawPhosphor (label,
                           display.withTrimmedLeft (Layout::badgeInsetX + Layout::badgeW)

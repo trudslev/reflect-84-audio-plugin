@@ -205,7 +205,7 @@ void PanelBackground::paintKnobLabels (juce::Graphics& g)
 
                 g.setFont (scaleFont);
                 g.setColour (Colour::scaleNumeral);
-                g.drawText (mark.printed,
+                g.drawText (Text::withRealMinus (mark.printed),
                             juce::Rectangle<float> (at.x - 30.0f, at.y - 8.0f, 60.0f, 16.0f),
                             juce::Justification::centred, false);
             }

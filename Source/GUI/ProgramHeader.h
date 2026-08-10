@@ -44,6 +44,19 @@ public:
 
     static juce::Rectangle<int> canvasBounds();
 
+    /** Section 9's live parameter readout. While a control is being moved the LCD shows
+        `<PARAMETER NAME>: <value>` in place of the program name, reverting 900ms after release.
+
+        **The CALLER guards on the control's own drag state.** A SliderAttachment also fires when a
+        Program is applied and on every host automation step, and without that guard the display
+        latches onto whichever parameter was written last and flickers for the length of a song -
+        which BRAND.md forbids outright: "Only direct user manipulation triggers it."
+
+        Naming mode wins over both; the glass belongs to the name field until it commits or
+        cancels. */
+    void showParameter (const juce::RangedAudioParameter& param);
+    void releaseParameter();
+
     /** The component the Program list is laid out inside. Its bounds become the list's parent area,
         which is what fixes the list's top edge and caps its height - layout, not plumbing. Passing
         nullptr returns the list to being a free desktop window sized to its own content, which for
@@ -103,6 +116,11 @@ private:
     juce::String displayedName;
     bool displayedIsFactory = true;
     bool displayedIsModified = false;
+
+    // The live readout and when it reverts. Held as text rather than a parameter pointer so the
+    // display cannot outlive what it is showing.
+    juce::String liveReadout;
+    juce::uint32 readoutRevertAtMs = 0;
 
     bool namingMode = false;
     juce::String typedName;

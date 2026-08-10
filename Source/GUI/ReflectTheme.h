@@ -192,6 +192,25 @@ namespace Text
         "GRAIN 46 . 18 STEP"). Built from its codepoint rather than written as a literal or a
         \x escape sequence: both depend on the source file's encoding surviving every toolchain
         the suite builds on, and a mis-decoded one renders as a stray "Â". */
+    /** U+2212 MINUS SIGN, which GUI-SPEC.md section 8 requires in both printed scales and readouts
+        rather than the ASCII hyphen - a hyphen is visibly shorter and sits lower than the digits it
+        precedes, so "-12" reads as smaller type than "+12" beside it.
+
+        Built from a codepoint for the same reason middleDot() is: juce::String's const char*
+        constructor decodes as LATIN-1, not UTF-8, so a "\xe2\x88\x92" literal renders as three
+        stray glyphs on the panel. */
+    inline juce::String minusSign()
+    {
+        return juce::String::charToString ((juce::juce_wchar) 0x2212);
+    }
+
+    /** Printed numerals carry ASCII hyphens in the mark tables, because those are constexpr
+        `const char*`. This swaps them for the real minus at draw time. */
+    inline juce::String withRealMinus (const char* text)
+    {
+        return juce::String (text).replaceCharacter ('-', (juce::juce_wchar) 0x2212);
+    }
+
     inline juce::String middleDot()
     {
         return juce::String::charToString ((juce::juce_wchar) 0x00B7);
@@ -268,10 +287,11 @@ namespace Layout
     inline constexpr float scanlinePitch = 3.0f;
 
     // --- Header bezel (measured: fill x 15..1185, y 15..118, 1px border outside) -------------
-    inline constexpr float headerX = 14.0f;
-    inline constexpr float headerY = 14.0f;
-    inline constexpr float headerW = 1172.0f;
-    inline constexpr float headerH = 105.0f;
+    // GUI-SPEC.md section 1's region table.
+    inline constexpr float headerX = 16.0f;
+    inline constexpr float headerY = 16.0f;
+    inline constexpr float headerW = 1308.0f;
+    inline constexpr float headerH = 103.0f;
     inline constexpr float headerRadius = 6.0f;
 
     // Wordmark block: min-width 300, starting at the header's content box (x + 1px border + 22px
@@ -286,16 +306,40 @@ namespace Layout
     inline constexpr float taglineGap = 3.0f;
 
     // PROGRAM block
-    inline constexpr float programLabelX = 363.0f;
-    inline constexpr float programLabelY = 36.0f;
+    // Section 9. All three column captions - PROGRAM, IN, OUT - sit on ONE line at y 41, and the
+    // LCD cell and both meter wells share a single 33px band at y 61. Those two shared baselines
+    // are the point: the header previously had the captions and wells on three different rows, so
+    // nothing lined up across the columns.
+    inline constexpr float programLabelX = 357.0f;
+    inline constexpr float programLabelY = 41.0f;
     inline constexpr float programLabelH = 12.0f;
-    inline constexpr float programWellX = 363.0f;
-    inline constexpr float programWellY = 55.0f;
-    inline constexpr float programWellW = 432.0f;
-    inline constexpr float programWellH = 42.0f;
-    inline constexpr float saveButtonX = 805.0f;
+    inline constexpr float programWellX = 357.0f;
+    inline constexpr float programWellY = 61.0f;
+    inline constexpr float programWellW = 586.0f;
+    inline constexpr float programWellH = 33.0f;
+
+    /** The bank indicator is printed ON the LCD glass now, not a badge beside it: same 16px face as
+        the program name, 16px padding either side, separated from the name by a 1px vertical rule.
+        No border, no fill, no radius - it is text on the display, and there is no separate bank
+        control anywhere on the panel. */
+    inline constexpr float lcdBankPadX = 16.0f;
+    inline constexpr float lcdRuleInsetY = 7.0f;
+    inline constexpr float lcdTextSize = 16.0f;
+    inline constexpr float lcdTextTracking = 0.13f;
+    inline constexpr float lcdChevronInsetRight = 12.0f;
+
+    /** Section 9's capacity note: the cell holds 36 characters at 16px against a longest readout of
+        19 ("DIGITAL GRAIN: 100"), so the live readout never needs the name cell to widen. */
+    inline constexpr int lcdCharacterBudget = 36;
+
+    /** How long the live readout stays after the gesture ends. Section 9 says 900ms; long enough to
+        read the value you just set, short enough that the LCD is back to naming the Program before
+        you look for it. */
+    inline constexpr juce::uint32 lcdReadoutHoldMs = 900;
+
+    inline constexpr float saveButtonX = 959.0f;
     inline constexpr float saveButtonW = 64.0f;
-    inline constexpr float deleteButtonX = 879.0f;
+    inline constexpr float deleteButtonX = 1033.0f;
     inline constexpr float deleteButtonW = 78.0f;
     inline constexpr float headerButtonY = programWellY;
     inline constexpr float headerButtonH = programWellH;
@@ -309,11 +353,12 @@ namespace Layout
     inline constexpr float chevronSize = 9.0f;
 
     // IN / OUT meters (measured: wells x 985 and 1079, both 84 wide, y 69..104)
-    inline constexpr float meterLabelY = 51.0f;
+    // Same caption line and same band as the LCD - see programLabelY / programWellY.
+    inline constexpr float meterLabelY = 41.0f;
     inline constexpr float meterLabelH = 12.0f;
-    inline constexpr float meterWellY = 69.0f;
+    inline constexpr float meterWellY = 61.0f;
     inline constexpr float meterWellW = 84.0f;
-    inline constexpr float meterWellH = 35.0f;
+    inline constexpr float meterWellH = 33.0f;
     inline constexpr float meterInX = 985.0f;
     inline constexpr float meterOutX = 1079.0f;
 
