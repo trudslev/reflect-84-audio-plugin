@@ -77,15 +77,6 @@ void PanelBackground::paintFascia (juce::Graphics& g)
     g.setGradientFill (fascia);
     g.fillRoundedRectangle (panel, Layout::panelRadius);
 
-    // The overlay texture is full-bleed but must not spill past the rounded corners.
-    {
-        juce::Graphics::ScopedSaveState save { g };
-        juce::Path clip;
-        clip.addRoundedRectangle (panel, Layout::panelRadius);
-        g.reduceClipRegion (clip);
-        g.drawImageAt (texture, 0, 0);
-    }
-
     // inset 0 1px 0 rgba(255,255,255,.75) - the lit top edge of the moulding
     g.setColour (juce::Colours::white.withAlpha (0.75f));
     g.drawLine (Layout::panelRadius, 0.5f, Layout::canvasWidth - Layout::panelRadius, 0.5f, 1.0f);
@@ -97,6 +88,18 @@ void PanelBackground::paintFascia (juce::Graphics& g)
                              Colour::panelInnerShade, lip.getX(), lip.getBottom(), false });
         g.fillRect (lip);
     }
+}
+
+void PanelBackground::paintTextureOverlay (juce::Graphics& g) const
+{
+    // Clipped to the rounded corners so it does not spill past the moulding.
+    const juce::Rectangle<float> panel { 0.0f, 0.0f, Layout::canvasWidth, Layout::canvasHeight };
+
+    juce::Graphics::ScopedSaveState save { g };
+    juce::Path clip;
+    clip.addRoundedRectangle (panel, Layout::panelRadius);
+    g.reduceClipRegion (clip);
+    g.drawImageAt (texture, 0, 0);
 }
 
 void PanelBackground::paintHeader (juce::Graphics& g)

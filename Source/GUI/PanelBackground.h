@@ -17,6 +17,14 @@ public:
 
     void paint (juce::Graphics& g) override;
 
+    /** The texture overlay, drawn by the EDITOR after every child rather than by this component.
+
+        Section 1 calls it "full bleed", and it means it: the scanlines and the sheen sit over the
+        header bezel and the controls, not just the bare fascia. Drawn inside paint() it was covered
+        by the very next thing painted - the header - which is where the effect is most visible,
+        because white lifts a #22304c bezel far harder than an already-near-white fascia. */
+    void paintTextureOverlay (juce::Graphics& g) const;
+
 private:
     void paintFascia (juce::Graphics& g);
     void paintHeader (juce::Graphics& g);

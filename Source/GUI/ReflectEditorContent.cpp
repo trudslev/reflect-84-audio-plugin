@@ -73,6 +73,12 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
 
 void ReflectEditorContent::paintOverChildren (juce::Graphics& g)
 {
+    // The texture overlay goes on FIRST, over every child - section 1 calls it full bleed. It used
+    // to be painted inside PanelBackground, which meant the header bezel covered it immediately;
+    // and the bezel is where it matters most, because white lifts #22304c by around 90 levels
+    // against about 17 on the near-white fascia.
+    panelBackground.paintTextureOverlay (g);
+
     const auto* bypass = processorRef.getBypassParameter();
 
     if (bypass == nullptr || ! bypass->get())
