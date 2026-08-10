@@ -10,9 +10,15 @@ Gatecrasher — the Program storage architecture, ported rather than redesigned)
 first for the cross-plugin design system (naming, "Program" not "Preset", the one-accent-colour
 rule, component grammar), then this file.
 
-`design/README.md` is the authoritative GUI spec and was written before implementation began. It is
-meant to be implemented as-is, not redesigned. `design/screenshots/01-panel.png` is the approved
-artwork and outranks the doc's prose wherever the two disagree — see "Canvas" below.
+**`design/GUI-SPEC.md` is the authoritative GUI spec** as of the v1.1 conformance pass, and
+supersedes `design/README.md` wherever the two disagree — README is the v1.0 document and is kept
+for the diff. `design/CHANGELOG.md` states which revision a bundle is; read it first.
+`design/screenshots/01-panel.png` is the approved artwork and outranks either doc's prose.
+
+**The bundle is a reference package, not a tree to sync.** Its own `fonts/README.md` says so: it
+ships no font binaries, and `CMakeLists.txt` embeds Jost and two IBM Plex Mono faces from
+`design/fonts/`, so installing a bundle over `design/` would delete build assets. Copy the documents
+and reference renders out; leave the build's own directories alone.
 
 ## Commands
 
@@ -104,8 +110,10 @@ the cached pointer. New parameters are appended, never inserted.
 
 **All eleven continuous parameters are stored 0-1 normalised**, matching `design/README.md`'s own
 state model. This differs from TapeRot and Gatecrasher, which store physical values behind a
-`NormalisableRange` — here every one of the design doc's mappings is affine, so the two forms are
-mathematically interchangeable and the normalised form keeps the mappings in one place. Each
+`NormalisableRange`. **Two of the mappings are no longer affine** — both damping controls went
+logarithmic in v1.1 — so the forms are not interchangeable any more, and the normalised form is kept
+for a different reason than it was chosen for: `ParamFormat` is the single place a normalised
+position becomes a physical value, and a skew on the range would split that in two. Each
 parameter carries a `stringFromValueFunction` built from the same `ParamFormat` helpers the panel
 readouts use, so a host's automation lane still reads "40 ms" rather than "0.22".
 
@@ -130,7 +138,25 @@ Two things here improve on both siblings, deliberately:
   version it never checks.
 
 The factory bank's values were authored in panel units and stored normalised; the per-Program
-comments in `FactoryPrograms.h` record the authored form. Heaven's 9.0 s decay was clamped to the
+comments in `FactoryPrograms.h` record the authored form, and they are the source of truth rather
+than decoration.
+
+**That mattered when the damping taper went log.** Stored normals are only correct relative to a
+curve: under the affine mapping a stored 0.5 meant 9 kHz, under `2000 * 8^n` it means 5.66 kHz.
+All 24 damping values were re-derived so the twelve Programs still sound as authored; left alone,
+damping LF would have roughly halved across the whole bank. `FactoryProgramsTests` asserts the
+authored HERTZ round-trip, not the stored normals — a test on the normals would pass through
+exactly the change it exists to catch.
+
+**`ParamDefaults` deliberately did NOT get the same treatment.** The defaults keep their normalised
+positions and now mean 4.8 kHz / 81 Hz, which is what GUI-SPEC §13 lists and what the reference
+render shows. Defaults were authored as positions, the bank was authored in hertz; each keeps its
+own authoring intent, which is why the two files' damping numbers no longer look alike.
+
+**Bypass is a parameter but not Program state.** `FactoryProgram` has no field for it and should
+never gain one — a Program that recalled "bypassed" would be a Program you cannot hear. The
+parameter-count guard states that as a rule rather than a number, so a second non-Program parameter
+still fails it. Heaven's 9.0 s decay was clamped to the
 control's 8.0 s maximum. The bank has **not** had a by-ear pass — the numbers are deliberate
 per-Program choices, but nothing has been listened to.
 
@@ -143,10 +169,20 @@ Gatecrasher and CHORUS-60, which use filmstrip PNGs and a baked background plate
 `ReflectTheme.h` holds every colour, size, position and typographic constant. Components pull from
 `ReflectTheme::Layout` / `::Colour` rather than carrying their own numbers.
 
-**Canvas is 1200 × 615**, not the "1200 × ~530" `design/README.md` estimates in prose. The 2×
-screenshot is 2400 × 1230 and the panel's height is content-driven rather than declared, so the
-artwork is authoritative. Every column boundary, knob centre and the scope rect in `Layout` was read
-off that screenshot and agrees with the design's CSS to within a pixel.
+**Canvas is 1340 × 645 with a four-column body** as of v1.1, up from 1200 × 615 and three columns.
+All three v1.1 screenshots are 2680 × 1290, so that is the artwork's own figure rather than prose.
+
+The fourth column exists because DAMPING was lifted out of the tank column into its own home beside
+ALGORITHM. That is what let the damping pair be promoted from the 44px tiny variant to 52px small -
+five 10px numerals will not clear a 29px tick radius, and the 10px floor is not negotiable - and the
+tiny variant is retired from the panel entirely. Three sizes now: 98 / 60 / 52.
+
+**Column 1's content centre is 158, not its geometric 168.** The rotary and both damping dials
+centre there. Both numbers are named in `Layout`; "the column centre" is ambiguous once they differ.
+
+**Dial centres are TICK-ARC centres**, per BRAND.md's "Stating coordinates" - the point the needle
+pivots about, not the centre of the control cell. The label sits below the arc, so the cell is not
+centred on the pivot; measuring the pivot off the cell is what shipped TapeRot 7.27px out.
 
 Two things that will bite anyone editing layout:
 
@@ -200,7 +236,24 @@ Plain stereo in/out, no sidechain bus.
   early-reflection tables are a structurally-reasoned first pass rather than a tuned one — build,
   load, listen, adjust. Tests cover RT60 tracking, stability at maximum settings, algorithm
   distinctness, switch continuity, and CPU (~0.3–0.5% of the real-time budget per algorithm).
-- **GUI**: implemented against the approved artwork and verified against it region by region.
+- **GUI**: conformant to `GUI-SPEC.md` v1.1 and verified against `01-panel.png` region by region.
+  Printed scales replace the standing readouts as the only at-rest value reference; live values
+  appear in the PROGRAM LCD while a control is moved and nowhere else; the scope clamps its trace to
+  the plot region rather than the screen; the panel has a bypass state.
+
+  **Ticks sit at the labelled values, stored as ROTATION FRACTIONS.** A mark's angle is
+  `-135 + f * 270` with no inverse mapping in the drawing code, so a taper change moves the ring
+  with the pointer instead of leaving it pointing where the pointer never goes.
+
+  **Two spec deviations are deliberate and must not be "fixed"**, both recorded beside the code:
+  SAVE stays gated on modification (§9 says "never disabled", but that predates a decision taken
+  here), and the dropdown opens flush to the LCD rather than §9's 4px below, because the whole suite
+  was changed to flush and the root `CLAUDE.md` carries that as the shared contract.
+
+  **Verify by clicking, and composite at true 1:1.** The composite against `01-panel.png` is what
+  found SAVE/DELETE drawn under the meter wells and the ALGORITHM caption pushed off its column;
+  the click pass is what found the bank indicator still a bordered badge, the USER group hidden when
+  empty, and the menu 35px over its height cap. None of that shows in a build log.
 - **Program bank**: twelve Programs with authored values, no by-ear pass yet.
 - **Icon**: `design/icon/` holds a hand-tuned optical ramp — three cuts, not one artwork scaled, with
   the 32/64 px versions dropping the glow because it turns to mush below 48 px. `ICON_BIG`/`ICON_SMALL`
