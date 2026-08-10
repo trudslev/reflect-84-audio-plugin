@@ -232,7 +232,12 @@ void PanelBackground::paintKnobLabels (juce::Graphics& g)
         const auto labelFont = Font::mono (v.labelSize);
         const float labelTracking = Font::trackingPx (v.labelTracking, v.labelSize);
 
-        const float labelTop = spec.centreY + v.radius + Layout::knobLabelGap;
+        // Below the NUMERALS, not below the body. The printed scale now sits outside the body at
+        // the numeral radius, so a label placed at radius + gap lands on top of the bottom numerals
+        // - which is exactly what it did. Section 5 puts the label "centred below the cell", and
+        // numeralRadius + gap is that same row expressed from the pivot rather than from a cell
+        // height, so the two cannot drift apart.
+        const float labelTop = spec.centreY + v.numeralRadius + Layout::knobLabelGap;
 
         Text::drawTracked (g, spec.label, labelFont, labelTracking,
                            { spec.centreX - 100.0f, labelTop, 200.0f, Layout::knobLabelLineHeight },
