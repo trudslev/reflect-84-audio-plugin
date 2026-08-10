@@ -84,11 +84,16 @@ public:
         the room actually below the anchor is the well's own height less than that. */
     static int menuHostTop() noexcept { return menuAnchorY() - 8; }
 
-    /** The host's HEIGHT is what caps the list at section 9's 260px - JUCE has no max-height option,
-        but it sizes a menu to `parentArea.getHeight() - 24` and clamps it there, so 260 + 24 plus
-        the 8px anchor lead gives exactly that. Beyond it the list scrolls, which is what the
-        twelve-Program bank plus two group headers does. */
-    static int menuHostHeight() noexcept { return 8 + 260 + 24; }
+    /** No height cap of our own: the host runs from the anchor to the PANEL's bottom, so the list
+        fills the panel and scrolls beyond it.
+
+        GUI-SPEC.md section 9 asks for a 260px maximum. That is not followed, for the same reason
+        section 9's "4px below the LCD" is not followed - the suite settled this shape across all
+        five castings and the root CLAUDE.md carries it as the contract: "an area running from the
+        display's bottom edge to the panel's bottom". A per-plugin figure that makes one casting's
+        list stop two-thirds of the way down while the others reach the bottom is exactly the drift
+        the contract exists to prevent. Raised with the designers. */
+    static int menuHostHeight (int panelHeight) noexcept { return panelHeight - menuHostTop(); }
 
 private:
     juce::Component* menuParent = nullptr;
