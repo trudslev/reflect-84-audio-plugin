@@ -48,7 +48,7 @@ void PanelBackground::buildTexture()
         juce::Graphics::ScopedSaveState save { g };
         g.addTransform (juce::AffineTransform::scale (1.0f, ry / rx, cx, cy));
 
-        juce::ColourGradient sheen { juce::Colours::white.withAlpha (0.5f), cx, cy,
+        juce::ColourGradient sheen { juce::Colours::white.withAlpha (Layout::sheenAlpha), cx, cy,
                                      juce::Colours::white.withAlpha (0.0f), cx + rx, cy, true };
         g.setGradientFill (sheen);
 

@@ -290,6 +290,22 @@ namespace Layout
     inline constexpr float panelPadding = 14.0f;
 
     /** The overlay texture: 1px scanlines every 3px, plus a top-left radial sheen. */
+    /** The fascia sheen's peak opacity. GUI-SPEC.md section 1 says 0.5; this is higher, deliberately.
+        Chief designer's call, and the reason is worth keeping because "50% white" is misleading here.
+
+        Two ceilings hold the effect down, neither of them a bug:
+
+        - **The fascia is already near-white.** Compositing 50% white over a ~220-level fascia gives
+          0.5*255 + 0.5*220 = 237.5, so the lift is capped around 17 levels. On a dark surface 50%
+          would be obvious; on this one it cannot be.
+        - **The header hides the peak.** The sheen's ellipse is 348px tall measured from y=0, and the
+          header bezel covers y 16..119 - so 34% of its vertical extent, including its brightest
+          part, is behind the header before it ever reaches bare fascia.
+
+        Measured lift on the bare strip below the header was +10 at the spec's 0.5. Raising the alpha
+        is the only lever that does not move the spec's stated geometry. */
+    inline constexpr float sheenAlpha = 0.90f;
+
     inline constexpr float scanlinePitch = 3.0f;
 
     // --- Header bezel (measured: fill x 15..1185, y 15..118, 1px border outside) -------------
