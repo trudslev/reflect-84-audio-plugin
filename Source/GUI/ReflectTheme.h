@@ -290,7 +290,7 @@ namespace Layout
     inline constexpr float panelPadding = 14.0f;
 
     /** The overlay texture: 1px scanlines every 3px, plus a top-left radial sheen. */
-    /** The sheen's peak opacity - section 1's stated 0.5, and it is correct.
+    /** The sheen's peak opacity. Section 1 states 0.5; this runs 0.40, chief designer's call.
         
         It briefly went to 0.90 while the sheen looked absent on the fascia. That was treating the
         symptom: the real fault was that the texture overlay was painted UNDER the header bezel
@@ -300,8 +300,10 @@ namespace Layout
         are the same observation.
         
         Back-solved from the artwork's own bezel - peak 142 over a 50.7 base - the overlay measures
-        alpha 0.45. The spec's 0.5 needed no adjustment once it was applied to the right layers. */
-    inline constexpr float sheenAlpha = 0.50f;
+        alpha 0.45, so 0.5 was very close to the render and needed no adjustment once the LAYERING
+        was fixed. 0.40 is a deliberate step below both: the effect is now carried mostly by the
+        header bezel, where it is strong, and the render's own level reads slightly hot there. */
+    inline constexpr float sheenAlpha = 0.40f;
 
     inline constexpr float scanlinePitch = 3.0f;
 
