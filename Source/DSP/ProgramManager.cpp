@@ -109,6 +109,9 @@ int ProgramManager::getNumPrograms() const
 
 juce::String ProgramManager::getProgramName (int index) const
 {
+    if (isInitProgram (index))
+        return kInitProgram.name;
+
     if (isFactoryProgram (index))
         return kFactoryPrograms[(size_t) index].name;
 
@@ -123,7 +126,9 @@ juce::String ProgramManager::getProgramName (int index) const
 //==============================================================================
 void ProgramManager::requestProgramChange (int index)
 {
-    if (! juce::isPositiveAndBelow (index, getNumPrograms()))
+    // INIT is a legal target and is NOT isPositiveAndBelow, so it is admitted explicitly rather
+    // than by widening the check - which would also admit every other negative index.
+    if (! isInitProgram (index) && ! juce::isPositiveAndBelow (index, getNumPrograms()))
         return;
 
     pendingProgramIndex.store (index, std::memory_order_relaxed);
@@ -132,23 +137,28 @@ void ProgramManager::requestProgramChange (int index)
 
 void ProgramManager::cancelPendingChange()
 {
-    pendingProgramIndex.store (-1, std::memory_order_relaxed);
+    pendingProgramIndex.store (noPendingProgram, std::memory_order_relaxed);
     cancelPendingUpdate();
 }
 
 void ProgramManager::handleAsyncUpdate()
 {
-    const int index = pendingProgramIndex.exchange (-1, std::memory_order_relaxed);
+    const int index = pendingProgramIndex.exchange (noPendingProgram, std::memory_order_relaxed);
 
-    if (index >= 0)
+    if (index != noPendingProgram)
         applyProgramByIndex (index);
 }
 
 void ProgramManager::setCurrentProgramIndexWithoutApplying (int index)
 {
-    currentProgramIndex.store (juce::isPositiveAndBelow (index, getNumPrograms())
-                                   ? index
-                                   : defaultFactoryProgramIndex,
+    // INIT is a valid remembered Program and is NOT isPositiveAndBelow, so it is admitted
+    // explicitly rather than by widening the check - which would also admit every other negative
+    // index. **No migration is needed**: INIT was ADDED at -1 rather than inserted at 0, so not one
+    // existing Factory index moved and every session saved before today still names the sound it
+    // was saved with.
+    const bool valid = isInitProgram (index) || juce::isPositiveAndBelow (index, getNumPrograms());
+
+    currentProgramIndex.store (valid ? index : defaultFactoryProgramIndex,
                                std::memory_order_relaxed);
 
     // The restored session IS its own baseline. The accepted consequence is that SAVE starts
@@ -162,6 +172,18 @@ void ProgramManager::setCurrentProgramIndexWithoutApplying (int index)
 //==============================================================================
 void ProgramManager::applyProgramByIndex (int index)
 {
+    if (isInitProgram (index))
+    {
+        applyFactoryProgram (kInitProgram);
+        currentProgramIndex.store (index, std::memory_order_relaxed);
+        captureCleanSnapshot();
+
+        if (onProgramListChanged)
+            onProgramListChanged();
+
+        return;
+    }
+
     if (! juce::isPositiveAndBelow (index, getNumPrograms()))
         return;
 
@@ -186,6 +208,16 @@ void ProgramManager::applyProgramByIndex (int index)
 
     if (onProgramListChanged)
         onProgramListChanged();
+}
+
+juce::String ProgramManager::getProgramDisplayName (int index) const
+{
+    const auto name = getProgramName (index);
+
+    if (isInitProgram (index) || name.isEmpty())
+        return name;
+
+    return juce::String (index + 1).paddedLeft ('0', 2) + " " + name;
 }
 
 void ProgramManager::applyFactoryProgram (const FactoryProgram& program)

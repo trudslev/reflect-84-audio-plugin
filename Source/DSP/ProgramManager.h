@@ -52,6 +52,15 @@ public:
     int getNumPrograms() const;
     juce::String getProgramName (int index) const;
 
+    /** What the LCD and the dropdown show: a two-digit 1-based index, a space, then the name.
+        getProgramName stays raw - that is what the HOST's program list wants, since a host renders
+        its own numbering and would print "01" twice. INIT is unnumbered in both, because it is
+        outside the bank and a number would place it in a running order it is not part of. */
+    juce::String getProgramDisplayName (int index) const;
+
+    /** INIT sits outside both banks at index -1, so it is neither factory nor user. */
+    static bool isInitProgram (int index) noexcept { return index == initProgramIndex; }
+
     static bool isFactoryProgram (int index) noexcept
     {
         return index >= 0 && index < kNumFactoryPrograms;
@@ -117,7 +126,10 @@ private:
     juce::Array<juce::File> userProgramFiles;
 
     std::atomic<int> currentProgramIndex { defaultFactoryProgramIndex };
-    std::atomic<int> pendingProgramIndex { -1 };
+    // **-2, not -1.** -1 is INIT's index now, so it can no longer double as "nothing pending" -
+    // using it would make selecting INIT indistinguishable from having nothing queued.
+    static constexpr int noPendingProgram = -2;
+    std::atomic<int> pendingProgramIndex { noPendingProgram };
 
     /** Normalised values in getParameters() order. Message-thread only - every writer runs there,
         so it needs no synchronisation. */

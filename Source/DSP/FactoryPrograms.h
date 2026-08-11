@@ -100,6 +100,45 @@ inline constexpr std::array<FactoryProgram, 12> kFactoryPrograms { {
 
 inline constexpr int kNumFactoryPrograms = (int) kFactoryPrograms.size();
 
+/** INIT's index. **-1, deliberately outside the bank rather than position 0 within it.**
+
+    INIT is the blank canvas you start from, not an authored sound competing with the twelve, so
+    numbering it would push RAIN ALL DAY to 02 and imply a running order it is not part of. Keeping
+    it outside also means it never renumbers anything, so no saved session needs migrating.
+
+    -1 is therefore a meaningful index here, and every "no index" sentinel in this casting has to be
+    something else - see ProgramManager's pending-apply sentinel, which is -2. */
+inline constexpr int initProgramIndex = -1;
+
+/** The blank canvas: the tank present and audible in its plainest form, with everything that gives
+    REFLECT-84 its character at zero.
+
+    Three rules decide every value, and they are not the same rule:
+      - **Character and amount go to zero** - Modulation and Digital Grain. Raise either and you
+        immediately hear what it does.
+      - **Structure goes to a usable middle, never zero** - Size, Decay and Density at 0.5. A reverb
+        at zero decay is not neutral, it is broken: there would be nothing to hear at all, and the
+        first knob raised would appear to do nothing.
+      - **Anything meaning "not acting" takes whatever value that is** - Pre-Delay 0 ms, Width 100 %
+        (the neutral point of a 0-200 % range), Trim 0 dB, and both damping filters wide open.
+
+    **Every value here is a normalised 0-1 position**, as everywhere in this casting, so the ones
+    that are not obvious are worked below rather than left to be re-derived:
+      - Decay 0.5 -> `0.4 + 0.5 x 7.6` = **4.2 s**, the middle of the range.
+      - Damping HF 1.0 -> `2000 x 8^1` = **16 kHz**, the TOP of the range and therefore the least
+        damping. It is 1.0 and not 0.0 precisely because "wide open" is the high end here.
+      - Damping LF 0.0 -> `40 x 12.5^0` = **40 Hz**, the bottom of its range and likewise the least.
+        The two open in opposite directions, which is exactly the sort of thing that gets inverted.
+      - Width 0.5 -> `0.5 x 200` = **100 %**, unmodified stereo rather than half of anything.
+      - Trim 0.5 -> `(0.5 - 0.5) x 24` = **0 dB**.
+
+    **Mix is 50 %.** REFLECT-84 is a wet/dry effect, and the midpoint reads as "nothing decided yet"
+    where a value like 35 % would look like a judgement someone made. The two serial castings,
+    TapeRot and Elmer, sit at 100 % for the opposite reason. */
+inline constexpr FactoryProgram kInitProgram
+    //                 alg  size     decay    preDly   dens     dampHF   dampLF   mod      grain    width    mix      trim
+    { "INIT",          0,   0.5000f, 0.5000f, 0.0000f, 0.5000f, 1.0000f, 0.0000f, 0.0000f, 0.0000f, 0.5000f, 0.5000f, 0.5000f };
+
 /** Loaded on first launch and whenever no saved session state exists. design/screenshots/01-panel.png
     shows "01 RAIN ALL DAY" in the display, so that is what the plugin opens on. */
 inline constexpr int defaultFactoryProgramIndex = 0;

@@ -87,7 +87,9 @@ bool ProgramHeader::isRegionEnabled (Region region) const
         // state rather than a newer intent. Raised with them; do not "fix" this to match §9.
         case Region::save:           return displayedIsModified;   // nothing moved, nothing to save
 
-        case Region::deleteOrCancel: return ! displayedIsFactory;  // factory Programs are read-only
+        // Factory Programs are read-only, and INIT is not a stored thing at all - there is
+        // nothing to delete.
+        case Region::deleteOrCancel: return ! displayedIsFactory && ! displayedIsInit;
         case Region::none:           break;
     }
 
@@ -107,6 +109,7 @@ bool ProgramHeader::refreshFromProcessor()
     const int index = manager.getCurrentProgram();
     const auto name = manager.getProgramName (index);
     const bool factory = ProgramManager::isFactoryProgram (index);
+    const bool onInit = ProgramManager::isInitProgram (index);
     const bool modified = manager.isModifiedFromLoadedProgram();
 
     if (index == displayedIndex && name == displayedName
@@ -116,6 +119,7 @@ bool ProgramHeader::refreshFromProcessor()
     displayedIndex = index;
     displayedName = name;
     displayedIsFactory = factory;
+    displayedIsInit = onInit;
     displayedIsModified = modified;
     return true;
 }
@@ -254,6 +258,13 @@ void ProgramHeader::showProgramMenu()
     const int current = manager.getCurrentProgram();
     const int total = manager.getNumPrograms();
 
+    // INIT first, unnumbered and above the Factory group, with a divider beneath it. Its item ID
+    // cannot be index + 1 like the rest - that would be 0, which PopupMenu reserves for "dismissed"
+    // - so it carries its own sentinel and is translated back on selection.
+    constexpr int initMenuId = 9999;
+    menu.addItem (initMenuId, "INIT", true, ProgramManager::isInitProgram (current));
+    menu.addSeparator();
+
     menu.addSectionHeader ("Factory");
 
     for (int i = 0; i < kNumFactoryPrograms; ++i)
@@ -332,7 +343,8 @@ void ProgramHeader::showProgramMenu()
                                 return;
 
                             // No forced refresh: the async apply plus the 20 Hz poll handle it.
-                            safeThis->processorRef.setCurrentProgram (result - 1);
+                            safeThis->processorRef.setCurrentProgram (
+                                result == initMenuId ? initProgramIndex : result - 1);
                         });
 }
 
@@ -453,11 +465,15 @@ void ProgramHeader::paint (juce::Graphics& g)
     // is no separate bank control anywhere on the panel, so nothing here should look like one.
     float nameCellLeft = 0.0f;
     {
+        // **On INIT the legend is an em-dash, not FACT and not USER.** INIT sits outside both
+        // banks, so either word would name a bank it is not in.
+        const bool onInit = displayedIsInit && ! namingMode;
         const bool showUser = namingMode || ! displayedIsFactory;
 
         const auto font = Font::mono (Layout::lcdTextSize);
         const float tracking = Font::trackingPx (Layout::lcdTextTracking, Layout::lcdTextSize);
-        const juce::String bank = showUser ? "USER" : "FACT";
+        const juce::String bank = onInit ? Text::emDash()
+                                         : juce::String (showUser ? "USER" : "FACT");
 
         const float textW = Text::trackedWidth (bank, font, tracking);
         const float cellW = Layout::lcdBankPadX * 2.0f + textW;
@@ -506,9 +522,14 @@ void ProgramHeader::paint (juce::Graphics& g)
             // The live readout takes the glass while a control is moving, then the Program name
             // comes back 900ms after release. Naming mode already returned above, so the three
             // states never contend for the cell.
-            const auto label = liveReadout.isNotEmpty()
-                                 ? liveReadout
-                                 : juce::String (displayedIndex + 1).paddedLeft ('0', 2) + " " + displayedName;
+            // **INIT is unnumbered**, here as in the dropdown: it is outside the bank, so a number
+            // would place it in a running order it is not part of - and the arithmetic would print
+            // "00", since its index is -1.
+            const auto programLabel = displayedIsInit
+                                        ? displayedName
+                                        : juce::String (displayedIndex + 1).paddedLeft ('0', 2) + " " + displayedName;
+
+            const auto label = liveReadout.isNotEmpty() ? liveReadout : programLabel;
 
             drawPhosphor (label,
                           display.withTrimmedLeft (nameCellLeft)

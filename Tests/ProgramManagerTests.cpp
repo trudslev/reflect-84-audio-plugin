@@ -214,12 +214,56 @@ public:
 
             manager.initialise();
 
-            for (const int index : { -1, kNumFactoryPrograms, 9999 })
+            // **-1 is no longer out of range - it is INIT.** It used to be the canonical
+            // "obviously invalid" index here, which is exactly why this needs saying: the set below
+            // now starts at -2, and INIT gets a case of its own beneath.
+            for (const int index : { -2, -9999, kNumFactoryPrograms, 9999 })
             {
                 manager.requestProgramChange (index);
                 manager.flushPendingChange();
                 expectEquals (manager.getCurrentProgram(), defaultFactoryProgramIndex);
             }
+        }
+
+        beginTest ("INIT is reachable at -1 and applies its own values");
+        {
+            ScopedTestDirectory dir { "init" };
+            TestHostProcessor host;
+            ProgramManager manager { host.apvts, dir.directory };
+
+            manager.initialise();
+            expectEquals (manager.getCurrentProgram(), defaultFactoryProgramIndex,
+                          "INIT must never be the instantiation default");
+
+            manager.requestProgramChange (initProgramIndex);
+            manager.flushPendingChange();
+            expectEquals (manager.getCurrentProgram(), initProgramIndex);
+
+            // The three rules, each spot-checked on the parameter it governs: character at zero,
+            // structure at a usable middle, and "not acting" at whatever value that is.
+            expectWithinAbsoluteError (valueOf (host, ParamIDs::modulation), 0.0f, 1.0e-4f);
+            expectWithinAbsoluteError (valueOf (host, ParamIDs::grain),      0.0f, 1.0e-4f);
+            expectWithinAbsoluteError (valueOf (host, ParamIDs::decay),      0.5f, 1.0e-4f);
+            expectWithinAbsoluteError (valueOf (host, ParamIDs::size),       0.5f, 1.0e-4f);
+            expectWithinAbsoluteError (valueOf (host, ParamIDs::preDelay),   0.0f, 1.0e-4f);
+
+            // Damping opens in OPPOSITE directions - HF wide open is 1.0 and LF wide open is 0.0 -
+            // which is the single easiest thing here to invert.
+            expectWithinAbsoluteError (ParamFormat::dampHFHz (valueOf (host, ParamIDs::dampHF)),
+                                       16000.0f, 1.0f);
+            expectWithinAbsoluteError (ParamFormat::dampLFHz (valueOf (host, ParamIDs::dampLF)),
+                                       40.0f, 0.1f);
+
+            // Mix is 50 % because REFLECT-84 is a wet/dry effect; the serial castings are at 100 %.
+            expectWithinAbsoluteError (ParamFormat::mixPercent (valueOf (host, ParamIDs::mix)),
+                                       50.0f, 0.01f);
+            expectWithinAbsoluteError (ParamFormat::widthPercent (valueOf (host, ParamIDs::width)),
+                                       100.0f, 0.01f);
+            expectWithinAbsoluteError (ParamFormat::trimDb (valueOf (host, ParamIDs::trim)),
+                                       0.0f, 0.01f);
+
+            expect (! ProgramManager::isFactoryProgram (initProgramIndex),
+                    "INIT must be in neither bank");
         }
     }
 

@@ -123,9 +123,11 @@ private:
 
     // Mirrors of the processor's state, refreshed by the timer. Deliberately not written to while
     // naming - that is what makes cancelling free.
-    int displayedIndex = -1;
+    // -2, not -1: -1 is INIT's index now, so it can no longer double as "nothing cached yet".
+    int displayedIndex = -2;
     juce::String displayedName;
     bool displayedIsFactory = true;
+    bool displayedIsInit = false;
     bool displayedIsModified = false;
 
     // The live readout and when it reverts. Held as text rather than a parameter pointer so the
