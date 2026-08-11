@@ -27,13 +27,27 @@ everything else alone.
 0. **`CHANGELOG.md`** — confirms the revision. If the bundle has no `GUI-SPEC.md`,
    it is v1.0 and nothing from this pass reached you.
 
-1. **`BRAND.md`** — the shared Neon Foundry DNA. Read first. This is the current
-   revision, attached with this pass.
+1. **`BRAND.md`** — the shared Neon Foundry DNA. Read first, from the repo: it is
+   not bundled here, deliberately, since a copy starts contradicting the repo as soon
+   as the suite document moves. `GUI-SPEC.md` cites it by section throughout.
 2. **`GUI-SPEC.md`** — the build contract: every position and size, the palette
    with measured contrast ratios, type metrics per role, per-knob mark and tick
    tables with rotation fractions, the dropdown and naming flow, corrected readout
    formats, and the bypass treatment.
-3. **`screenshots/01-panel.png`** — the reference render, for visual comparison.
+3. **`screenshots/header/`** — the header row rendered once per panel state at 3×,
+   five images matching the state matrix in `GUI-SPEC.md` § 9. **Check the built
+   header against these, not against the prose** — the legend bloom is the one part of
+   this design that numbers cannot settle.
+4. **`screenshots/01-panel.png`** — the whole panel at 2×, for everything else.
+
+The five header renders are the whole row — wordmark, PROGRAM LCD, SAVE, DELETE, IN
+and OUT in one image — deliberately, so the shared 34px band and single baseline are
+checkable. A crop of the button pair alone cannot show whether the buttons sit level
+with the LCD beside them, which is the drift we are trying to make visible.
+
+Because the panel is wholly code-drawn there is no plate to composite against, so
+these renders are the only external check that exists. They are references for
+comparison and **never build inputs**: nothing in this bundle is a backing image.
 
 ## Asset format
 
@@ -113,12 +127,17 @@ cuts. `Reflect-84 Icon.dc.html` is the live source.
 | File | What it is |
 |---|---|
 | `CHANGELOG.md` | Revision log — check this first |
-| `BRAND.md` | Neon Foundry shared DNA — current revision, read first |
 | `GUI-SPEC.md` | The build contract for this panel |
 | `fonts/README.md` | Font families, weights, licence and sources. **No binaries — this folder never overwrites the build's own `design/fonts/`.** |
-| `screenshots/01-panel.png` | Reference render, 2× (2680 × 1290) |
+| `screenshots/01-panel.png` | Reference render, 2× (2680 × 1298) — **re-captured for the rebuilt Program buttons** |
+| `screenshots/header/01-rest-nothing-to-do.png` | **Factory Program, unmodified**, 3×. All four legends dark. **The important one** — it has to read as *"nothing to do here"*, not as a blank or broken button, and it is the case most likely to look wrong while measuring right. |
+| `screenshots/header/02-factory-edited-save-lit.png` | **Factory Program, edited**, 3×. SAVE lit; note the ` *` dirty marker in the LCD, which reads the same flag as SAVE's lamp. |
+| `screenshots/header/03-user-unmodified-delete-lit.png` | **User Program, unmodified**, 3×. DELETE lit, SAVE dark. |
+| `screenshots/header/04-user-edited-save-delete-lit.png` | **User Program, edited**, 3×. SAVE and DELETE both lit — the only state with two lamps on one row. |
+| `screenshots/header/05-naming-store-cancel-lit.png` | **Naming a Program**, 3×. STORE and CANCEL lit, SAVE and DELETE dark, badge `NAME`, block caret at the end of the seeded draft. |
+| `screenshots/03-panel-lit.png` | Whole panel on an edited User Program, 2× — the same state as header `04`, for context around the row. Judge the bloom from the 3× header renders, not from this. |
 | `screenshots/02-panel-blank.png` | Bare fascia at 2× — gradient, scanline texture, sheen, edge and inner highlight, every control and label removed. Match the background material before placing controls. |
-| `screenshots/03-panel-bypassed.png` | The disengaged state at 2× — the 0.50 multiply, pointers unmoved |
+| *(no bypassed render)* | The disengaged state is **specified, not rendered** — see `GUI-SPEC.md` § 10. Our capture path does not composite `mix-blend-mode: multiply` faithfully, so any PNG we shipped would read as a dimmer switch rather than a light going out, which is the exact failure § 10 warns against. Build it from the spec: full-bleed `#808080` multiply at 0.50 over every panel layer. |
 | `Reflect-84 v1.1.dc.html` | Working prototype of the conformed panel. Opens directly in a browser. |
 | `Reflect-84 Icon.dc.html` | Icon source, all three optical cuts |
 | `icon/*.png` | Icon at 1024 / 256 / 128 / 64 / 32 |
@@ -132,8 +151,9 @@ codebase from `GUI-SPEC.md`.
 
 - Fine-drag (shift = ×0.25) and double-click-to-default are specified but not in
   the prototype.
-- The SAVE naming flow is stubbed in the prototype — it commits a generated name
-  immediately. Build the inline LCD name entry from `GUI-SPEC.md` § 9.
+- ~~The SAVE naming flow is stubbed in the prototype.~~ **Built this pass** — seeded
+  field, upper-cased input, Enter commits, Esc cancels leaving the Program edited,
+  cap 42. It is render `05`; spec at `GUI-SPEC.md` § 9 *Name entry*.
 - IN / OUT meters are sample text in the prototype; wire to real peak metering.
 - Reconcile `GUI-SPEC.md` § 13 against the build's actual parameter table —
   especially the two damping tapers — before implementation.

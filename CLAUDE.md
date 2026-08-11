@@ -13,7 +13,20 @@ rule, component grammar), then this file.
 **`design/GUI-SPEC.md` is the authoritative GUI spec** as of the v1.1 conformance pass, and
 supersedes `design/README.md` wherever the two disagree — README is the v1.0 document and is kept
 for the diff. `design/CHANGELOG.md` states which revision a bundle is; read it first.
-`design/screenshots/01-panel.png` is the approved artwork and outranks either doc's prose.
+`design/screenshots/01-panel.png` is the approved artwork and outranks either doc's prose **on
+appearance** — but not, as of the 2026-08-11 bundle, on absolute Y.
+
+**That render is 4 px taller than the canvas the spec states, and the discrepancy is unexplained.**
+§1 still says 1340 × 645; `01-panel.png` is 2680 × 1298, which is 2× of 1340 × **649**. The previous
+render matched 645 exactly, so this is new. Correlating the two vertically, the body content sits
+**1 canvas px lower** than before — consistent with the header band going 33 → 34 — which leaves
+**3 px unaccounted for, below the body**. Until the designers resolve it: take X and appearance off
+the render freely, take absolute Y from the spec, and do not composite the two at a shared origin
+without checking which of them you have anchored to.
+
+`design/screenshots/header/` holds the five per-state header renders at 3×, which are the acceptance
+target for the Program-button lighting — the one part of this design no coordinate settles, and the
+reason those renders were asked for. They are 3× of a 1308 × 104 block, **not** of the canvas.
 
 **The bundle is a reference package, not a tree to sync.** Its own `fonts/README.md` says so: it
 ships no font binaries, and `CMakeLists.txt` embeds Jost and two IBM Plex Mono faces from

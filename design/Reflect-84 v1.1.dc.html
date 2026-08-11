@@ -34,10 +34,10 @@
     </div>
 
     <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 7px; position: relative;">
-      <div style="font-size: 10px; letter-spacing: .30em; color: #c8b177;">PROGRAM</div>
-      <div style="display: flex; align-items: stretch; gap: 10px;">
+      <div style="font-size: 10px; letter-spacing: .30em; color: #d8c18a;">PROGRAM</div>
+      <div style="display: flex; align-items: stretch; gap: 8px;">
         <div style="flex: 1; position: relative;">
-          <div onClick="{{ onProgramClick }}" style="display: flex; align-items: stretch; background: linear-gradient(#0a0f18, #060a11); border: 1px solid rgba(0,0,0,.7); border-radius: 3px; box-shadow: inset 0 2px 7px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.12); cursor: pointer; overflow: hidden; position: relative;" style-hover="background: linear-gradient(#0e1522, #080d16);">
+          <div onClick="{{ onProgramClick }}" style="height: 34px; box-sizing: border-box; display: flex; align-items: stretch; background: linear-gradient(#0a0f18, #060a11); border: 1px solid rgba(0,0,0,.7); border-radius: 3px; box-shadow: inset 0 2px 7px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.12); cursor: pointer; overflow: hidden; position: relative;" style-hover="background: linear-gradient(#0e1522, #080d16);">
             <div style="display: flex; align-items: center; padding: 5px 16px; font-size: 16px; letter-spacing: .13em; color: #f2e6c2; text-shadow: 0 0 9px rgba(242,230,194,.3);">{{ bankBadge }}</div>
             <div style="width: 1px; margin: 5px 0; background: rgba(242,230,194,.35);"></div>
             <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 5px 32px 5px 12px; font-size: 16px; letter-spacing: .13em; color: #f2e6c2; text-shadow: 0 0 9px rgba(242,230,194,.3); white-space: nowrap; overflow: hidden;">{{ lcdText }}</div>
@@ -56,19 +56,25 @@
           </sc-if>
         </div>
 
-        <div onClick="{{ onSave }}" style="padding: 0 15px; display: flex; align-items: center; font-size: 10px; letter-spacing: .20em; color: #14192a; background: linear-gradient(#ded0a6, #bda979); border: 1px solid rgba(0,0,0,.5); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 1px 2px rgba(0,0,0,.4); cursor: pointer;" style-hover="background: linear-gradient(#eadcb4, #cbb787);">SAVE</div>
-        <div onClick="{{ onDelete }}" title="{{ deleteTitle }}" style="padding: 0 15px; display: flex; align-items: center; font-size: 10px; letter-spacing: .20em; color: {{ deleteColor }}; background: {{ deleteBg }}; border: 1px solid rgba(0,0,0,.45); border-radius: 3px; box-shadow: inset 0 1px 3px rgba(0,0,0,.5); cursor: {{ deleteCursor }};">DELETE</div>
+        <div onClick="{{ onSave }}" title="{{ saveTitle }}" style="height: 34px; box-sizing: border-box; padding: 0 9px; display: flex; flex-direction: column; justify-content: center; gap: 1px; background: linear-gradient(#26324d, #1a2438); border: 1px solid rgba(0,0,0,.55); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 1px 2px rgba(0,0,0,.45); cursor: {{ saveCursor }};">
+          <div style="font-size: 10px; line-height: 12px; letter-spacing: .20em; text-indent: .20em; text-align: center; color: {{ legSave.color }}; text-shadow: {{ legSave.glow }};">SAVE</div>
+          <div style="font-size: 10px; line-height: 12px; letter-spacing: .20em; text-indent: .20em; text-align: center; color: {{ legStore.color }}; text-shadow: {{ legStore.glow }};">STORE</div>
+        </div>
+        <div onClick="{{ onDelete }}" title="{{ deleteTitle }}" style="height: 34px; box-sizing: border-box; padding: 0 9px; display: flex; flex-direction: column; justify-content: center; gap: 1px; background: linear-gradient(#26324d, #1a2438); border: 1px solid rgba(0,0,0,.55); border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 1px 2px rgba(0,0,0,.45); cursor: {{ deleteCursor }};">
+          <div style="font-size: 10px; line-height: 12px; letter-spacing: .20em; text-indent: .20em; text-align: center; color: {{ legDelete.color }}; text-shadow: {{ legDelete.glow }};">DELETE</div>
+          <div style="font-size: 10px; line-height: 12px; letter-spacing: .20em; text-indent: .20em; text-align: center; color: {{ legCancel.color }}; text-shadow: {{ legCancel.glow }};">CANCEL</div>
+        </div>
       </div>
     </div>
 
     <div style="display: flex; align-items: stretch; gap: 10px;">
       <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 7px;">
-        <div style="font-size: 10px; letter-spacing: .28em; color: #a9b6cd;">IN</div>
-        <div style="padding: 5px 12px; min-width: 58px; text-align: center; font-size: 16px; color: #e8dcba; background: linear-gradient(#0a0f18, #060a11); border: 1px solid rgba(0,0,0,.7); border-radius: 3px; box-shadow: inset 0 2px 6px rgba(0,0,0,.75);">-3.2</div>
+        <div style="display: flex; align-items: baseline; gap: 4px; font-size: 10px; color: #b7c2d8;"><div style="letter-spacing: .28em; text-indent: .28em;">IN</div><div style="letter-spacing: .02em;">dB</div></div>
+        <div style="height: 34px; box-sizing: border-box; padding: 0 12px; min-width: 58px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #e8dcba; background: linear-gradient(#0a0f18, #060a11); border: 1px solid rgba(0,0,0,.7); border-radius: 3px; box-shadow: inset 0 2px 6px rgba(0,0,0,.75);">-3.2</div>
       </div>
       <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 7px;">
-        <div style="font-size: 10px; letter-spacing: .28em; color: #a9b6cd;">OUT</div>
-        <div style="padding: 5px 12px; min-width: 58px; text-align: center; font-size: 16px; color: #e8dcba; background: linear-gradient(#0a0f18, #060a11); border: 1px solid rgba(0,0,0,.7); border-radius: 3px; box-shadow: inset 0 2px 6px rgba(0,0,0,.75);">-0.8</div>
+        <div style="display: flex; align-items: baseline; gap: 4px; font-size: 10px; color: #b7c2d8;"><div style="letter-spacing: .28em; text-indent: .28em;">OUT</div><div style="letter-spacing: .02em;">dB</div></div>
+        <div style="height: 34px; box-sizing: border-box; padding: 0 12px; min-width: 58px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #e8dcba; background: linear-gradient(#0a0f18, #060a11); border: 1px solid rgba(0,0,0,.7); border-radius: 3px; box-shadow: inset 0 2px 6px rgba(0,0,0,.75);">-0.8</div>
       </div>
     </div>
   </div>
@@ -267,7 +273,7 @@ class Component extends DCLogic {
     this.state = {
       vals: { size: 0.55, decay: 0.58, predly: 0.22, density: 0.72, hf: 0.42, lf: 0.28, mod: 0.34, grain: null, width: 0.7, mix: 0.55, trim: 0.5 },
       algo: null, phase: 0, program: 0, bank: 'FACT',
-      users: [], menuOpen: false, live: null
+      users: [], menuOpen: false, live: null, dirty: false, naming: false, nameDraft: ''
     };
     this.factory = ['01 RAIN ALL DAY', '02 SO LONG', '03 COLD ATMOSPHERE', '04 WORLD GONE MAD'];
     this.noise = Array.from({ length: 240 }, () => 0.35 + Math.random() * 0.65);
@@ -280,8 +286,36 @@ class Component extends DCLogic {
       this._raf = requestAnimationFrame(loop);
     };
     this._raf = requestAnimationFrame(loop);
+    this._onKey = (e) => {
+      if (!this.state.naming) return;
+      if (e.key === 'Enter') { e.preventDefault(); this.commitName(); return; }
+      if (e.key === 'Escape') { e.preventDefault(); this.cancelName(); return; }
+      if (e.key === 'Backspace') { e.preventDefault(); this.setState(st => ({ nameDraft: st.nameDraft.slice(0, -1) })); return; }
+      if (e.key.length === 1) {
+        e.preventDefault();
+        this.setState(st => ({ nameDraft: (st.nameDraft + e.key.toUpperCase()).slice(0, 42) }));
+      }
+    };
+    window.addEventListener('keydown', this._onKey);
   }
-  componentWillUnmount() { cancelAnimationFrame(this._raf); clearTimeout(this._liveT); }
+  componentWillUnmount() { cancelAnimationFrame(this._raf); clearTimeout(this._liveT); window.removeEventListener('keydown', this._onKey); }
+
+  // Seed: the current name less its factory index and any existing suffix, plus the
+  // lowest free numeric suffix. Capped at 42 — the user-name cap in GUI-SPEC.md § 9.
+  seedName() {
+    const list = this.state.bank === 'USER' ? this.state.users : this.factory;
+    const cur = (list[this.state.program] || this.factory[0]).replace(/^\d\d\s+/, '').replace(/\s+\d+$/, '');
+    let n = 2;
+    while (this.state.users.indexOf(cur + ' ' + n) !== -1) n++;
+    return (cur + ' ' + n).slice(0, 42);
+  }
+  startNaming() { this.setState({ naming: true, nameDraft: this.seedName(), menuOpen: false, live: null }); }
+  commitName() {
+    const name = (this.state.nameDraft.trim() || this.seedName()).slice(0, 42);
+    this.setState(st => ({ users: st.users.concat([name]), bank: 'USER', program: st.users.length, naming: false, nameDraft: '', dirty: false, menuOpen: false }));
+  }
+  // Esc leaves the Program edited: nothing was stored, so the dirty flag is untouched.
+  cancelName() { this.setState({ naming: false, nameDraft: '' }); }
 
   get grain() {
     const v = this.state.vals.grain;
@@ -298,7 +332,7 @@ class Component extends DCLogic {
 
   showLive(text) {
     clearTimeout(this._liveT);
-    this.setState({ live: text });
+    this.setState({ live: text, dirty: true });
     this._liveT = setTimeout(() => this.setState({ live: null }), 900);
   }
 
@@ -339,7 +373,15 @@ class Component extends DCLogic {
 
   even(labels) { return labels.map((t, i) => [i / (labels.length - 1), t]); }
 
-  selectProgram(bank, i) { this.setState({ bank, program: i, menuOpen: false }); }
+  selectProgram(bank, i) { this.setState({ bank, program: i, menuOpen: false, dirty: false }); }
+
+  // Backlit legends: the type IS the lamp. No separate light source, no ink-weight
+  // change, never the accent. Unlit reads at 3.91:1 worst case on the button face.
+  legend(on) {
+    return on
+      ? { color: '#fdf7e6', glow: '0 0 1px rgba(255,250,236,.95), 0 0 4px rgba(248,238,208,.8), 0 0 9px rgba(244,232,196,.6), 0 0 18px rgba(240,226,184,.35), 0 0 30px rgba(236,220,172,.2)' }
+      : { color: '#8090ae', glow: 'none' };
+  }
 
   renderVals() {
     const v = this.state.vals;
@@ -397,6 +439,9 @@ class Component extends DCLogic {
     const list = bank === 'FACT' ? this.factory : this.state.users;
     const current = list[this.state.program] || this.factory[0];
     const isUser = bank === 'USER';
+    const naming = !!this.state.naming;
+    // Dirty marker and SAVE's lamp read the same flag, so they cannot disagree.
+    const shown = current.toUpperCase() + (this.state.dirty ? ' *' : '');
 
     const rows = [];
     const head = (t) => ({ text: t, tick: '', pad: '9px 12px 4px', size: '10px', track: '.26em', color: '#c8b177', cursor: 'default', onClick: () => {} });
@@ -449,25 +494,26 @@ class Component extends DCLogic {
         this.knob('trim', 'OUTPUT TRIM', 'small', 'dB', this.even(['\u221212', '\u22126', '0', '+6', '+12']), x => { const d = (x - 0.5) * 24; return (d >= 0 ? '+' : '\u2212') + Math.abs(d).toFixed(1) + ' dB'; }, 'OUTPUT TRIM')
       ],
 
-      lcdText: this.state.live || current,
-      bankBadge: bank,
+      lcdText: naming ? this.state.nameDraft + '\u258C' : (this.state.live || shown),
+      bankBadge: naming ? 'NAME' : bank,
       menuOpen: this.state.menuOpen,
       menuRows: rows,
-      onProgramClick: () => this.setState(s => ({ menuOpen: !s.menuOpen })),
-      onSave: () => {
-        const n = this.state.users.length + 1;
-        const name = String(n).padStart(2, '0') + ' USER PROGRAM';
-        this.setState(s => ({ users: s.users.concat([name]), bank: 'USER', program: s.users.length, menuOpen: false }));
-      },
-      deleteTitle: isUser ? 'Delete this User Program' : 'Enabled only on a User Program',
-      deleteColor: isUser ? '#14192a' : '#8090ae',
-      deleteBg: isUser ? 'linear-gradient(#ded0a6, #bda979)' : 'linear-gradient(#232f49, #1b2640)',
-      deleteCursor: isUser ? 'pointer' : 'not-allowed',
+      onProgramClick: () => { if (naming) return; this.setState(s => ({ menuOpen: !s.menuOpen })); },
+      onSave: () => { if (naming) this.commitName(); else if (this.state.dirty) this.startNaming(); },
+      legSave: this.legend(!naming && this.state.dirty),
+      legStore: this.legend(naming),
+      legDelete: this.legend(!naming && isUser),
+      legCancel: this.legend(naming),
+      saveCursor: (naming || this.state.dirty) ? 'pointer' : 'default',
+      saveTitle: naming ? 'Store under the typed name' : (this.state.dirty ? 'Save as a new User Program' : 'Nothing to save — Program is unmodified'),
+      deleteTitle: naming ? 'Cancel naming' : (isUser ? 'Delete this User Program' : 'Enabled only on a User Program'),
+      deleteCursor: (naming || isUser) ? 'pointer' : 'default',
       onDelete: () => {
+        if (naming) { this.cancelName(); return; }
         if (!isUser) return;
         this.setState(s => {
           const u = s.users.slice(); u.splice(s.program, 1);
-          return { users: u, bank: 'FACT', program: 0 };
+          return { users: u, bank: 'FACT', program: 0, dirty: false };
         });
       },
 
