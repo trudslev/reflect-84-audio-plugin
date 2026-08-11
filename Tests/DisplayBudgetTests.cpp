@@ -92,9 +92,10 @@ public:
     }
 
 private:
-    // REFLECT-84 draws no dirty asterisk - it gates SAVE instead - so the marker costs nothing
-    // here. Stated rather than assumed, because four of the six castings do draw one.
-    static constexpr int dirtyMarker = 0;
+    // " *", which every casting now draws. TapeRot and REFLECT-84 gated dirty through SAVE alone
+    // until this change; the caps are sized for the marker from the start rather than having to
+    // contract by two if it were added later.
+    static constexpr int dirtyMarker = 2;
 };
 
 static DisplayBudgetTests displayBudgetTests;

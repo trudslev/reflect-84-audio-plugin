@@ -116,14 +116,13 @@ public:
     /** **36, and it is now derived rather than asserted.**
 
         The name cell holds 37 characters at the font actually drawn (see ReflectTheme's
-        lcdCharacterBudget, measured in Tests/DisplayBudgetTests.cpp), and the naming field draws a
-        cursor after the text, so the cap is 37 - 1. REFLECT-84 paints no dirty asterisk - it gates
-        SAVE instead - so there is no marker to subtract.
+        lcdCharacterBudget, measured in Tests/DisplayBudgetTests.cpp). The dirty marker " *" takes
+        2 and the naming cursor takes 1, so the cap is the budget less the larger of the two.
 
         It was 22, with no stated derivation, computed against a font size the panel does not use
         and against a display that still carried a two-digit index prefix on user names. Both are
         gone: only Factory Programs are numbered now. */
-    static constexpr int maxProgramNameLength = 36;
+    static constexpr int maxProgramNameLength = 35;
 
 private:
     void handleAsyncUpdate() override;

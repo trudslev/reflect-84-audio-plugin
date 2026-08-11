@@ -531,10 +531,17 @@ void ProgramHeader::paint (juce::Graphics& g)
             // and untouched, only the name is unknown, so the panel says so rather than pretending.
             // Otherwise the number is a label computed from the Factory position at paint time;
             // INIT and User Programs carry none.
+            // **A trailing " *" while the loaded Program has been edited**, matching the other
+            // five castings. REFLECT-84 signalled dirty only through SAVE's enabled state, which
+            // has to be looked for; the marker is seen at a glance.
+            //
+            // No marker on an unresolved identifier: there is no baseline to differ from, so an
+            // asterisk there would be claiming something it cannot know.
             const auto programLabel =
                 displayedId.bank == ProgramBank::unresolved
                     ? displayedId.displayName + "?"
-                    : processorRef.getProgramManager().displayLabelFor (displayedId);
+                    : processorRef.getProgramManager().displayLabelFor (displayedId)
+                        + (displayedIsModified ? " *" : "");
 
             const auto label = liveReadout.isNotEmpty() ? liveReadout : programLabel;
 
