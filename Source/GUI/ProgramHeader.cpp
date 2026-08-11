@@ -125,8 +125,13 @@ void ProgramHeader::showParameter (const juce::RangedAudioParameter& param)
     // host's automation lane cannot disagree - the same construction TapeRot uses. Section 9 wants
     // the printed control names in full (PRE-DELAY, STEREO WIDTH, DAMPING HF), which is what the
     // parameter names already are.
+    //
+    // **The value is NOT upper-cased.** Reflect-84's parameters bake their unit into the text
+    // (ParamFormat's dampHFText, decayText, trimText), so upper-casing it produced "4.8 KHZ",
+    // "4.6 S" and "+2.5 DB". A capital S is a different unit from a lowercase one, and KHZ is not
+    // a unit at all. The parameter name above still is, because that is a panel label.
     const auto name = param.getName (Layout::lcdCharacterBudget).toUpperCase();
-    const auto value = param.getText (param.getValue(), 0).toUpperCase();
+    const auto value = param.getText (param.getValue(), 0);
 
     liveReadout = name + ": " + value;
     readoutRevertAtMs = 0;

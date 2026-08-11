@@ -31,8 +31,32 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
         // BRAND.md: "Only direct user manipulation triggers it."
         if (auto* param = processorRef.apvts.getParameter (spec.paramID))
         {
+            auto* rawKnob = knob.get();
+
             knob->onDragStart = [this, param] { programHeader.showParameter (*param); };
             knob->onDragEnd   = [this]        { programHeader.releaseParameter(); };
+
+            // **onValueChange, not just onDragStart.** showParameter renders the value once, so
+            // wiring only the drag boundaries left the LCD showing whatever the knob held at the
+            // instant it was grabbed - frozen for the whole gesture, then reverting. Every other
+            // casting updates here.
+            //
+            // This is also the only place that can tell a person from automation, which is why
+            // noteUserEdit belongs here and nowhere else. It disarms the processor's
+            // justRestoredState guard, and it was **never called anywhere in this plugin** -
+            // so after restoring a session the guard stayed armed indefinitely, and selecting the
+            // currently-loaded Program from the host to revert an edit did nothing at all.
+            // A ValueTree listener cannot be used instead: it fires for automation too, and a host
+            // that writes automation on load before replaying its remembered program would disarm
+            // the guard exactly when it is needed.
+            knob->onValueChange = [this, param, rawKnob]
+            {
+                if (! rawKnob->isMouseButtonDown())
+                    return;
+
+                processorRef.noteUserEdit();
+                programHeader.showParameter (*param);
+            };
 
             // Every parameter here is stored 0-1, so the default IS the parameter's own default
             // value - no range conversion needed for double-click-to-default.
