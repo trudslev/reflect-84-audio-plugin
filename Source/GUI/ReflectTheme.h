@@ -61,8 +61,14 @@ namespace Colour
     inline const juce::Colour textPrimary      { 0xFF332B1E };   // 8.82:1 functional
     inline const juce::Colour textSecondary    { 0xFF3E3527 };   // 7.62:1 functional
     inline const juce::Colour scaleNumeral     { 0xFF3E3527 };   // 7.62:1 functional - printed scales
-    inline const juce::Colour textTertiary     { 0xFF5E5440 };   // 4.71:1 flavour
-    inline const juce::Colour textMuted        { 0xFF5E5440 };   // 4.71:1 flavour
+    // **Reclassified functional, and darkened to reach that floor.** These were annotated
+    // "flavour" at 4.71:1, but three of their four uses carry information rather than decorate:
+    // the unselected algorithm names report state, the scope header prints RT60 and ms/DIV, and
+    // textMuted labels the ALGORITHM section. Flavour is for text that can be missed.
+    // contrast: 7.12-9.05:1 vs fasciaTop,fasciaMid,fasciaBottom [functional]
+    inline const juce::Colour textTertiary     { 0xFF413A2C };
+    // contrast: 7.12-9.05:1 vs fasciaTop,fasciaMid,fasciaBottom [functional]
+    inline const juce::Colour textMuted        { 0xFF413A2C };
     // textFaint (#9a8e74, 2.04:1) is RETIRED. It carried the unselected algorithm labels - text
     // reporting real state at barely twice the contrast of the fascia itself - and the version
     // stamp. Both now use textTertiary. Anything reaching for a fainter tone should ask whether the
@@ -76,7 +82,11 @@ namespace Colour
     inline const juce::Colour bezelBottom      { 0xFF142036 };
     inline const juce::Colour pillTop          { 0xFF22304C };
     inline const juce::Colour pillBottom       { 0xFF16223A };
-    inline const juce::Colour bezelLabel       { 0xFFA9B6CD };
+    // Lightened from #A9B6CD, which read 6.43:1 at the top of the bezel gradient. This carries
+    // REVERB PROCESSOR and MODEL RF-84 - BRAND.md calls the model line primary identification,
+    // so it is functional text and cannot sit under the floor at any point of its own ground.
+    // contrast: 7.09-8.77:1 vs bezelTop,bezelMid,bezelBottom [functional]
+    inline const juce::Colour bezelLabel       { 0xFFB3BFD3 };
     inline const juce::Colour bezelGold        { 0xFFC8B177 };
     inline const juce::Colour bezelGoldBright  { 0xFFD8C18A };
     inline const juce::Colour wordmark         { 0xFFF0E2BA };
@@ -97,7 +107,9 @@ namespace Colour
     inline const juce::Colour brassText        { 0xFF2A3550 };
     inline const juce::Colour buttonOffTop     { 0xFF232F49 };
     inline const juce::Colour buttonOffBottom  { 0xFF1B2640 };
-    inline const juce::Colour buttonOffText    { 0xFF4A5670 };
+    // Lightened from #4A5670, which read 1.81:1 against its own button - absent rather than dim.
+    // contrast: 3.23-3.64:1 vs buttonOffTop,buttonOffBottom [state]
+    inline const juce::Colour buttonOffText    { 0xFF747D91 };
 
     // --- Scope ---------------------------------------------------------------
     inline const juce::Colour screenTop        { 0xFF080D16 };
