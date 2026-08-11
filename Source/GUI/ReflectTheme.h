@@ -345,13 +345,25 @@ namespace Layout
         control anywhere on the panel. */
     inline constexpr float lcdBankPadX = 16.0f;
     inline constexpr float lcdRuleInsetY = 7.0f;
-    /** **17px / .16em, which is what the paint path actually draws.** The theme used to declare
-        16px / .13em while ProgramHeader hard-coded 17 / .16 at the draw call, so the declaration
-        described a string nothing rendered - and the 36-character budget below was computed from
-        the declaration. The drawn values win, because they are what a user sees, and the paint call
-        now reads these constants instead of repeating literals. */
-    inline constexpr float lcdTextSize = 17.0f;
-    inline constexpr float lcdTextTracking = 0.16f;
+    /** **The LCD's general type: the FACT/USER bank tag and the Program dropdown's rows.** 16px is
+        the approved size for both and must stay 16 - ReflectLookAndFeel's menu font reasons about
+        matching "the LCD's 16" explicitly.
+
+        **Not the program name.** That is drawn a point larger; see lcdNameTextSize. One constant
+        used to serve all three, declared at 16 while ProgramHeader hard-coded 17 at the name's draw
+        call - so raising the declaration to match what the NAME drew would have taken the bank tag
+        and every menu row up with it, which is a visual change to two things nobody asked to
+        change. They are separate constants now because they are separate decisions. */
+    inline constexpr float lcdTextSize = 16.0f;
+    inline constexpr float lcdTextTracking = 0.13f;
+
+    /** **The program name, which is drawn at 17px / .16em and always has been.** The theme simply
+        did not say so: ProgramHeader carried these as literals at the draw call while the theme
+        declared 16 / .13, and the character budget was computed from the declaration rather than
+        from what rendered. Declaring them here changes nothing on screen - it makes the theme
+        describe the panel. */
+    inline constexpr float lcdNameTextSize = 17.0f;
+    inline constexpr float lcdNameTextTracking = 0.16f;
     inline constexpr float lcdChevronInsetRight = 12.0f;
 
     /** Section 9's capacity note: the cell holds 36 characters at 16px against a longest readout of

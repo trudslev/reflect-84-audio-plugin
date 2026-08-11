@@ -23,13 +23,20 @@ public:
     {
         using namespace ReflectTheme;
 
-        const auto font = Font::mono (Layout::lcdTextSize);
-        const float tracking = Font::trackingPx (Layout::lcdTextTracking, Layout::lcdTextSize);
+        // **Two faces, because the cell uses two.** The bank tag is the LCD's general 16px type;
+        // the program name is a point larger. Measuring the name at the bank's size - or sizing the
+        // bank cell with the name's - is exactly the conflation that made the old budget wrong.
+        const auto bankFont = Font::mono (Layout::lcdTextSize);
+        const float bankTracking = Font::trackingPx (Layout::lcdTextTracking, Layout::lcdTextSize);
+
+        const auto font = Font::mono (Layout::lcdNameTextSize);
+        const float tracking = Font::trackingPx (Layout::lcdNameTextTracking, Layout::lcdNameTextSize);
 
         // The name area exactly as ProgramHeader::paint builds it: the well, less the bank cell
-        // (whose width is the tracked width of "FACT" plus its padding, computed at runtime), less
-        // the chevron inset.
-        const float bankCellW = Layout::lcdBankPadX * 2.0f + Text::trackedWidth ("FACT", font, tracking);
+        // (whose width is the tracked width of "FACT" AT THE BANK'S FONT plus its padding, computed
+        // at runtime), less the chevron inset.
+        const float bankCellW = Layout::lcdBankPadX * 2.0f
+                                 + Text::trackedWidth ("FACT", bankFont, bankTracking);
         const float nameAreaW = Layout::programWellW - (bankCellW + 1.0f)
                                  - (Layout::lcdChevronInsetRight + 18.0f);
 
@@ -42,7 +49,7 @@ public:
 
         logMessage ("  name area " + juce::String (nameAreaW, 1) + "px, advance "
                     + juce::String (advance, 2) + "px, budget " + juce::String (budget)
-                    + " characters at " + juce::String (Layout::lcdTextSize, 0) + "px");
+                    + " characters at " + juce::String (Layout::lcdNameTextSize, 0) + "px");
 
         beginTest ("The measured budget is what the theme declares");
         expectEquals (budget, Layout::lcdCharacterBudget,

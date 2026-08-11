@@ -497,8 +497,8 @@ void ProgramHeader::paint (juce::Graphics& g)
     {
         // From the theme, not repeated literals - the two disagreed for a while, and the budget
         // was derived from the declaration rather than from what was drawn.
-        const auto font = Font::mono (Layout::lcdTextSize);
-        const float tracking = Font::trackingPx (Layout::lcdTextTracking, Layout::lcdTextSize);
+        const auto font = Font::mono (Layout::lcdNameTextSize);
+        const float tracking = Font::trackingPx (Layout::lcdNameTextTracking, Layout::lcdNameTextSize);
 
         // The phosphor glow: the same text drawn soft and wide underneath the crisp pass.
         const auto drawPhosphor = [&] (const juce::String& text,
