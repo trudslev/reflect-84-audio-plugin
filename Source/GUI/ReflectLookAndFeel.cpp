@@ -80,17 +80,10 @@ ReflectLookAndFeel::ReflectLookAndFeel()
 
 juce::Font ReflectLookAndFeel::getPopupMenuFont()
 {
-    // **Matched to the LCD's own 16px, not GUI-SPEC.md section 9's 13px** - a deliberate deviation,
-    // taken by the chief designer.
-    //
-    // The list is an extension of the display it drops out of: it is anchored flush to the glass,
-    // takes the glass's width, and shows the same Program names in the same phosphor. At 13px
-    // against the LCD's 16 it read as a different, smaller thing hanging off the bar rather than
-    // the bar continuing downward - and 13px is small for a bank you scan rather than read.
-    //
-    // Section 9's 13px is logged for the designers to fold in. It also makes the list taller, so
-    // more of the twelve-Program bank sits behind the 260px scroll cap; that is the accepted cost.
-    return Font::mono (Layout::lcdTextSize);
+    // Deliberately the bank tag's size, not GUI-SPEC.md section 9's 13px. **The reasoning lives
+    // beside Layout::menuRowTextSize**, in the theme header - it belongs where the change would be
+    // made, not here where nobody editing the constant would meet it.
+    return Font::mono (Layout::menuRowTextSize);
 }
 
 void ReflectLookAndFeel::paintKnob (juce::Graphics& g,

@@ -357,6 +357,24 @@ namespace Layout
     inline constexpr float lcdTextSize = 16.0f;
     inline constexpr float lcdTextTracking = 0.13f;
 
+    /** **The Program dropdown's rows follow the bank tag, deliberately - raise one and you raise
+        the other.** The alias is here rather than a bare reuse of lcdTextSize so that the
+        dependency is visible at the point someone would change it.
+
+        The list is an extension of the display it drops out of: anchored flush to the glass, at the
+        glass's width, showing the same Program names in the same phosphor. At GUI-SPEC.md section
+        9's 13px against the LCD's 16 it read as a different, smaller thing hanging off the bar
+        rather than the bar continuing downward - and 13px is small for a bank you scan rather than
+        read. **Matched to 16 as a deliberate deviation from section 9, taken by the chief
+        designer**; the 13px is logged for the designers to fold in. It also makes the list taller,
+        so more of the bank sits behind the scroll cap; that is the accepted cost.
+
+        This reasoning used to live only in ReflectLookAndFeel::getPopupMenuFont, where someone
+        editing this header would never meet it - and it was silently invalidated once, when
+        lcdTextSize was raised to 17 to match the program name and took every menu row with it. The
+        dependency was never the problem; its being invisible from here was. */
+    inline constexpr float menuRowTextSize = lcdTextSize;
+
     /** **The program name, which is drawn at 17px / .16em and always has been.** The theme simply
         did not say so: ProgramHeader carried these as literals at the draw call while the theme
         declared 16 / .13, and the character budget was computed from the declaration rather than
