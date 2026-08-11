@@ -84,6 +84,16 @@ juce_add_plugin(Reflect84
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/design/icon/icon-1024.png"
     ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/design/icon/icon-256.png"
     BUNDLE_ID "com.neonfoundry.reflect84"
+    # **Without this the Standalone is silent and the meters look broken.** An app whose Info.plist
+    # carries no NSMicrophoneUsageDescription is never granted capture access on macOS - the OS does
+    # not prompt and does not error, the input stream simply delivers zeros. On an effect that reads
+    # as dead metering: IN sits at its floor and OUT follows, because there is nothing to process.
+    # The meters are wired correctly; they have nothing to show.
+    #
+    # Plugin formats are unaffected - the host owns the input there - so this only surfaces when
+    # someone opens the Standalone to listen.
+    MICROPHONE_PERMISSION_ENABLED TRUE
+    MICROPHONE_PERMISSION_TEXT "REFLECT-84 needs audio input so the Standalone can process what you play into it."
     PLUGIN_MANUFACTURER_CODE Nfdy
     PLUGIN_CODE Rf84
     FORMATS ${REFLECT84_FORMATS}
