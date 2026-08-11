@@ -55,14 +55,28 @@ juce::File ProgramManager::getDefaultUserProgramDirectory()
     // not those - they are application-owned data in our own XML format - so they belong where an
     // application keeps its data, and the AU folder should hold only what AU understands.
     //
-    // The "Application Support" segment is JUCE's, not ours, and must never be hard-coded:
-    // userApplicationDataDirectory resolves to ~/Library/Application Support on macOS, %APPDATA% on
-    // Windows and ~/.config on Linux. A shared literal path would be wrong on two of the three.
+    // **macOS needs the "Application Support" segment added by hand, and only macOS.** JUCE's
+    // userApplicationDataDirectory is `~/Library` there - NOT `~/Library/Application Support` -
+    // while it is `%APPDATA%` on Windows and `~/.config` on Linux, both of which are already the
+    // right root. JUCE's own PropertiesFile appends the segment the same way, for the same reason.
+    //
+    // This was got wrong once in exactly the plausible direction: the note here used to claim JUCE
+    // resolved the segment for us, and that hard-coding it would be wrong on two platforms out of
+    // three. The first half was false, and the second half only argues for the `#if` - it is one
+    // platform's extra segment, not a shared literal path. Programs landed directly in
+    // `~/Library/<Company>/` for a while, which is not where application data goes on macOS and is
+    // not a folder anything else writes into.
     //
     // No migration from the old location: nothing has shipped at a released version, so no
     // installed build has ever written a Program there for anyone but us. See Elmer's
     // ProgramManager for the full reasoning - it is a decision, not an oversight.
-    return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
+    auto dir = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory);
+
+   #if JUCE_MAC
+    dir = dir.getChildFile ("Application Support");
+   #endif
+
+    return dir
                .getChildFile (NF_COMPANY_NAME)
                .getChildFile (NF_PRODUCT_NAME)
                .getChildFile ("Programs");
