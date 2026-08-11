@@ -24,12 +24,15 @@ public:
             TestHostProcessor host;
             ProgramManager manager { host.apvts, dir.directory };
 
+            // getNumPrograms is the HOST's list and is the Factory bank, always - it does not
+            // grow with user files any more, which is the juce_AudioProcessor.h contract.
             expectEquals (manager.getNumPrograms(), kNumFactoryPrograms);
-            expect (ProgramManager::isFactoryProgram (0));
-            expect (ProgramManager::isFactoryProgram (kNumFactoryPrograms - 1));
-            expect (! ProgramManager::isFactoryProgram (kNumFactoryPrograms));
-            expect (! ProgramManager::isFactoryProgram (-1));
             expectEquals (manager.getProgramName (0), juce::String ("RAIN ALL DAY"));
+            expect (userPrograms (manager).empty());
+
+            // INIT + the factory bank, and nothing else.
+            expectEquals ((int) manager.listPrograms().size(), kNumFactoryPrograms + 1);
+            expect (manager.listPrograms().front().bank == ProgramBank::init);
         }
 
         beginTest ("loading a factory Program writes every parameter");
@@ -83,9 +86,17 @@ public:
 
             manager.saveNewUserProgram ("my program");
 
-            expectEquals (manager.getNumPrograms(), kNumFactoryPrograms + 1);
-            expectEquals (manager.getCurrentProgram(), kNumFactoryPrograms);
-            expectEquals (manager.getProgramName (kNumFactoryPrograms), juce::String ("MY PROGRAM"));
+            // The host list must NOT have grown - that is the conformance point.
+            expectEquals (manager.getNumPrograms(), kNumFactoryPrograms);
+
+            const auto users = userPrograms (manager);
+            expectEquals ((int) users.size(), 1);
+            expect (manager.getCurrentProgramId() == users.front());
+            expectEquals (users.front().displayName, juce::String ("MY PROGRAM"));
+
+            // A User Program carries no number - it sorts alphabetically, so one would change
+            // whenever another was saved.
+            expectEquals (manager.displayLabelFor (users.front()), juce::String ("MY PROGRAM"));
 
             // The just-saved Program is the new clean baseline, so SAVE goes straight back to
             // disabled.
@@ -102,28 +113,27 @@ public:
 
             setValueOf (host, ParamIDs::decay, 0.20f);
             manager.saveNewUserProgram ("SAME NAME");
-            const auto firstName = manager.getProgramName (manager.getCurrentProgram());
+            const auto firstId = manager.getCurrentProgramId();
 
             setValueOf (host, ParamIDs::decay, 0.80f);
             manager.saveNewUserProgram ("SAME NAME");
-            const auto secondName = manager.getProgramName (manager.getCurrentProgram());
+            const auto secondId = manager.getCurrentProgramId();
 
-            expectEquals (manager.getNumPrograms(), kNumFactoryPrograms + 2);
+            expectEquals ((int) userPrograms (manager).size(), 2);
 
-            // Deliberately compared by NAME, not by index: the list is re-sorted after every
-            // save, so a new Program can take an index an older one previously held. Index
-            // equality here would prove nothing.
-            expect (firstName != secondName, "the second save reused the first Program's name");
+            // Compared by IDENTITY, which is now the only thing they could be compared by - and
+            // which is the point: the list re-sorts after every save, so a position proves nothing.
+            expect (firstId != secondId, "the second save reused the first Program's identity");
 
             // The original Program's values survived untouched - that is the actual guarantee.
             bool foundOriginal = false;
 
-            for (int i = kNumFactoryPrograms; i < manager.getNumPrograms(); ++i)
+            for (const auto& id : userPrograms (manager))
             {
-                if (manager.getProgramName (i) != firstName)
+                if (id != firstId)
                     continue;
 
-                manager.requestProgramChange (i);
+                manager.requestProgramChange (id);
                 manager.flushPendingChange();
                 expectWithinAbsoluteError (valueOf (host, ParamIDs::decay), 0.20f, 1.0e-3f);
                 foundOriginal = true;
@@ -132,16 +142,18 @@ public:
             expect (foundOriginal, "the first Program is gone - it was overwritten");
         }
 
-        beginTest ("Delete no-ops on a factory index, whatever calls it");
+        beginTest ("Delete no-ops on anything that is not a User Program");
         {
             ScopedTestDirectory dir { "deleteFactory" };
             TestHostProcessor host;
             ProgramManager manager { host.apvts, dir.directory };
 
-            for (int i = 0; i < kNumFactoryPrograms; ++i)
-                manager.deleteUserProgram (i);
+            // Every Factory Program, plus INIT. The gate is on the BANK now, which is stronger than
+            // the old index range: an id from any other bank simply cannot address a file.
+            for (const auto& id : manager.listPrograms())
+                manager.deleteUserProgram (id);
 
-            expectEquals (manager.getNumPrograms(), kNumFactoryPrograms);
+            expectEquals ((int) manager.listPrograms().size(), kNumFactoryPrograms + 1);
         }
 
         beginTest ("Delete removes a user Program and falls back if it was loaded");
@@ -154,14 +166,19 @@ public:
             setValueOf (host, ParamIDs::width, 0.9f);
             manager.saveNewUserProgram ("DOOMED");
 
-            const int index = manager.getCurrentProgram();
-            expectEquals (index, kNumFactoryPrograms);
+            const auto doomed = manager.getCurrentProgramId();
+            expect (doomed.bank == ProgramBank::user);
 
-            manager.deleteUserProgram (index);
+            manager.deleteUserProgram (doomed);
             manager.flushPendingChange();
 
-            expectEquals (manager.getNumPrograms(), kNumFactoryPrograms);
-            expectEquals (manager.getCurrentProgram(), defaultFactoryProgramIndex);
+            expect (userPrograms (manager).empty());
+
+            // Deleting from the panel is unambiguous intent, so it falls back to the default
+            // Program rather than to the unresolved state - that is reserved for a session naming
+            // something that is gone.
+            expect (manager.getCurrentProgramId()
+                        == ProgramManager::factoryIdAt (defaultFactoryProgramIndex));
         }
 
         beginTest ("a user Program round-trips its values through disk");
@@ -175,9 +192,9 @@ public:
             setValueOf (host, ParamIDs::grain, 0.66f);
             manager.saveNewUserProgram ("ROUND TRIP");
 
-            const int saved = manager.getCurrentProgram();
+            const auto saved = manager.getCurrentProgramId();
 
-            manager.requestProgramChange (defaultFactoryProgramIndex);
+            manager.requestProgramChange (ProgramManager::factoryIdAt (defaultFactoryProgramIndex));
             manager.flushPendingChange();
 
             manager.requestProgramChange (saved);
@@ -198,46 +215,56 @@ public:
 
             // This is the setStateInformation sequence: a request arrives, then the restore
             // cancels it before replacing the state.
-            manager.requestProgramChange (5);
+            manager.requestProgramChange (ProgramManager::factoryIdAt (5));
             manager.cancelPendingChange();
             manager.flushPendingChange();
 
             expectWithinAbsoluteError (valueOf (host, ParamIDs::mix), 0.42f, 1.0e-4f);
-            expectEquals (manager.getCurrentProgram(), defaultFactoryProgramIndex);
+            expect (manager.getCurrentProgramId()
+                        == ProgramManager::factoryIdAt (defaultFactoryProgramIndex));
         }
 
-        beginTest ("out-of-range program changes are ignored, not clamped into something else");
+        beginTest ("An unresolvable identifier is ignored, not clamped into something else");
         {
             ScopedTestDirectory dir { "bounds" };
             TestHostProcessor host;
             ProgramManager manager { host.apvts, dir.directory };
 
             manager.initialise();
+            const auto before = manager.getCurrentProgramId();
 
-            // **-1 is no longer out of range - it is INIT.** It used to be the canonical
-            // "obviously invalid" index here, which is exactly why this needs saying: the set below
-            // now starts at -2, and INIT gets a case of its own beneath.
-            for (const int index : { -2, -9999, kNumFactoryPrograms, 9999 })
+            // **There is no out-of-range any more** - that was the whole point. What replaces it is
+            // an identifier naming nothing, and the answer must be to leave the current Program
+            // alone rather than land on whatever now occupies some position.
+            for (const auto& bogus : { ProgramId { ProgramBank::factory, "no-such-slug", "X" },
+                                       ProgramId { ProgramBank::user, "no-such-file", "X" },
+                                       ProgramId { ProgramBank::init, "not-init", "X" } })
             {
-                manager.requestProgramChange (index);
+                manager.requestProgramChange (bogus);
                 manager.flushPendingChange();
-                expectEquals (manager.getCurrentProgram(), defaultFactoryProgramIndex);
+                expect (manager.getCurrentProgramId() == before,
+                        "an unresolvable id must not move the current Program");
             }
         }
 
-        beginTest ("INIT is reachable at -1 and applies its own values");
+        beginTest ("INIT is its own bank, reachable, and never the default");
         {
             ScopedTestDirectory dir { "init" };
             TestHostProcessor host;
             ProgramManager manager { host.apvts, dir.directory };
 
             manager.initialise();
-            expectEquals (manager.getCurrentProgram(), defaultFactoryProgramIndex,
-                          "INIT must never be the instantiation default");
+            expect (manager.getCurrentProgramId()
+                        == ProgramManager::factoryIdAt (defaultFactoryProgramIndex),
+                    "INIT must never be the instantiation default");
 
-            manager.requestProgramChange (initProgramIndex);
+            manager.requestProgramChange (ProgramManager::initId());
             manager.flushPendingChange();
-            expectEquals (manager.getCurrentProgram(), initProgramIndex);
+            expect (manager.getCurrentProgramId() == ProgramManager::initId());
+
+            // INIT is in neither bank, so it carries no number and reports position 0 to the host.
+            expectEquals (manager.displayLabelFor (ProgramManager::initId()), juce::String ("INIT"));
+            expectEquals (manager.getCurrentFactoryPosition(), 0);
 
             // The three rules, each spot-checked on the parameter it governs: character at zero,
             // structure at a usable middle, and "not acting" at whatever value that is.
@@ -262,12 +289,27 @@ public:
             expectWithinAbsoluteError (ParamFormat::trimDb (valueOf (host, ParamIDs::trim)),
                                        0.0f, 0.01f);
 
-            expect (! ProgramManager::isFactoryProgram (initProgramIndex),
-                    "INIT must be in neither bank");
+            expect (ProgramManager::initId().bank == ProgramBank::init,
+                    "INIT must be in neither of the other banks");
+            expect (ProgramManager::factoryPositionOf (ProgramManager::initId().id) < 0,
+                    "INIT's slug must not name a Factory entry");
         }
     }
 
 private:
+    /** The user Programs in display order, as ProgramIds. The tests used to walk indices from
+        kNumFactoryPrograms upward; there is no such range any more. */
+    static std::vector<ProgramId> userPrograms (const ProgramManager& manager)
+    {
+        std::vector<ProgramId> out;
+
+        for (const auto& id : manager.listPrograms())
+            if (id.bank == ProgramBank::user)
+                out.push_back (id);
+
+        return out;
+    }
+
     static float valueOf (TestHostProcessor& host, const char* id)
     {
         return host.apvts.getRawParameterValue (id)->load();

@@ -5,6 +5,7 @@ target_sources(Reflect84Tests PRIVATE
     GrainSpecTests.cpp
     FactoryProgramsTests.cpp
     ProgramManagerTests.cpp
+    DisplayBudgetTests.cpp
     ReverbEngineTests.cpp
     ../Source/DSP/ProgramManager.cpp
     ../Source/DSP/PlateTank.cpp
@@ -21,7 +22,11 @@ target_compile_definitions(Reflect84Tests PRIVATE
     NF_COMPANY_NAME="${REFLECT84_COMPANY_NAME}"
     NF_PRODUCT_NAME="${REFLECT84_PRODUCT_NAME}")
 
+# Reflect84BinaryData, because DisplayBudgetTests measures against ReflectTheme.h and the theme
+# header includes BinaryData.h for the embedded faces. Linking the real generated header rather
+# than stubbing it is the point: the font a test measures must be the font the panel draws.
 target_link_libraries(Reflect84Tests PRIVATE
+    Reflect84BinaryData
     juce::juce_dsp
     juce::juce_audio_basics
     juce::juce_audio_processors

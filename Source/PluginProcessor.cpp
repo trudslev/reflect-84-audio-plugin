@@ -213,6 +213,18 @@ juce::AudioProcessorEditor* Reflect84AudioProcessor::createEditor()
 }
 
 //==============================================================================
+void Reflect84AudioProcessor::setCurrentProgram (int index)
+{
+    if (! juce::isPositiveAndBelow (index, programManager.getNumPrograms()))
+        return;
+
+    // The stale-replay guard, disarmed by this call whether or not it is honoured.
+    if (justRestoredState.exchange (false, std::memory_order_relaxed) && index == getCurrentProgram())
+        return;
+
+    programManager.requestProgramChange (ProgramManager::factoryIdAt (index));
+}
+
 void Reflect84AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     auto state = apvts.copyState();
@@ -224,8 +236,12 @@ void Reflect84AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // Sticky display metadata only, restored clamped below and never re-validated against the
     // session's actual knob values: a session saved after tweaking a loaded Program still
     // remembers which Program it was tweaked from, even though it was never itself saved.
-    xml->setAttribute (LegacyMigration::currentProgramIndexAttribute,
-                       programManager.getCurrentProgram());
+    // **The bank, the identifier, and the full parameter state.** The values make the session
+    // sound right; the identity only decides what the panel CALLS them.
+    const auto id = programManager.getCurrentProgramId();
+    xml->setAttribute (LegacyMigration::programBankAttribute, LegacyMigration::bankAttributeValue (id.bank));
+    xml->setAttribute (LegacyMigration::programIdAttribute, id.id);
+    xml->setAttribute (LegacyMigration::programNameAttribute, id.displayName);
 
     copyXmlToBinary (*xml, destData);
 }
@@ -242,10 +258,17 @@ void Reflect84AudioProcessor::setStateInformation (const void* data, int sizeInB
     // ones fall back to defaults, producing a silent hybrid nothing reports as a problem.
     const int savedSchema = xml->getIntAttribute (LegacyMigration::stateSchemaVersionAttribute, 1);
 
-    if (savedSchema != LegacyMigration::currentStateSchemaVersion)
+    // **Two branches, both pinned to literals, because they are different situations.** Too old:
+    // the values genuinely cannot be interpreted. Too new: written by a later build, and reading it
+    // with today's assumptions would give plausible wrong values rather than an obvious fallback.
+    //
+    // This replaced `savedSchema != currentStateSchemaVersion`, which was correct exactly once -
+    // this very bump would otherwise have discarded every existing session over a change that
+    // alters no parameter's meaning.
+    if (LegacyMigration::classifySchema (savedSchema) != LegacyMigration::SchemaVerdict::readable)
     {
         programManager.cancelPendingChange();
-        programManager.requestProgramChange (defaultFactoryProgramIndex);
+        programManager.requestProgramChange (ProgramManager::factoryIdAt (defaultFactoryProgramIndex));
         return;
     }
 
@@ -255,8 +278,35 @@ void Reflect84AudioProcessor::setStateInformation (const void* data, int sizeInB
 
     apvts.replaceState (juce::ValueTree::fromXml (*xml));
 
-    programManager.setCurrentProgramIndexWithoutApplying (
-        xml->getIntAttribute (LegacyMigration::currentProgramIndexAttribute, defaultFactoryProgramIndex));
+    ProgramId restored;
+
+    if (savedSchema >= LegacyMigration::identitySchemaVersion)
+    {
+        restored = programManager.resolve (
+            LegacyMigration::bankFromAttribute (
+                xml->getStringAttribute (LegacyMigration::programBankAttribute)),
+            xml->getStringAttribute (LegacyMigration::programIdAttribute),
+            xml->getStringAttribute (LegacyMigration::programNameAttribute));
+    }
+    else
+    {
+        // v1 stored a position. Map it through the CURRENT bank - correct because nothing has
+        // shipped and the bank has not moved.
+        const int savedIndex = xml->getIntAttribute (LegacyMigration::currentProgramIndexAttribute,
+                                                      defaultFactoryProgramIndex);
+
+        if (savedIndex == -1)
+            restored = ProgramManager::initId();
+        else if (juce::isPositiveAndBelow (savedIndex, kNumFactoryPrograms))
+            restored = ProgramManager::factoryIdAt (savedIndex);
+        else
+            restored = ProgramManager::factoryIdAt (defaultFactoryProgramIndex);
+    }
+
+    programManager.setCurrentProgramWithoutApplying (restored);
+
+    // **Armed AFTER replaceState**, or the restore's own writes would disarm it.
+    justRestoredState.store (true, std::memory_order_relaxed);
 }
 
 //==============================================================================

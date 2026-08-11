@@ -3,6 +3,9 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "ReflectTheme.h"
+#include "../DSP/FactoryPrograms.h"      // ProgramId / ProgramBank
+
+#include <vector>
 
 class Reflect84AudioProcessor;
 
@@ -123,11 +126,11 @@ private:
 
     // Mirrors of the processor's state, refreshed by the timer. Deliberately not written to while
     // naming - that is what makes cancelling free.
-    // -2, not -1: -1 is INIT's index now, so it can no longer double as "nothing cached yet".
-    int displayedIndex = -2;
-    juce::String displayedName;
-    bool displayedIsFactory = true;
-    bool displayedIsInit = false;
+    /** The Program the panel is showing, mirrored so the poll only repaints on a real change. */
+    ProgramId displayedId;
+
+    /** The Programs the open menu was built from, in row order. */
+    std::vector<ProgramId> menuRows;
     bool displayedIsModified = false;
 
     // The live readout and when it reverts. Held as text rather than a parameter pointer so the

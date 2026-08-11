@@ -345,13 +345,24 @@ namespace Layout
         control anywhere on the panel. */
     inline constexpr float lcdBankPadX = 16.0f;
     inline constexpr float lcdRuleInsetY = 7.0f;
-    inline constexpr float lcdTextSize = 16.0f;
-    inline constexpr float lcdTextTracking = 0.13f;
+    /** **17px / .16em, which is what the paint path actually draws.** The theme used to declare
+        16px / .13em while ProgramHeader hard-coded 17 / .16 at the draw call, so the declaration
+        described a string nothing rendered - and the 36-character budget below was computed from
+        the declaration. The drawn values win, because they are what a user sees, and the paint call
+        now reads these constants instead of repeating literals. */
+    inline constexpr float lcdTextSize = 17.0f;
+    inline constexpr float lcdTextTracking = 0.16f;
     inline constexpr float lcdChevronInsetRight = 12.0f;
 
     /** Section 9's capacity note: the cell holds 36 characters at 16px against a longest readout of
         19 ("DIGITAL GRAIN: 100"), so the live readout never needs the name cell to widen. */
-    inline constexpr int lcdCharacterBudget = 36;
+    /** **37, MEASURED against the font the paint path draws**, not quoted from the spec.
+        Tests/DisplayBudgetTests.cpp recomputes it from these very constants each run: the name area
+        is 474.0px once the runtime bank cell and the chevron inset are taken off the well, and
+        IBM Plex Mono at 17px / .16em advances 12.78px.
+
+        It read 36, derived at the theme's declared 16px / .13em - which is not what was drawn. */
+    inline constexpr int lcdCharacterBudget = 37;
 
     /** How long the live readout stays after the gesture ends. Section 9 says 900ms; long enough to
         read the value you just set, short enough that the LCD is back to naming the Program before

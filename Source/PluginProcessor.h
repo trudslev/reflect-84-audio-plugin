@@ -65,16 +65,39 @@ public:
 
     //==============================================================================
     // Programs, never Presets - BRAND.md's terminology rule reaches the code, not just the label.
+    //==============================================================================
+    /** **The host adapter - the ONLY place a Program is addressed by position.**
+
+        **The list is the Factory bank and nothing else** - not INIT, not User Programs.
+        juce_AudioProcessor.h documents getNumPrograms as "The value returned must be valid as soon
+        as this object is created, and must not change over its lifetime", and a count including
+        User Programs changed the moment one was saved.
+
+        Before anyone makes it dynamic again: JUCE's VST3 wrapper builds the automatable Program
+        parameter ONCE in its constructor from this value, so a Program saved afterwards was
+        unreachable from the host. That was the API keeping its documented promise, not a bug.
+
+        Excluding INIT too means host index n IS Factory Program n+1.
+
+        **Accepted divergence.** getCurrentProgram answers 0 while a User Program is loaded, so a
+        host's menu shows a Factory name while the panel shows the user's Program. Sound and panel
+        are both correct; only the host's own menu is wrong. */
     int getNumPrograms() override { return programManager.getNumPrograms(); }
-    int getCurrentProgram() override { return programManager.getCurrentProgram(); }
-    void setCurrentProgram (int index) override { programManager.requestProgramChange (index); }
+    int getCurrentProgram() override { return programManager.getCurrentFactoryPosition(); }
+    void setCurrentProgram (int index) override;
     const juce::String getProgramName (int index) override { return programManager.getProgramName (index); }
 
     /** Renaming in place would be an overwrite by another name, and there is deliberately no
         overwrite path - Save always creates a new Program. */
+    /** Deliberately a no-op: with Factory-only exposure nothing on the host's list can be renamed.
+        Implementing it would be a back door into the Factory bank, which is what the permanent
+        slugs exist to prevent. */
     void changeProgramName (int, const juce::String&) override {}
 
     ProgramManager& getProgramManager() noexcept { return programManager; }
+
+    /** Clears the stale-replay guard. Called from the editor when a change is USER-originated. */
+    void noteUserEdit() noexcept { justRestoredState.store (false, std::memory_order_relaxed); }
 
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
@@ -99,6 +122,12 @@ public:
 
 private:
     //==============================================================================
+    /** **Guards a host replaying a stale program index over a just-restored session.** Armed by
+        setStateInformation, disarmed by the first setCurrentProgram (itself ignored only when it
+        matches what getCurrentProgram reports) or the first USER-originated edit. Automation must
+        not disarm it: a host may write automation on load before replaying. */
+    std::atomic<bool> justRestoredState { false };
+
     ProgramManager programManager { apvts };
 
     //==============================================================================

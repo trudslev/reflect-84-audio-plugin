@@ -1,5 +1,7 @@
 #pragma once
 
+#include "DSP/FactoryPrograms.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include <memory>
@@ -137,7 +139,59 @@ namespace LegacyMigration
         host's numeric automation-lane ID - APVTS's own XML is keyed by plain ID string
         regardless, so a schema change needs its own marker. */
     inline constexpr auto stateSchemaVersionAttribute = "reflect84StateSchemaVersion";
-    inline constexpr int currentStateSchemaVersion = 1;
+    inline constexpr int currentStateSchemaVersion = 2;
+
+    /** The schema at which the session stopped storing a positional index and started storing bank
+        + identifier. */
+    inline constexpr int identitySchemaVersion = 2;
+
+    /** **The oldest schema whose values can still be interpreted, pinned to a literal.** REFLECT-84
+        has only ever had one, and the identity bump is purely additive, so v1 sessions remain fully
+        readable - the identifier is simply absent and the position is migrated instead.
+
+        A literal on purpose. The gate used to read `savedSchema != currentStateSchemaVersion`,
+        which is correct exactly once: this very bump would otherwise have discarded every existing
+        session's parameter values over a change that alters no parameter's meaning. */
+    inline constexpr int oldestReadableSchemaVersion = 1;
+
+    /** **The identity attributes, and they are a contract.** Rename one and the session still
+        parses while the Program silently reverts. `...ProgramName` is DISPLAY ONLY. */
+    inline constexpr auto programBankAttribute = "reflect84ProgramBank";
+    inline constexpr auto programIdAttribute   = "reflect84ProgramId";
+    inline constexpr auto programNameAttribute = "reflect84ProgramName";
+
+    inline juce::String bankAttributeValue (ProgramBank bank)
+    {
+        switch (bank)
+        {
+            case ProgramBank::init:       return "init";
+            case ProgramBank::factory:    return "factory";
+            case ProgramBank::user:       return "user";
+            case ProgramBank::unresolved: return "unresolved";
+        }
+
+        return "factory";
+    }
+
+    inline ProgramBank bankFromAttribute (const juce::String& value)
+    {
+        if (value == "init")       return ProgramBank::init;
+        if (value == "user")       return ProgramBank::user;
+        if (value == "unresolved") return ProgramBank::unresolved;
+
+        return ProgramBank::factory;
+    }
+
+    /** Three outcomes, deliberately distinct: too old to interpret, too new to know about, usable. */
+    enum class SchemaVerdict { tooOld, tooNew, readable };
+
+    inline SchemaVerdict classifySchema (int savedSchema) noexcept
+    {
+        if (savedSchema < oldestReadableSchemaVersion) return SchemaVerdict::tooOld;
+        if (savedSchema > currentStateSchemaVersion)   return SchemaVerdict::tooNew;
+
+        return SchemaVerdict::readable;
+    }
 
     /** Sticky display metadata: which Program the session was last on. */
     inline constexpr auto currentProgramIndexAttribute = "reflect84CurrentProgramIndex";

@@ -49,31 +49,35 @@ public:
     void initialise();
 
     //==============================================================================
-    int getNumPrograms() const;
-    juce::String getProgramName (int index) const;
+    /** The Factory bank's size - what the host is told, and it never changes. */
+    int getNumPrograms() const noexcept { return kNumFactoryPrograms; }
 
-    /** What the LCD and the dropdown show: a two-digit 1-based index, a space, then the name.
-        getProgramName stays raw - that is what the HOST's program list wants, since a host renders
-        its own numbering and would print "01" twice. INIT is unnumbered in both, because it is
-        outside the bank and a number would place it in a running order it is not part of. */
-    juce::String getProgramDisplayName (int index) const;
+    /** Raw, unnumbered - what the HOST's list wants, since a host renders its own numbering. */
+    juce::String getProgramName (int factoryPosition) const;
 
-    /** INIT sits outside both banks at index -1, so it is neither factory nor user. */
-    static bool isInitProgram (int index) noexcept { return index == initProgramIndex; }
+    ProgramId getCurrentProgramId() const;
+    static ProgramId factoryIdAt (int factoryPosition);
+    static ProgramId initId();
+    static int factoryPositionOf (const juce::String& slug);
 
-    static bool isFactoryProgram (int index) noexcept
-    {
-        return index >= 0 && index < kNumFactoryPrograms;
-    }
+    /** The Factory position of the current Program, or 0 when it is INIT, a User Program or
+        unresolved - none of which the host's list contains. */
+    int getCurrentFactoryPosition() const;
 
-    int getCurrentProgram() const noexcept
-    {
-        return currentProgramIndex.load (std::memory_order_relaxed);
-    }
+    ProgramId resolve (ProgramBank bank, const juce::String& id, const juce::String& displayName) const;
+    std::vector<ProgramId> listPrograms() const;
+
+    /** **What the LCD and the dropdown print - a label, not a key.** Only Factory Programs get the
+        two-digit number, computed from their bank position at paint time. */
+    juce::String displayLabelFor (const ProgramId& id) const;
+
+
+
+
 
     /** Thread-safe from anywhere: stores the index and defers the actual apply to the message
         thread. */
-    void requestProgramChange (int index);
+    void requestProgramChange (const ProgramId& id);
 
     /** Drops any deferred change. setStateInformation MUST call this before restoring, or a
         request that arrived just beforehand lands afterwards and clobbers the restored session. */
@@ -86,11 +90,11 @@ public:
 
     /** Restores the "which Program was I on" display state without touching parameter values, and
         treats the current values as the new clean baseline. */
-    void setCurrentProgramIndexWithoutApplying (int index);
+    void setCurrentProgramWithoutApplying (const ProgramId& id);
 
     //==============================================================================
     void saveNewUserProgram (const juce::String& requestedName);
-    void deleteUserProgram (int index);
+    void deleteUserProgram (const ProgramId& id);
 
     /** True once any parameter differs from the loaded Program. Drives SAVE's enablement - there
         is nothing to save until something has actually moved. */
@@ -109,14 +113,25 @@ public:
 
     static juce::String getProgramFileExtension() { return ".reflect84program"; }
 
-    /** The LCD's usable width at 17px with .16em tracking. */
-    static constexpr int maxProgramNameLength = 22;
+    /** **36, and it is now derived rather than asserted.**
+
+        The name cell holds 37 characters at the font actually drawn (see ReflectTheme's
+        lcdCharacterBudget, measured in Tests/DisplayBudgetTests.cpp), and the naming field draws a
+        cursor after the text, so the cap is 37 - 1. REFLECT-84 paints no dirty asterisk - it gates
+        SAVE instead - so there is no marker to subtract.
+
+        It was 22, with no stated derivation, computed against a font size the panel does not use
+        and against a display that still carried a two-digit index prefix on user names. Both are
+        gone: only Factory Programs are numbered now. */
+    static constexpr int maxProgramNameLength = 36;
 
 private:
     void handleAsyncUpdate() override;
 
     void refreshUserProgramList();
-    void applyProgramByIndex (int index);
+    void applyProgram (const ProgramId& id);
+    void setCurrentId (const ProgramId& id);
+    juce::File userProgramFile (const juce::String& stem) const;
     void applyFactoryProgram (const FactoryProgram& program);
     void captureCleanSnapshot();
 
@@ -125,11 +140,11 @@ private:
     const juce::File userDirectory;
     juce::Array<juce::File> userProgramFiles;
 
-    std::atomic<int> currentProgramIndex { defaultFactoryProgramIndex };
-    // **-2, not -1.** -1 is INIT's index now, so it can no longer double as "nothing pending" -
-    // using it would make selecting INIT indistinguishable from having nothing queued.
-    static constexpr int noPendingProgram = -2;
-    std::atomic<int> pendingProgramIndex { noPendingProgram };
+    mutable juce::SpinLock currentIdLock;
+    ProgramId currentId;
+    juce::SpinLock pendingLock;
+    bool hasPendingProgram = false;
+    ProgramId pendingProgram;
 
     /** Normalised values in getParameters() order. Message-thread only - every writer runs there,
         so it needs no synchronisation. */
