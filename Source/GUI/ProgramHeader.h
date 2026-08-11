@@ -119,8 +119,15 @@ private:
     juce::Rectangle<float> saveArea() const;
     juce::Rectangle<float> deleteArea() const;
 
+    /** One face, two permanently printed legends, each lit or not. There is no `enabled` and no
+        label argument: the button never relabels and never wears a disabled face, so the only
+        thing that varies is which of the two legends is illuminated. */
     void paintButton (juce::Graphics& g, juce::Rectangle<float> area,
-                      const juce::String& text, bool enabled, bool hovered);
+                      const juce::String& topLegend, const juce::String& bottomLegend,
+                      bool topLit, bool bottomLit);
+
+    void paintLegend (juce::Graphics& g, const juce::String& text,
+                      juce::Rectangle<float> lineBox, bool lit);
 
     Reflect84AudioProcessor& processorRef;
 

@@ -425,35 +425,85 @@ void ProgramHeader::focusLost (FocusChangeType)
 }
 
 //==============================================================================
-void ProgramHeader::paintButton (juce::Graphics& g, juce::Rectangle<float> area,
-                                 const juce::String& text, bool enabled, bool hovered)
+void ProgramHeader::paintLegend (juce::Graphics& g, const juce::String& text,
+                                 juce::Rectangle<float> lineBox, bool lit)
 {
-    if (enabled)
+    const auto font = Font::mono (Layout::legendTextSize);
+    const float tracking = Font::trackingPx (Layout::legendTracking, Layout::legendTextSize);
+
+    // The spec's `text-indent: .20em` cancels the trailing tracking CSS leaves on the last
+    // character, so the legend centres optically rather than metrically. drawTracked adds tracking
+    // BETWEEN glyphs only - the trailing gap never exists here - so there is nothing to cancel.
+
+    if (lit)
     {
-        g.setGradientFill (Paint::verticalGradient (area,
-                                                    hovered ? Colour::brassTopHover : Colour::brassTop,
-                                                    hovered ? Colour::brassBottomHover : Colour::brassBottom));
-    }
-    else
-    {
-        g.setGradientFill (Paint::verticalGradient (area, Colour::buttonOffTop, Colour::buttonOffBottom));
+        /*  **The legend is the lamp**, so the bloom has to read as light coming from behind the
+            type rather than as a soft edge on it.
+
+            GUI-SPEC gives five text-shadow layers (1 / 4 / 9 / 18 / 30 px). JUCE has neither
+            text-shadow nor a cheap blur for a string, so each layer here is the same tracked text
+            drawn at eight points around a circle: overlapping copies sum to a halo, which is what
+            a blur of that radius produces anyway at 10px type.
+
+            **Three radii, not five, and that is deliberate.** The 18px and 30px layers are the
+            faint wash a backlit legend throws onto the face *around* it - but this face is only
+            34px tall, so at those radii the wash covers the whole button and spills onto the bezel,
+            where it reads as a smudge rather than as light. The clip below would cut them square
+            in any case. Folded into the 9px pass instead.
+
+            Alphas are tuned by eye against the render, not derived: eight overlapping copies at
+            alpha a reach 1-(1-a)^8 where they coincide, so the published per-layer figures cannot
+            be used directly. */
+        struct BloomLayer { float radius, alpha; };
+        static constexpr BloomLayer bloom[] { { 9.0f, 0.030f }, { 4.0f, 0.055f }, { 1.0f, 0.100f } };
+
+        for (const auto& layer : bloom)
+            for (int i = 0; i < 8; ++i)
+            {
+                const float angle = juce::MathConstants<float>::twoPi * (float) i / 8.0f;
+
+                Text::drawTracked (g, text, font, tracking,
+                                   lineBox.translated (std::cos (angle) * layer.radius,
+                                                       std::sin (angle) * layer.radius),
+                                   juce::Justification::centred,
+                                   Colour::legendLit.withAlpha (layer.alpha));
+            }
     }
 
+    Text::drawTracked (g, text, font, tracking, lineBox, juce::Justification::centred,
+                       lit ? Colour::legendLit : Colour::legendUnlit);
+}
+
+void ProgramHeader::paintButton (juce::Graphics& g, juce::Rectangle<float> area,
+                                 const juce::String& topLegend, const juce::String& bottomLegend,
+                                 bool topLit, bool bottomLit)
+{
+    // **The face is identical in every state**, including the state that used to be "disabled".
+    // Nothing here branches on enablement, and nothing should: a dark legend is not a disabled
+    // control, it is a function with nothing to do.
+    g.setGradientFill (Paint::verticalGradient (area, Colour::buttonFaceTop, Colour::buttonFaceBottom));
     g.fillRoundedRectangle (area, Layout::lcdRadius);
 
-    g.setColour (juce::Colours::black.withAlpha (enabled ? 0.5f : 0.45f));
+    g.setColour (juce::Colours::black.withAlpha (0.55f));
     g.drawRoundedRectangle (area, Layout::lcdRadius, 1.0f);
 
-    if (enabled)
-    {
-        // inset 0 1px 0 rgba(255,255,255,.55) - the machined top lip on the brass
-        g.setColour (juce::Colours::white.withAlpha (0.55f));
-        g.drawLine (area.getX() + 3.0f, area.getY() + 1.5f, area.getRight() - 3.0f, area.getY() + 1.5f, 1.0f);
-    }
+    // inset 0 1px 0 rgba(255,255,255,.10) - a far shallower lip than the brass carried, because a
+    // dark cap catches much less light along its top edge.
+    g.setColour (juce::Colours::white.withAlpha (0.10f));
+    g.drawLine (area.getX() + 3.0f, area.getY() + 1.5f, area.getRight() - 3.0f, area.getY() + 1.5f, 1.0f);
 
-    Text::drawTracked (g, text, Font::mono (10.0f), Font::trackingPx (0.20f, 10.0f),
-                       area, juce::Justification::centred,
-                       enabled ? Colour::brassText : Colour::buttonOffText);
+    // Two 12px line boxes, 1px between, the pair centred on the face. Resting function on top,
+    // what the button becomes while naming beneath it.
+    const float lineH = Layout::legendLineHeight;
+    const float blockH = lineH * 2.0f + Layout::legendGap;
+    const float blockTop = area.getCentreY() - blockH * 0.5f;
+
+    const juce::Graphics::ScopedSaveState state (g);
+    g.reduceClipRegion (area.getSmallestIntegerContainer());
+
+    paintLegend (g, topLegend,    { area.getX(), blockTop, area.getWidth(), lineH }, topLit);
+    paintLegend (g, bottomLegend, { area.getX(), blockTop + lineH + Layout::legendGap,
+                                    area.getWidth(), lineH }, bottomLit);
 }
 
 void ProgramHeader::paint (juce::Graphics& g)
@@ -580,9 +630,30 @@ void ProgramHeader::paint (juce::Graphics& g)
     }
 
     // --- Buttons -------------------------------------------------------------
-    paintButton (g, saveArea(), namingMode ? "STORE" : "SAVE",
-                 isRegionEnabled (Region::save), hoveredRegion == Region::save);
+    /*  GUI-SPEC section 9's state matrix, in full. Five panel states, four legends, and the four
+        expressions below are the whole contract:
 
-    paintButton (g, deleteArea(), namingMode ? "CANCEL" : "DELETE",
-                 isRegionEnabled (Region::deleteOrCancel), hoveredRegion == Region::deleteOrCancel);
+        | Panel state                 | SAVE | STORE | DELETE | CANCEL |
+        | Factory Program, unmodified | dark | dark  | dark   | dark   |
+        | Factory Program, edited     | LIT  | dark  | dark   | dark   |
+        | User Program, unmodified    | dark | dark  | LIT    | dark   |
+        | User Program, edited        | LIT  | dark  | LIT    | dark   |
+        | Naming a Program            | dark | LIT   | dark   | LIT    |
+
+        **Lighting and clickability come from one source each**, not from two that have to be kept
+        in step: each `lit` below is exactly `isRegionEnabled` for that region, so a legend cannot
+        glow at something that will ignore the click, or sit dark on something that responds.
+
+        The naming row is why STORE and CANCEL are gated on `namingMode` rather than on the region
+        being enabled: while naming, `isRegionEnabled` reports both regions live, and it is the row
+        of the matrix that decides which of each button's two legends that liveness belongs to. */
+    const bool naming = namingMode;
+
+    paintButton (g, saveArea(), "SAVE", "STORE",
+                 ! naming && isRegionEnabled (Region::save),   // SAVE:   the Program is edited
+                 naming);                                      // STORE:  always live while naming
+
+    paintButton (g, deleteArea(), "DELETE", "CANCEL",
+                 ! naming && isRegionEnabled (Region::deleteOrCancel),  // DELETE: a User Program
+                 naming);                                              // CANCEL: live while naming
 }

@@ -113,16 +113,25 @@ public:
 
     static juce::String getProgramFileExtension() { return ".reflect84program"; }
 
-    /** **36, and it is now derived rather than asserted.**
+    /** **39, and it is derived rather than asserted.**
 
-        The name cell holds 37 characters at the font actually drawn (see ReflectTheme's
+        The name cell holds 41 characters at the font actually drawn (see ReflectTheme's
         lcdCharacterBudget, measured in Tests/DisplayBudgetTests.cpp). The dirty marker " *" takes
         2 and the naming cursor takes 1, so the cap is the budget less the larger of the two.
 
-        It was 22, with no stated derivation, computed against a font size the panel does not use
-        and against a display that still carried a two-digit index prefix on user names. Both are
-        gone: only Factory Programs are numbered now. */
-    static constexpr int maxProgramNameLength = 35;
+        **It grew from 35 with the 34px header row**, because the LCD widened 586 -> 641: the
+        second legend cost no button width (each was already sized by its longest word) and the
+        row gaps either side came in from 10px to 8px. The cell took all of it.
+
+        **A budget may grow; a cap may never shrink.** If a future change to the header height,
+        font size, tracking or cell width would reduce this, take the room from padding or widen
+        the cell instead. Lowering it orphans names already saved to disk - they would load, then
+        fail to save back under their own name.
+
+        It was 22 before that, with no stated derivation, computed against a font size the panel
+        does not use and against a display that still carried a two-digit index prefix on user
+        names. Both are gone: only Factory Programs are numbered now. */
+    static constexpr int maxProgramNameLength = 39;
 
 private:
     void handleAsyncUpdate() override;

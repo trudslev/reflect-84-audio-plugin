@@ -263,6 +263,36 @@ Plain stereo in/out, no sidechain bus.
   here), and the dropdown opens flush to the LCD rather than §9's 4px below, because the whole suite
   was changed to flush and the root `CLAUDE.md` carries that as the shared contract.
 
+  **The header row is one 34px band and the Program buttons carry two legends each.** Every part —
+  LCD, SAVE, DELETE, IN and OUT — is 34px *border-box*, which is the suite's figure from BRAND.md
+  rather than this panel's: the castings are differently-sized units, not scales of one design, and
+  a manufacturer uses the same physical part across a product line. `meterWellH` and `headerButtonH`
+  follow `programWellH` rather than repeating 34, because they are one decision.
+
+  The whole row was measured off `screenshots/header/04-user-edited-save-delete-lit.png` at 3×, and
+  it closes on itself: 357 + 641 = 998, +8 → SAVE 1006 + 62 = 1068, +8 → DELETE 1076 + 70 = 1146,
+  +16 → IN at **1162**, which is where the render puts the meter well to the pixel. A chain landing
+  on an independently measured edge is the check that the row is right rather than merely plausible.
+
+  **The buttons never relabel and have no disabled face.** SAVE above STORE, DELETE above CANCEL,
+  permanently printed, on one dark face in every state; only the legends' illumination changes. The
+  brass cap and the separate disabled face are both gone and neither should return — a printed panel
+  legend cannot rewrite itself, and a pale cap leaves lit type with no headroom to read as lit. Each
+  legend's `lit` flag is exactly its region's `isRegionEnabled`, so a glowing legend cannot sit on
+  something that will ignore the click.
+
+  The bloom is eight offset copies per radius at three radii, not the spec's five: JUCE has no
+  text-shadow, and the 18px and 30px layers would wash a 34px face entirely and spill onto the
+  bezel. Alphas are tuned against the render rather than taken from the spec, because eight
+  overlapping copies at alpha *a* reach 1−(1−*a*)⁸ where they coincide.
+
+  **The name cap grew 35 → 39** and that direction is the rule: a budget may grow, a cap may never
+  shrink. The LCD widened 586 → 641 because the second legend cost no button width and the gaps
+  either side came in 10px → 8px. Lowering the cap would orphan names already on disk — they would
+  load and then fail to save back under their own name. `DisplayBudgetTests` measures the budget
+  from the drawn font each run and asserts the cap is the budget less the larger of the marker and
+  the cursor, so the pair cannot drift apart.
+
   **Verify by clicking, and composite at true 1:1.** The composite against `01-panel.png` is what
   found SAVE/DELETE drawn under the meter wells and the ALGORITHM caption pushed off its column;
   the click pass is what found the bank indicator still a bordered badge, the USER group hidden when

@@ -99,17 +99,30 @@ namespace Colour
     inline const juce::Colour phosphor         { 0xFFF2E6C2 };
     inline const juce::Colour meterText        { 0xFFE8DCBA };
 
-    // --- Buttons -------------------------------------------------------------
-    inline const juce::Colour brassTop         { 0xFFDED0A6 };
-    inline const juce::Colour brassBottom      { 0xFFBDA979 };
-    inline const juce::Colour brassTopHover    { 0xFFEADCB4 };
-    inline const juce::Colour brassBottomHover { 0xFFCBB787 };
-    inline const juce::Colour brassText        { 0xFF2A3550 };
-    inline const juce::Colour buttonOffTop     { 0xFF232F49 };
-    inline const juce::Colour buttonOffBottom  { 0xFF1B2640 };
-    // Lightened from #4A5670, which read 1.81:1 against its own button - absent rather than dim.
-    // contrast: 3.23-3.64:1 vs buttonOffTop,buttonOffBottom [state]
-    inline const juce::Colour buttonOffText    { 0xFF747D91 };
+    // --- Program buttons -----------------------------------------------------
+    /** **One face, in every state.** GUI-SPEC.md section 9: each button carries two legends,
+        stacked and permanently printed - SAVE above STORE, DELETE above CANCEL - and the face
+        never changes. Only the legends' illumination does.
+
+        This replaced a brass cap (#DED0A6 -> #BDA979) with a separate disabled face. Both are
+        gone, and neither should come back:
+
+        - **A printed panel legend cannot rewrite itself.** Five castings relabelled SAVE to STORE
+          at runtime, which no piece of rack gear can do; the second legend is how hardware says it.
+        - **A dark face is what gives a lit legend somewhere brighter to go.** On the brass, lit
+          type had no headroom - the cap was already the brightest thing on the button, so
+          "illuminated" could not read as illuminated.
+        - **There is no disabled face.** Real gear does not grey a button out; its lamp goes out.
+          Both legends unlit *is* the "nothing to do here" state, and it still has to be readable. */
+    inline const juce::Colour buttonFaceTop    { 0xFF26324D };
+    inline const juce::Colour buttonFaceBottom { 0xFF1A2438 };
+
+    /** The legend crosses the face's gradient, so both ratios are quoted against its LIGHT end -
+        the worst case. Measuring against the mean would flatter both by about a stop.
+        // contrast: 11.91:1 vs buttonFaceTop [functional]
+        // contrast: 3.91:1 vs buttonFaceTop [state] */
+    inline const juce::Colour legendLit        { 0xFFFDF7E6 };
+    inline const juce::Colour legendUnlit      { 0xFF8090AE };
 
     // --- Scope ---------------------------------------------------------------
     inline const juce::Colour screenTop        { 0xFF080D16 };
@@ -331,7 +344,7 @@ namespace Layout
     inline constexpr float headerX = 16.0f;
     inline constexpr float headerY = 16.0f;
     inline constexpr float headerW = 1308.0f;
-    inline constexpr float headerH = 103.0f;
+    inline constexpr float headerH = 104.0f;
     inline constexpr float headerRadius = 6.0f;
 
     // Wordmark block: min-width 300, starting at the header's content box (x + 1px border + 22px
@@ -355,8 +368,19 @@ namespace Layout
     inline constexpr float programLabelH = 12.0f;
     inline constexpr float programWellX = 357.0f;
     inline constexpr float programWellY = 61.0f;
-    inline constexpr float programWellW = 586.0f;
-    inline constexpr float programWellH = 33.0f;
+    inline constexpr float programWellW = 641.0f;
+
+    /** **34, and it is the suite's figure rather than this panel's.** BRAND.md fixes the header
+        part height at 34px in every casting - not a proportion of the panel, because the castings
+        are differently-sized units rather than scales of one design, and a manufacturer uses the
+        same physical part across a product line. The LCD, both Program buttons and both meter
+        wells all measure it; see headerButtonH and meterWellH, which follow this rather than
+        repeating the number.
+
+        Border-box, so the 1px border is inside it and the content is 32. That distinction is not
+        pedantry here: reconstructing border-box from a content figure by adding padding is where
+        four castings picked up 0.5-2px of drift between row-mates. */
+    inline constexpr float programWellH = 34.0f;
 
     /** The bank indicator is printed ON the LCD glass now, not a badge beside it: same 16px face as
         the program name, 16px padding either side, separated from the name by a 1px vertical rule.
@@ -411,23 +435,46 @@ namespace Layout
         IBM Plex Mono at 17px / .16em advances 12.78px.
 
         It read 36, derived at the theme's declared 16px / .13em - which is not what was drawn. */
-    inline constexpr int lcdCharacterBudget = 37;
+    inline constexpr int lcdCharacterBudget = 41;
 
     /** How long the live readout stays after the gesture ends. Section 9 says 900ms; long enough to
         read the value you just set, short enough that the LCD is back to naming the Program before
         you look for it. */
     inline constexpr juce::uint32 lcdReadoutHoldMs = 900;
 
-    // Measured off 01-panel.png rather than derived from the header's padding, and the measurement
-    // reproduces section 9's stated 16px DELETE-to-IN gap exactly (1123 - 1107), which is the check
-    // that the whole row is right rather than merely plausible.
-    inline constexpr float saveButtonX = 954.0f;
-    inline constexpr float saveButtonW = 64.0f;
-    inline constexpr float deleteButtonX = 1029.0f;
-    inline constexpr float deleteButtonW = 78.0f;
+    /** **Measured off screenshots/header/04-user-edited-save-delete-lit.png at 3x**, not derived
+        from the header's padding, and the whole row closes on itself: 357 + 641 = 998, +8 -> SAVE
+        1006 + 62 = 1068, +8 -> DELETE 1076 + 70 = 1146, +16 -> IN at **1162**, which is where the
+        render puts the meter well to the pixel. A chain that lands on an independently measured
+        edge is the check that the row is right rather than merely plausible.
+
+        The two buttons differ in width **by design** - each is sized by its longest legend, STORE
+        at 5 characters and DELETE at 6. Only the 34px height is shared. If a content size ever
+        changes, take the difference out of padding: the 34 is the number that stays put.
+
+        The DELETE-to-IN gap is 16px against 10px between the two meter wells, so the meters read
+        as their own pair rather than as two more buttons. Both gaps were measured off the render
+        rather than assumed - the 10 lands exactly (well border ends 1226.99, next begins 1237.00).
+
+        One pixel is unresolved and recorded rather than smoothed over: the render draws the IN
+        well 65 wide and the OUT well 64, which cannot both be right on a row whose spec table
+        gives one figure for the pair. 64 is taken from the spec; the odd pixel is sub-pixel
+        rounding in the export and is raised with the designers. */
+    inline constexpr float saveButtonX = 1006.0f;
+    inline constexpr float saveButtonW = 62.0f;
+    inline constexpr float deleteButtonX = 1076.0f;
+    inline constexpr float deleteButtonW = 70.0f;
     inline constexpr float headerButtonY = programWellY;
     inline constexpr float headerButtonH = programWellH;
     inline constexpr float lcdRadius = 3.0f;
+
+    /** The two stacked legends. 10px is BRAND.md's floor for functional text and **both** legends
+        are functional, so neither is set smaller than the other to fit - the pair is what sets the
+        34px height (2 x 10px ink + leading + padding needs ~27px). */
+    inline constexpr float legendTextSize = 10.0f;
+    inline constexpr float legendTracking = 0.20f;
+    inline constexpr float legendLineHeight = 12.0f;
+    inline constexpr float legendGap = 1.0f;
 
     // FACT/USER badge sits 14px in from the well's left edge; the chevron 11px from its right.
     inline constexpr float badgeInsetX = 14.0f;
@@ -436,15 +483,16 @@ namespace Layout
     inline constexpr float chevronInsetX = 11.0f;
     inline constexpr float chevronSize = 9.0f;
 
-    // IN / OUT meters (measured: wells x 985 and 1079, both 84 wide, y 69..104)
-    // Same caption line and same band as the LCD - see programLabelY / programWellY.
+    // IN / OUT meters. Same caption line and same band as the LCD - meterWellH follows
+    // programWellH rather than repeating 34, because they are the same decision, not two that
+    // happen to agree. See programWellH for why that height is the suite's and not this panel's.
     inline constexpr float meterLabelY = 41.0f;
     inline constexpr float meterLabelH = 12.0f;
-    inline constexpr float meterWellY = 61.0f;
-    inline constexpr float meterWellW = 84.0f;
-    inline constexpr float meterWellH = 33.0f;
-    inline constexpr float meterInX = 1123.0f;
-    inline constexpr float meterOutX = 1217.0f;
+    inline constexpr float meterWellY = programWellY;
+    inline constexpr float meterWellW = 64.0f;
+    inline constexpr float meterWellH = programWellH;
+    inline constexpr float meterInX = 1162.0f;
+    inline constexpr float meterOutX = 1236.0f;
 
     // --- Body row ------------------------------------------------------------
     // Panel padding box minus the body row's own `padding: 20px 4px 6px`.
