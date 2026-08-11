@@ -117,8 +117,15 @@ namespace Colour
     inline const juce::Colour scopeBezelTop    { 0xFFC9BD9C };
     inline const juce::Colour scopeBezelBottom { 0xFFB8AA87 };
     inline const juce::Colour scopeGrid        { juce::Colour::fromRGBA (120, 160, 200,  26) }; // .10
-    inline const juce::Colour scopeLegend      { juce::Colour::fromRGBA (190, 205, 225, 128) }; // .50
-    inline const juce::Colour scopeLegendDim   { juce::Colour::fromRGBA (190, 205, 225, 102) }; // .40
+    // **Opaque, and that alone was the fix.** These are the scope's 0 dB / -60 dB / DCY ENV
+    // labels - printed scales, which BRAND.md names as functional text. At .50 the legend read
+    // 3.71:1; the identical colour opaque reads 12.05, so the alpha was the whole defect.
+    // contrast: 12.05-12.41:1 vs screenTop,screenBottom [functional]
+    inline const juce::Colour scopeLegend      { 0xFFBECDE1 };
+    // The -60 dB LEADER LINE, not text. scopeLegendDim used to serve both, so raising the text
+    // off the floor would have dragged a hairline with it - split by what each describes, per
+    // the root CLAUDE.md's one-constant-one-meaning rule. Alpha on a rule is furniture and stays.
+    inline const juce::Colour scopeLeaderLine  { juce::Colour::fromRGBA (190, 205, 225, 102) }; // .40
     inline const juce::Colour scopeNoiseTail   { juce::Colour::fromRGBA (190, 205, 225,  41) }; // .16
 
     // --- Knobs ---------------------------------------------------------------

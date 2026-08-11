@@ -396,7 +396,7 @@ void TankScope::paintScreen (juce::Graphics& g)
         };
 
         leader (Layout::scopeZeroDbY,       Colour::scopeLegend);
-        leader (Layout::scopeMinusSixtyDbY, Colour::scopeLegendDim);
+        leader (Layout::scopeMinusSixtyDbY, Colour::scopeLeaderLine);
 
         const auto zeroAt  = fromViewBox (Layout::scopeGutterLabelX, Layout::scopeZeroDbY);
         const auto minusAt = fromViewBox (Layout::scopeGutterLabelX, Layout::scopeMinusSixtyDbY);
@@ -407,6 +407,6 @@ void TankScope::paintScreen (juce::Graphics& g)
 
         Text::drawTracked (g, Text::minusSign() + juce::String ("60 dB"), font, tracking,
                            { minusAt.x, minusAt.y - lineHeight * 0.5f, 120.0f, lineHeight },
-                           juce::Justification::left, Colour::scopeLegendDim);
+                           juce::Justification::left, Colour::scopeLegend);
     }
 }
