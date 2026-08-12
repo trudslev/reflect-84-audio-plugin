@@ -13,28 +13,22 @@ rule, component grammar), then this file.
 **`design/GUI-SPEC.md` is the authoritative GUI spec** as of the v1.1 conformance pass, and
 supersedes `design/README.md` wherever the two disagree — README is the v1.0 document and is kept
 for the diff. `design/CHANGELOG.md` states which revision a bundle is; read it first.
-`design/screenshots/01-panel.png` is the approved artwork and outranks either doc's prose **on
-appearance** — but not, as of the 2026-08-11 bundle, on absolute Y.
+`design/screenshots/01-panel.png` is the approved artwork and outranks either doc's prose, on
+appearance **and** on geometry — it is 2680 × 1290, exactly 2× the canvas, and is safe to measure
+absolute Y off again as of the 2026-08-12 re-cut.
 
-**That render is 4 px taller than the canvas, and the canvas is right.** §1 says 1340 × 645;
-`01-panel.png` is 2680 × 1298, which is 2× of 1340 × **649**. Confirmed with the designers on
-2026-08-12: the panel is **1340 × 645.13** measured off the live layout, nothing in the source
-produces 649, and the render gained the pixels in export. `canvasHeight` stays 645.
+**The canvas is 1340 × 645.13, and 645 is safe as an integer.** That .13 is recorded because we
+anchor against it: it comes entirely from the wordmark's `line-height: 0.92` on 42 px — 38.64 px,
+the only fractional contributor on the panel — and it sits below the rounding floor at every
+supported scale. Knowing its provenance is what makes carrying 645 as an `int` a decision rather
+than a rounding someone will later "fix" into a float that infects every derived coordinate.
 
-The .13 is worth knowing precisely because we anchor against it: it comes entirely from the
-wordmark's `line-height: 0.92` on 42 px — 38.64 px, the only fractional contributor on the panel —
-and it sits below the rounding floor at every supported scale, so 645 is safe as an integer rather
-than a value someone should be tempted to carry as a float.
-
-One pixel of the four *is* real and is not export: correlating the old render against the new, the
-body sits 1 canvas px lower, which is the header band going 33 → 34. That change is in the source.
-The other three are not, at any point in the layout.
-
-**So: take X and appearance off the render freely; take absolute Y from the spec.** Do not composite
-the two at a shared origin without checking which you have anchored to. A clean re-cut has been
-offered and accepted, and when it lands this caveat goes with it — until then the render is one
-pixel of real change wrapped in three of padding, which is exactly the shape that reads as a
-measurement rather than an artefact.
+**For the record, because the shape of it is the lesson:** the 2026-08-11 render was 2680 × 1298,
+2× of 1340 × 649, and four pixels taller than the canvas. Exactly one of those four was real — the
+body sat 1 px lower because the header band went 33 → 34, a change we had made ourselves — and the
+other three were export padding. A row-by-row correlation against the previous render is what
+separated them, and without it the honest reading would have been "all four are noise", which would
+have been wrong about our own work.
 
 `design/screenshots/header/` holds the five per-state header renders at 3×, which are the acceptance
 target for the Program-button lighting — the one part of this design no coordinate settles, and the

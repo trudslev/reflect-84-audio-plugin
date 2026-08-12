@@ -21,6 +21,13 @@ pass affects it.
 ## 1. Canvas and coordinate frame
 
 - Panel **1340 × 645 px** at 100%. Fixed aspect 2.077:1, scales proportionally.
+  Height is content-driven, not pinned: the laid-out panel measures **645.13 px**
+  (the wordmark's `line-height: 0.92` on 42px = 38.64px is the only fractional
+  contributor). 645 is the number to build against; the 0.13 is below the rounding
+  floor at every supported scale.
+- `screenshots/01-panel.png` is the acceptance target: **2680 × 1290, exactly 2× the
+  canvas**, re-cut 12 Aug. X, Y and appearance may all be measured off it. (The
+  earlier re-cut exported 1298 and was not Y-anchorable; that caveat is retired.)
 - Scaling range must reach at least **200%** as a genuine accessibility lever
   (BRAND.md § Canvas). 50–200% is the intended range.
 - All coordinates below are **px from the panel's top-left corner at 100%**.
@@ -763,7 +770,7 @@ review cuts still apply, and nothing in this pass touches them.
 ## 15. Open items
 
 - Fine-drag (shift) and double-click-to-default are specified above but not in the reference render.
-- ~~The SAVE naming flow is stubbed in the prototype.~~ **Closed this pass** — the inline LCD name entry is built and is render `05`; see § 9 *Name entry*. Remaining gap: not demonstrated. Build it from § 9, not from the prototype's behaviour.
+- ~~The SAVE naming flow is stubbed in the prototype.~~ **Closed this pass** — the inline LCD name entry is built, matches § 9 *Name entry*, and is reference render `05`.
 - IN / OUT meters are sample text in the render; wire to real peak metering.
 - Reconcile § 13 against the build's actual parameter table before implementation.
 - Update the Roster row for Reflect-84 in `BRAND.md` when this pass lands.

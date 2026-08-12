@@ -7,6 +7,16 @@ Check this file first to confirm which revision you are holding.
 Panel **1340 × 645**, four body columns. Adds `GUI-SPEC.md`, which is the build
 contract and supersedes `README.md` wherever they disagree.
 
+- **All three panel renders re-cut at exactly 2680 × 1290** (2× the 645 canvas);
+  they previously exported 1298. Y is anchorable off them again and the "X and
+  appearance only" caveat is retired. Panel states unchanged — `01-panel` rest on
+  Factory 01 RAIN ALL DAY, `02-panel-blank` bare fascia, `03-panel-lit` edited User
+  Program. These are re-exports of the same three views, not new ones. The five 3×
+  header renders were already correct and are untouched.
+- `GUI-SPEC.md` § 1 — canvas height **confirmed 645**, not 649. Measured off the
+  laid-out panel (645.13; the wordmark line-height is the only fraction). The
+  `01-panel.png` re-cut's extra 4 canvas px are export overshoot — § 1 now says
+  absolute Y is not to be taken off that render. Width 1340 unchanged and exact.
 - `GUI-SPEC.md` — **new file in this revision.** If your bundle has no
   `GUI-SPEC.md`, you are holding v1.0 and none of the items below reached you.
 - Printed scales on every knob; standing value readouts removed.

@@ -129,7 +129,7 @@ cuts. `Reflect-84 Icon.dc.html` is the live source.
 | `CHANGELOG.md` | Revision log — check this first |
 | `GUI-SPEC.md` | The build contract for this panel |
 | `fonts/README.md` | Font families, weights, licence and sources. **No binaries — this folder never overwrites the build's own `design/fonts/`.** |
-| `screenshots/01-panel.png` | Reference render, 2× (2680 × 1298) — **re-captured for the rebuilt Program buttons** |
+| `screenshots/01-panel.png` | Reference render, 2× (**2680 × 1290, exactly 2× the 645 canvas**) — measurable in X *and* Y |
 | `screenshots/header/01-rest-nothing-to-do.png` | **Factory Program, unmodified**, 3×. All four legends dark. **The important one** — it has to read as *"nothing to do here"*, not as a blank or broken button, and it is the case most likely to look wrong while measuring right. |
 | `screenshots/header/02-factory-edited-save-lit.png` | **Factory Program, edited**, 3×. SAVE lit; note the ` *` dirty marker in the LCD, which reads the same flag as SAVE's lamp. |
 | `screenshots/header/03-user-unmodified-delete-lit.png` | **User Program, unmodified**, 3×. DELETE lit, SAVE dark. |
