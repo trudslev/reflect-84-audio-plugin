@@ -39,11 +39,26 @@ ships no font binaries, and `CMakeLists.txt` embeds Jost and two IBM Plex Mono f
 `design/fonts/`, so installing a bundle over `design/` would delete build assets. Copy the documents
 and reference renders out; leave the build's own directories alone.
 
-**This casting consumes `neon-foundry-core`, and is the first to.** The pin is a `FetchContent`
+**This casting consumes `neon-foundry-core`, and was the first to.** The pin is a `FetchContent`
 line in `CMakeLists.txt` beside the JUCE one — `https://github.com/trudslev/neon-foundry-core.git`
-at `GIT_TAG v1.0.0`. Core carries shared *behaviour*
-only — as of v1.0.0 that is `nf::userProgramDirectory`, which resolves where user Programs live per
-platform. `getDefaultUserProgramDirectory()` now forwards to it.
+at `GIT_TAG v1.0.0`. All six castings are on it now; core carries shared *behaviour* only, and this
+repo takes the whole public surface:
+
+| From core | Stayed here |
+|---|---|
+| `nf::userProgramDirectory` — the per-OS path and the `Application Support` segment | The `.reflect84program` extension and the 39-character cap |
+| `nf::UserProgramStore` — scanning, sorting, naming (`TAKE n`), collision, save, delete | **What a Program contains** — the whole APVTS state and the schema attribute |
+| `nf::ParameterSnapshot` — the dirty baseline, keyed by parameter ID and `SpinLock`-guarded | Which events re-capture it: apply, save, session restore |
+| `nf::ProgramId` / `nf::ProgramBank` / `programDisplayLabel` | The Factory bank, and resolving a slug to its position |
+
+Core owns files and names; this repo owns meaning. **The collision check that makes "SAVE never
+overwrites" true rather than merely unimplemented originated here** and is core's guarantee for all
+six now — two sibling castings used to write straight to the composed path, so reusing a name
+silently replaced that Program's contents.
+
+One behaviour changed with the move: the empty-name fallback is **`TAKE n`**, not `NEW PROGRAM`.
+Six castings had five different fallbacks, and consecutive empty saves now give `TAKE 3`, `TAKE 4`
+rather than leaning on `getNonexistentSibling` for `NEW PROGRAM (2)`.
 
 **Company and product stay here**, passed to core as arguments. Core has no defaults for them by
 design: a hand-synced copy of one drifted to a dead company name in CHORUS-60 and quietly pointed

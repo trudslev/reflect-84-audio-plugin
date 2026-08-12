@@ -19,14 +19,15 @@ directory nothing was writing to."
 ProgramManager::ProgramManager (juce::AudioProcessorValueTreeState& state,
                                 juce::File userDirectoryOverride)
     : apvts (state),
-      userDirectory (userDirectoryOverride == juce::File() ? getDefaultUserProgramDirectory()
-                                                           : userDirectoryOverride)
+      store (nf::userProgramDirectory (NF_COMPANY_NAME, NF_PRODUCT_NAME, userDirectoryOverride),
+             getProgramFileExtension(),
+             maxProgramNameLength)
 {
     // The identity must be valid before initialise() runs, as the atomic index it replaced was
     // valid from its in-class initialiser: a host may query the moment the processor exists.
     setCurrentId (factoryIdAt (defaultFactoryProgramIndex));
 
-    refreshUserProgramList();
+    store.refresh();
 }
 
 ProgramManager::~ProgramManager()
@@ -42,7 +43,7 @@ void ProgramManager::initialise()
 //==============================================================================
 juce::File ProgramManager::getUserProgramDirectory() const
 {
-    return userDirectory;
+    return store.getDirectory();
 }
 
 juce::File ProgramManager::getDefaultUserProgramDirectory()
@@ -58,27 +59,6 @@ juce::File ProgramManager::getDefaultUserProgramDirectory()
     return nf::userProgramDirectory (NF_COMPANY_NAME, NF_PRODUCT_NAME);
 }
 
-void ProgramManager::refreshUserProgramList()
-{
-    userProgramFiles.clear();
-
-    const auto dir = getUserProgramDirectory();
-
-    if (dir.isDirectory())
-        for (const auto& entry : juce::RangedDirectoryIterator (dir, false, "*" + getProgramFileExtension()))
-            userProgramFiles.add (entry.getFile());
-
-    // Alphabetical by filename, deliberately not by modification time: the menu's order has to be
-    // the same every launch.
-    std::sort (userProgramFiles.begin(), userProgramFiles.end(),
-               [] (const juce::File& a, const juce::File& b)
-               {
-                   // The STEM, not getFileName(): comparing with the extension attached sorts
-                   // "AB C" before "AB", because a space (0x20) precedes the dot (0x2E).
-                   return a.getFileNameWithoutExtension()
-                           .compareIgnoreCase (b.getFileNameWithoutExtension()) < 0;
-               });
-}
 
 //==============================================================================
 juce::String ProgramManager::getProgramName (int factoryPosition) const
@@ -147,9 +127,8 @@ ProgramId ProgramManager::resolve (ProgramBank bank, const juce::String& id,
             return factoryIdAt (pos);
 
     if (bank == ProgramBank::user)
-        for (const auto& f : userProgramFiles)
-            if (f.getFileNameWithoutExtension() == id)
-                return { ProgramBank::user, id, id };
+        if (store.fileFor (id) != juce::File())
+            return { ProgramBank::user, id, id };
 
     // **Degrade honestly.** The restored values are correct and stay put; only the name is unknown.
     return { ProgramBank::unresolved, id, displayName.isNotEmpty() ? displayName : id };
@@ -158,14 +137,14 @@ ProgramId ProgramManager::resolve (ProgramBank bank, const juce::String& id,
 std::vector<ProgramId> ProgramManager::listPrograms() const
 {
     std::vector<ProgramId> out;
-    out.reserve (1 + kFactoryPrograms.size() + (size_t) userProgramFiles.size());
+    out.reserve (1 + kFactoryPrograms.size() + (size_t) store.getFiles().size());
 
     out.push_back (initId());
 
     for (size_t i = 0; i < kFactoryPrograms.size(); ++i)
         out.push_back (factoryIdAt ((int) i));
 
-    for (const auto& f : userProgramFiles)
+    for (const auto& f : store.getFiles())
     {
         const auto stem = f.getFileNameWithoutExtension();
         out.push_back ({ ProgramBank::user, stem, stem });
@@ -176,21 +155,12 @@ std::vector<ProgramId> ProgramManager::listPrograms() const
 
 juce::String ProgramManager::displayLabelFor (const ProgramId& id) const
 {
-    if (id.bank == ProgramBank::factory)
-        if (const int pos = factoryPositionOf (id.id); pos >= 0)
-            return juce::String (pos + 1).paddedLeft ('0', 2) + " " + id.displayName;
-
-    return id.displayName;
+    // The Factory position is resolved here because the Factory bank is this casting's own; core
+    // never holds one. The two-digit number is presentation and is computed, never stored.
+    return nf::programDisplayLabel (id, id.bank == ProgramBank::factory ? factoryPositionOf (id.id)
+                                                                        : -1);
 }
 
-juce::File ProgramManager::userProgramFile (const juce::String& stem) const
-{
-    for (const auto& f : userProgramFiles)
-        if (f.getFileNameWithoutExtension() == stem)
-            return f;
-
-    return {};
-}
 
 void ProgramManager::requestProgramChange (const ProgramId& id)
 {
@@ -267,7 +237,7 @@ void ProgramManager::applyProgram (const ProgramId& id)
     }
     else if (id.bank == ProgramBank::user)
     {
-        const auto file = userProgramFile (id.id);
+        const auto file = store.fileFor (id.id);
 
         if (file == juce::File())
             return;
@@ -357,37 +327,29 @@ bool ProgramManager::isModifiedFromLoadedProgram() const
 //==============================================================================
 void ProgramManager::saveNewUserProgram (const juce::String& requestedName)
 {
-    juce::String name = requestedName.trim().toUpperCase();
-
-    if (name.isEmpty())
-        name = "NEW PROGRAM";
-
-    if (name.length() > maxProgramNameLength)
-        name = name.substring (0, maxProgramNameLength);
-
-    const auto dir = getUserProgramDirectory();
-
-    if (! dir.isDirectory())
-        dir.createDirectory();
-
+    // **What a Program CONTAINS stays here** - the whole APVTS state plus the schema version. Core
+    // owns naming, the collision check and the write, and takes finished XML.
     auto state = apvts.copyState();
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     xml->setAttribute (LegacyMigration::stateSchemaVersionAttribute,
                        LegacyMigration::currentStateSchemaVersion);
 
-    juce::File file = dir.getChildFile (juce::File::createLegalFileName (name) + getProgramFileExtension());
+    // **The empty-name fallback is `TAKE n` now, not `NEW PROGRAM`.** The suite had five different
+    // ones across six castings; TAKE n is the one that is better rather than merely different,
+    // since consecutive empty saves give TAKE 3, TAKE 4 instead of leaning on getNonexistentSibling
+    // for "NEW PROGRAM (2)". Trimming, upper-casing and the 39-character cap are core's now too -
+    // this casting already applied all three here, so only the fallback string changes.
+    //
+    // The collision check that made "never overwrites" true rather than merely unimplemented
+    // originated in this casting; it is core's guarantee for all six now.
+    const auto file = store.save (requestedName, *xml);
 
-    // Save always creates a NEW Program. Both sibling castings write straight to this path, which
-    // means reusing an existing name silently replaces that Program's contents - the one way their
-    // "never overwrites" guarantee could actually be broken. getNonexistentSibling appends a
-    // counter instead, so the older Program survives and the new one is distinct.
-    if (file.existsAsFile())
-        file = file.getNonexistentSibling();
+    if (file == juce::File())
+        return;   // the write failed; the panel keeps naming the Program it was already on
 
-    xml->writeTo (file);
-
-    refreshUserProgramList();
-
+    // **The stem comes off the file core returned, not off the requested name.** A collision takes
+    // the next free sibling, so taking it from the request would point the panel at the first file
+    // while the values came from the second.
     const auto stem = file.getFileNameWithoutExtension();
     setCurrentId ({ ProgramBank::user, stem, stem });
 
@@ -405,15 +367,10 @@ void ProgramManager::deleteUserProgram (const ProgramId& id)
     if (id.bank != ProgramBank::user)
         return;
 
-    const auto file = userProgramFile (id.id);
-
-    if (file == juce::File())
-        return;
-
     const bool wasCurrent = getCurrentProgramId() == id;
 
-    file.deleteFile();
-    refreshUserProgramList();
+    if (! store.remove (id.id))
+        return;
 
     // Deliberately NOT the unresolved state: deleting from the panel is unambiguous intent.
     if (wasCurrent)

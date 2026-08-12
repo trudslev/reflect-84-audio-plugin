@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include <nf/ParameterSnapshot.h>
+#include <nf/UserProgramStore.h>
 
 #include "FactoryPrograms.h"
 
@@ -138,17 +139,16 @@ public:
 private:
     void handleAsyncUpdate() override;
 
-    void refreshUserProgramList();
     void applyProgram (const ProgramId& id);
     void setCurrentId (const ProgramId& id);
-    juce::File userProgramFile (const juce::String& stem) const;
     void applyFactoryProgram (const FactoryProgram& program);
     void captureCleanSnapshot();
 
     juce::AudioProcessorValueTreeState& apvts;
 
-    const juce::File userDirectory;
-    juce::Array<juce::File> userProgramFiles;
+    /** The User bank on disk. Scanning, sorting, naming, the collision check, save and delete are
+        core's; WHAT a Program contains - the whole APVTS state - stays here. */
+    nf::UserProgramStore store;
 
     mutable juce::SpinLock currentIdLock;
     ProgramId currentId;

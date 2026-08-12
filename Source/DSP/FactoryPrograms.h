@@ -2,6 +2,8 @@
 
 #include <juce_core/juce_core.h>
 
+#include <nf/ProgramId.h>
+
 #include <array>
 
 /**
@@ -32,31 +34,19 @@
     (design/README.md section 5), so it is stored at 1.0 = 8.0 s - the longest tail the control
     can express. Everything else is transcribed exactly.
 */
-/** Which list a Program belongs to. INIT is its own bank rather than a magic index; `unresolved`
-    is a stored identifier that no longer names anything. */
-enum class ProgramBank
-{
-    init,
-    factory,
-    user,
-    unresolved
-};
+/** **Program identity comes from core, and these aliases are the whole of the local surface.**
 
-/** **How a Program is identified everywhere except the host adapter.** Not a position - positions
-    change when the bank is reordered or extended, so a stored position is a name that stops meaning
-    the same thing.
+    `nf::ProgramBank` and `nf::ProgramId` say what six identical copies used to say separately:
+    INIT is its own bank rather than a magic index, identity is a permanent slug for a Factory
+    Program and the filename stem for a User one, and `displayName` is carried for presentation
+    only - a factory slug is not presentable, "rain-all-day?" in the LCD would read as a rendering
+    fault - and is deliberately outside `operator==`, so a corrected typo in the bank cannot make a
+    Program stop equalling itself.
 
-    `displayName` is carried because a factory slug is not presentable: "rain-all-day?" in the LCD
-    would read as a rendering fault. It is display only and never resolves anything. */
-struct ProgramId
-{
-    ProgramBank bank = ProgramBank::factory;
-    juce::String id;
-    juce::String displayName;
-
-    bool operator== (const ProgramId& o) const noexcept { return bank == o.bank && id == o.id; }
-    bool operator!= (const ProgramId& o) const noexcept { return ! operator== (o); }
-};
+    Aliased rather than used qualified at every call site, because the unqualified names are what
+    the panel, the header and the tests already read. */
+using ProgramBank = nf::ProgramBank;
+using ProgramId   = nf::ProgramId;
 
 struct FactoryProgram
 {
