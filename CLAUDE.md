@@ -16,13 +16,25 @@ for the diff. `design/CHANGELOG.md` states which revision a bundle is; read it f
 `design/screenshots/01-panel.png` is the approved artwork and outranks either doc's prose **on
 appearance** — but not, as of the 2026-08-11 bundle, on absolute Y.
 
-**That render is 4 px taller than the canvas the spec states, and the discrepancy is unexplained.**
-§1 still says 1340 × 645; `01-panel.png` is 2680 × 1298, which is 2× of 1340 × **649**. The previous
-render matched 645 exactly, so this is new. Correlating the two vertically, the body content sits
-**1 canvas px lower** than before — consistent with the header band going 33 → 34 — which leaves
-**3 px unaccounted for, below the body**. Until the designers resolve it: take X and appearance off
-the render freely, take absolute Y from the spec, and do not composite the two at a shared origin
-without checking which of them you have anchored to.
+**That render is 4 px taller than the canvas, and the canvas is right.** §1 says 1340 × 645;
+`01-panel.png` is 2680 × 1298, which is 2× of 1340 × **649**. Confirmed with the designers on
+2026-08-12: the panel is **1340 × 645.13** measured off the live layout, nothing in the source
+produces 649, and the render gained the pixels in export. `canvasHeight` stays 645.
+
+The .13 is worth knowing precisely because we anchor against it: it comes entirely from the
+wordmark's `line-height: 0.92` on 42 px — 38.64 px, the only fractional contributor on the panel —
+and it sits below the rounding floor at every supported scale, so 645 is safe as an integer rather
+than a value someone should be tempted to carry as a float.
+
+One pixel of the four *is* real and is not export: correlating the old render against the new, the
+body sits 1 canvas px lower, which is the header band going 33 → 34. That change is in the source.
+The other three are not, at any point in the layout.
+
+**So: take X and appearance off the render freely; take absolute Y from the spec.** Do not composite
+the two at a shared origin without checking which you have anchored to. A clean re-cut has been
+offered and accepted, and when it lands this caveat goes with it — until then the render is one
+pixel of real change wrapped in three of padding, which is exactly the shape that reads as a
+measurement rather than an artefact.
 
 `design/screenshots/header/` holds the five per-state header renders at 3×, which are the acceptance
 target for the Program-button lighting — the one part of this design no coordinate settles, and the
