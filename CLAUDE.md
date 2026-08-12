@@ -41,8 +41,8 @@ and reference renders out; leave the build's own directories alone.
 
 **This casting consumes `neon-foundry-core`, and is the first to.** The pin is a `FetchContent`
 line in `CMakeLists.txt` beside the JUCE one — `https://github.com/trudslev/neon-foundry-core.git`
-at `GIT_TAG v0.1.0`. Core carries shared *behaviour*
-only — as of v0.1.0 that is `nf::userProgramDirectory`, which resolves where user Programs live per
+at `GIT_TAG v1.0.0`. Core carries shared *behaviour*
+only — as of v1.0.0 that is `nf::userProgramDirectory`, which resolves where user Programs live per
 platform. `getDefaultUserProgramDirectory()` now forwards to it.
 
 **Company and product stay here**, passed to core as arguments. Core has no defaults for them by

@@ -41,7 +41,7 @@ FetchContent_MakeAvailable(JUCE)
 #
 FetchContent_Declare(NeonFoundryCore
     GIT_REPOSITORY https://github.com/trudslev/neon-foundry-core.git
-    GIT_TAG v0.1.0
+    GIT_TAG v1.0.0
     GIT_SHALLOW TRUE)
 FetchContent_MakeAvailable(NeonFoundryCore)
 
