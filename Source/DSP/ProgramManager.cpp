@@ -15,14 +15,6 @@ copy costs - it drifted from the real company name and quietly pointed saved Pro
 directory nothing was writing to."
 #endif
 
-namespace
-{
-    /** A parameter is "moved" once it differs by more than this from the loaded Program. Loose
-        enough to absorb the float round-trip through a user Program's XML, so a freshly loaded
-        Program never reads as dirty; far tighter than the smallest movement any control can make. */
-    constexpr float modifiedEpsilon = 1.0e-4f;
-}
-
 //==============================================================================
 ProgramManager::ProgramManager (juce::AudioProcessorValueTreeState& state,
                                 juce::File userDirectoryOverride)
