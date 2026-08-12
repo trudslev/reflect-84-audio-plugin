@@ -39,11 +39,10 @@ FetchContent_MakeAvailable(JUCE)
 # available. Two JUCE trees in one build link two juce_core builds into one binary and surface as
 # duplicate symbols a long way from the cause.
 #
-# GIT_REPOSITORY is a local path for now. It becomes the GitHub URL the moment the remote exists —
-# a one-line change, and the tag pin is already what it will be.
 FetchContent_Declare(NeonFoundryCore
-    GIT_REPOSITORY ${CMAKE_CURRENT_SOURCE_DIR}/../neon-foundry-core
-    GIT_TAG v0.1.0)
+    GIT_REPOSITORY https://github.com/trudslev/neon-foundry-core.git
+    GIT_TAG v0.1.0
+    GIT_SHALLOW TRUE)
 FetchContent_MakeAvailable(NeonFoundryCore)
 
 # REFLECT-84's panel is entirely vector/code-drawn - unlike Gatecrasher and CHORUS-60 there is no

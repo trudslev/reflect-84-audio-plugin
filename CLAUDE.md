@@ -40,7 +40,8 @@ ships no font binaries, and `CMakeLists.txt` embeds Jost and two IBM Plex Mono f
 and reference renders out; leave the build's own directories alone.
 
 **This casting consumes `neon-foundry-core`, and is the first to.** The pin is a `FetchContent`
-line in `CMakeLists.txt` beside the JUCE one, at `GIT_TAG v0.1.0`. Core carries shared *behaviour*
+line in `CMakeLists.txt` beside the JUCE one — `https://github.com/trudslev/neon-foundry-core.git`
+at `GIT_TAG v0.1.0`. Core carries shared *behaviour*
 only — as of v0.1.0 that is `nf::userProgramDirectory`, which resolves where user Programs live per
 platform. `getDefaultUserProgramDirectory()` now forwards to it.
 
