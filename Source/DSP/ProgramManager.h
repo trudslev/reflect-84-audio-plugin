@@ -2,6 +2,8 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include <nf/ParameterSnapshot.h>
+
 #include "FactoryPrograms.h"
 
 #include <functional>
@@ -154,9 +156,10 @@ private:
     bool hasPendingProgram = false;
     ProgramId pendingProgram;
 
-    /** Normalised values in getParameters() order. Message-thread only - every writer runs there,
-        so it needs no synchronisation. */
-    std::vector<float> cleanSnapshot;
+    /** The baseline the dirty flag compares against. Message-thread only - every writer runs
+        there, so it needs no synchronisation. Keyed by parameter ID inside; see
+        nf/ParameterSnapshot.h for why that is not an index. */
+    nf::ParameterSnapshot cleanSnapshot;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ProgramManager)
 };

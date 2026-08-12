@@ -348,26 +348,18 @@ void ProgramManager::applyFactoryProgram (const FactoryProgram& program)
 //==============================================================================
 void ProgramManager::captureCleanSnapshot()
 {
-    const auto& params = apvts.processor.getParameters();
-
-    cleanSnapshot.resize ((size_t) params.size());
-
-    for (int i = 0; i < params.size(); ++i)
-        cleanSnapshot[(size_t) i] = params[i]->getValue();
+    // The four call sites are unchanged - apply, restore, save, and the constructor. What moved is
+    // the storage: nf::ParameterSnapshot keys by parameter ID rather than by getParameters() order,
+    // so the "did the count change" guard this used to need is gone. That guard silently reported
+    // "not modified" whenever it fired, which is the wrong direction to fail in.
+    cleanSnapshot.capture (apvts.processor);
 }
 
 bool ProgramManager::isModifiedFromLoadedProgram() const
 {
-    const auto& params = apvts.processor.getParameters();
-
-    if (cleanSnapshot.size() != (size_t) params.size())
-        return false;
-
-    for (int i = 0; i < params.size(); ++i)
-        if (std::abs (params[i]->getValue() - cleanSnapshot[(size_t) i]) > modifiedEpsilon)
-            return true;
-
-    return false;
+    // No exclusion predicate here: every parameter on this casting counts as an edit. Chorus-60
+    // passes one for its pager latches; the distinction is documented on ParameterSnapshot.
+    return cleanSnapshot.differsFrom (apvts.processor);
 }
 
 //==============================================================================
