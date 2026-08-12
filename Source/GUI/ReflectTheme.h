@@ -315,11 +315,32 @@ namespace Text
 namespace Layout
 {
     // --- Canvas --------------------------------------------------------------
-    // GUI-SPEC.md section 1. Confirmed against all three v1.1 screenshots, which are 2680 x 1290 -
+    // GUI-SPEC.md section 1. Confirmed against the 2026-08-12 screenshots, which are 2680 x 1298 -
     // the artwork's own figure, not the doc's prose. v1.0's 1200 x 615 is retired along with its
     // three-column body; v1.1 is four columns.
+    //
+    // **649, and the 645 it replaces was measured off un-fonted renders.** The earlier screenshots
+    // were captured before the webfonts applied; three unpinned `line-height` blocks lay out ~3.5px
+    // shorter under the fallback face, so the whole panel came out 1290 at 2x instead of 1298.
+    //
+    // **Every coordinate below was already right and none of them moved.** That is the part worth
+    // recording, because the obvious reading of "the canvas grew by 4" is that the layout shifted.
+    // It did not - the build's own row-by-row correlation against the old renders had reported
+    // "1px in the header, the rest below", and this pass confirms the build was describing the
+    // panel while the render was describing a font that had not loaded. Measured landmark by
+    // landmark against old and new:
+    //
+    //     header top        16.0    old 16   new 16    unmoved in both
+    //     programWellY      61.0    old 60   new 61    build already matched the NEW render
+    //     scope bezel top  164.6    old 164  new 165        "
+    //     scopeScreenY     170.6    old 170  new 171        "
+    //     scope bezel base 346.6    old 346  new 347        "
+    //
+    // So this is a one-constant change. If a future render disagrees with the build again, measure
+    // landmarks before moving coordinates: the render is not automatically the authority when it
+    // may have been shot in a different font state.
     inline constexpr float canvasWidth  = 1340.0f;
-    inline constexpr float canvasHeight = 645.0f;
+    inline constexpr float canvasHeight = 649.0f;
     inline constexpr float panelRadius  = 10.0f;
     inline constexpr float panelPadding = 14.0f;
 
