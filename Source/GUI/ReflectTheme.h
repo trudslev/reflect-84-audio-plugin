@@ -101,6 +101,60 @@ namespace Colour
     inline const juce::Colour phosphor         { 0xFFF2E6C2 };
     inline const juce::Colour meterText        { 0xFFE8DCBA };
 
+    // --- Program list --------------------------------------------------------
+    /** **The list is the display continuing downward**, so it is drawn in the LCD's own well
+        material rather than the header's navy bezel - GUI-SPEC.md section 9. A bezel-coloured list
+        at the display's width reads as a panel part that has appeared from nowhere; glass reads as
+        more of the screen. */
+    inline const juce::Colour listTop          { 0xFF0A0F18 };
+    inline const juce::Colour listMid          { 0xFF070C14 };   // at 45%
+    inline const juce::Colour listBottom       { 0xFF05080E };
+
+    // Program names. The ink crosses the whole gradient, so both ends are quoted.
+    // contrast: 15.42-16.11:1 vs listTop,listBottom [functional]
+    inline const juce::Colour listItem         { 0xFFF2E6C2 };
+    // The FACTORY / USER captions.
+    // contrast: 10.89-11.37:1 vs listTop,listBottom [functional]
+    inline const juce::Colour listCaption      { 0xFFD8C18A };
+    /** The `- none saved -` row. **State, not functional**: a deliberately non-interactive row,
+        which BRAND.md's Legibility puts outside the functional floor - its job is to convey
+        *nothing here* rather than to be read. Still comfortably clear of the 3:1 state floor. */
+    // contrast: 7.22-7.55:1 vs listTop,listBottom [state]
+    inline const juce::Colour listPlaceholder  { 0xFF8EA0BC };
+    /** The rule between groups. **Deliberately carries no contrast annotation**, which is the
+        house treatment for a hairline - see scopeLeaderLine below: *"not text ... Alpha on a rule
+        is furniture and stays."* BRAND.md's floors are stated for TEXT ("No functional text
+        below...", "Flavour text never falls below..."), and judging a 1px divider by a text
+        standard is a category error. Annotated [flavour] it measured 2.30:1 and failed, which
+        would have been a bar it was never under. */
+    inline const juce::Colour listSeparator    { juce::Colour::fromRGBA (242, 230, 194, 77) }; // .30
+
+    /** The current Program's 3px bar, and the row's own lift. A bar rather than a tick: a tick
+        costs a character cell on every row to serve one, and JUCE's tick is the most OS-looking
+        mark available. The bar reads straight down one edge. */
+    inline const juce::Colour listMarker       { 0xFFF2E6C2 };
+    inline const juce::Colour listCurrentField { juce::Colour::fromRGBA (120, 160, 200, 23) }; // .09
+    inline const juce::Colour listHoverField   { juce::Colour::fromRGBA (120, 160, 200, 26) }; // .10
+    // The current row's text, which steps up from listItem.
+    // contrast: 17.93-18.73:1 vs listTop,listBottom [functional]
+    inline const juce::Colour listCurrentText  { 0xFFFDF7E6 };
+
+    /** **The chevron bands are opaque and their own colour**, which is why the chevrons are
+        measured against them rather than against the list surface. Top band is the surface's light
+        end, bottom band its dark end, each with a 1px rule along its inner edge. */
+    inline const juce::Colour listBandTop      { 0xFF0A0F18 };
+    inline const juce::Colour listBandBottom   { 0xFF05080E };
+    inline const juce::Colour listBandRule     { juce::Colour::fromRGBA (242, 230, 194, 26) }; // .10
+
+    // The scroll chevron, enabled.
+    // contrast: 10.89-11.37:1 vs listBandTop,listBandBottom [functional]
+    inline const juce::Colour listChevron      { 0xFFD8C18A };
+    /** At the end of its travel the chevron is **not removed and not hidden** - it steps back to
+        the Program buttons' unlit ink with no glow, because *nothing on this panel is ever drawn
+        inert*. State-dimming, so the 3:1 floor applies rather than the functional one. */
+    // contrast: 5.96-6.22:1 vs listBandTop,listBandBottom [state]
+    inline const juce::Colour listChevronDim   { 0xFF8090AE };
+
     // --- Program buttons -----------------------------------------------------
     /** **One face, in every state.** GUI-SPEC.md section 9: each button carries two legends,
         stacked and permanently printed - SAVE above STORE, DELETE above CANCEL - and the face
@@ -121,9 +175,21 @@ namespace Colour
 
     /** The legend crosses the face's gradient, so both ratios are quoted against its LIGHT end -
         the worst case. Measuring against the mean would flatter both by about a stop.
-        // contrast: 11.91:1 vs buttonFaceTop [functional]
-        // contrast: 3.91:1 vs buttonFaceTop [state] */
+
+        **Both annotations used to sit here, above legendLit.** An annotation binds to the next
+        colour constant below it, so the unlit figure bound to the LIT colour and check_contrast.py
+        reported legendLit as claiming 3.91 while measuring 11.92. The colour had not drifted - the
+        annotation had taken the wrong row, the same one-value-two-meanings shape as a schema
+        version or a font size serving two things. GUI-SPEC.md:197-198 gives 11.91 lit and 3.91
+        unlit; each now sits above the constant it describes. */
+    // contrast: 11.91:1 vs buttonFaceTop [functional]
     inline const juce::Colour legendLit        { 0xFFFDF7E6 };
+    // **3.96, not the spec's 3.91** - measured off the shipped colours rather than transcribed.
+    // #8090AE on #26324D is 3.9605; GUI-SPEC.md:198 rounds to 3.91. A 0.05 gap, which is the
+    // designer's arithmetic against ours and is below any perceptual threshold; both clear the 3:1
+    // state floor comfortably, so this is recorded rather than raised. It only surfaced now because
+    // the annotation had never bound to this constant - see the note above.
+    // contrast: 3.96:1 vs buttonFaceTop [state]
     inline const juce::Colour legendUnlit      { 0xFF8090AE };
 
     // --- Scope ---------------------------------------------------------------
