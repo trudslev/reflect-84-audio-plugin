@@ -25,6 +25,27 @@ FetchContent_Declare(JUCE
     GIT_SHALLOW TRUE)
 FetchContent_MakeAvailable(JUCE)
 
+# ---------------------------------------------------------------------------------------------
+# neon-foundry-core: shared BEHAVIOUR across the suite, pinned by tag exactly like JUCE above.
+#
+# **This is not a dependency on a sibling casting.** Depending on one of those is still forbidden —
+# it couples two things that must ship on their own schedules. This is a versioned library that no
+# casting owns, so a change to it forces nothing on anyone until they move their own pin, which is
+# the same relationship every casting already has with JUCE. The root CLAUDE.md draws that
+# distinction under "Structure".
+#
+# **Declared AFTER JUCE, and that ordering is load-bearing.** Core links juce::juce_core and does
+# not fetch its own when consumed; it fails with an explicit message if JUCE is not already
+# available. Two JUCE trees in one build link two juce_core builds into one binary and surface as
+# duplicate symbols a long way from the cause.
+#
+# GIT_REPOSITORY is a local path for now. It becomes the GitHub URL the moment the remote exists —
+# a one-line change, and the tag pin is already what it will be.
+FetchContent_Declare(NeonFoundryCore
+    GIT_REPOSITORY ${CMAKE_CURRENT_SOURCE_DIR}/../neon-foundry-core
+    GIT_TAG v0.1.0)
+FetchContent_MakeAvailable(NeonFoundryCore)
+
 # REFLECT-84's panel is entirely vector/code-drawn - unlike Gatecrasher and CHORUS-60 there is no
 # background plate, no knob filmstrip, no baked nameplate. The only runtime assets are the two
 # typefaces design/README.md specifies: Jost 500 for the engraved wordmark and IBM Plex Mono for
@@ -135,6 +156,7 @@ target_link_libraries(Reflect84
         juce::juce_audio_utils
         juce::juce_dsp
         Reflect84BinaryData
+        nf::core
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

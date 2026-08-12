@@ -39,6 +39,25 @@ ships no font binaries, and `CMakeLists.txt` embeds Jost and two IBM Plex Mono f
 `design/fonts/`, so installing a bundle over `design/` would delete build assets. Copy the documents
 and reference renders out; leave the build's own directories alone.
 
+**This casting consumes `neon-foundry-core`, and is the first to.** The pin is a `FetchContent`
+line in `CMakeLists.txt` beside the JUCE one, at `GIT_TAG v0.1.0`. Core carries shared *behaviour*
+only — as of v0.1.0 that is `nf::userProgramDirectory`, which resolves where user Programs live per
+platform. `getDefaultUserProgramDirectory()` now forwards to it.
+
+**Company and product stay here**, passed to core as arguments. Core has no defaults for them by
+design: a hand-synced copy of one drifted to a dead company name in CHORUS-60 and quietly pointed
+saved Programs at a directory nothing reads. The `#error` at the top of `ProgramManager.cpp`
+guarantees CMake supplied them.
+
+**Declaring core after JUCE is load-bearing.** Core links `juce::juce_core` and does not fetch its
+own when consumed; it fails with an explicit message if JUCE is not already available. Two JUCE
+trees in one build link two `juce_core` builds into one binary, and that surfaces as duplicate
+symbols a long way from the cause.
+
+**This is not a dependency on a sibling casting**, which stays forbidden. Core is a versioned
+library no casting owns, so a change to it forces nothing until this repo moves its own pin — the
+same relationship every casting already has with JUCE. See the root `CLAUDE.md` under *Structure*.
+
 ## Commands
 
 REFLECT-84 builds on macOS (AU + VST3 + Standalone), Windows (VST3 + Standalone), and Linux

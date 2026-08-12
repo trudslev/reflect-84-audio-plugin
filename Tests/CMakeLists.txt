@@ -27,6 +27,8 @@ target_compile_definitions(Reflect84Tests PRIVATE
 # than stubbing it is the point: the font a test measures must be the font the panel draws.
 target_link_libraries(Reflect84Tests PRIVATE
     Reflect84BinaryData
+    # ProgramManager.cpp is compiled into both targets and now calls into core, so both link it.
+    nf::core
     juce::juce_dsp
     juce::juce_audio_basics
     juce::juce_audio_processors

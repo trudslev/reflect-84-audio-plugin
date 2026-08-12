@@ -2,6 +2,8 @@
 
 #include "../Parameters.h"
 
+#include <nf/UserProgramDirectory.h>
+
 #include <algorithm>
 #include <cmath>
 
@@ -53,37 +55,15 @@ juce::File ProgramManager::getUserProgramDirectory() const
 
 juce::File ProgramManager::getDefaultUserProgramDirectory()
 {
-    // **Application data on every platform - no macOS special case.** This used to branch, putting
-    // macOS Programs under ~/Library/Audio/Presets. That is Apple's location for the AU PRESET
-    // FORMAT: .aupreset files the AU system itself scans, reads and writes. Our user Programs are
-    // not those - they are application-owned data in our own XML format - so they belong where an
-    // application keeps its data, and the AU folder should hold only what AU understands.
+    // **Moved to core**, where the reasoning lives with it: the AU-preset-folder mistake five
+    // castings made, and the macOS "Application Support" segment that went missing for a day
+    // because a comment claimed JUCE resolved it. See nf/UserProgramDirectory.h.
     //
-    // **macOS needs the "Application Support" segment added by hand, and only macOS.** JUCE's
-    // userApplicationDataDirectory is `~/Library` there - NOT `~/Library/Application Support` -
-    // while it is `%APPDATA%` on Windows and `~/.config` on Linux, both of which are already the
-    // right root. JUCE's own PropertiesFile appends the segment the same way, for the same reason.
-    //
-    // This was got wrong once in exactly the plausible direction: the note here used to claim JUCE
-    // resolved the segment for us, and that hard-coding it would be wrong on two platforms out of
-    // three. The first half was false, and the second half only argues for the `#if` - it is one
-    // platform's extra segment, not a shared literal path. Programs landed directly in
-    // `~/Library/<Company>/` for a while, which is not where application data goes on macOS and is
-    // not a folder anything else writes into.
-    //
-    // No migration from the old location: nothing has shipped at a released version, so no
-    // installed build has ever written a Program there for anyone but us. See Elmer's
-    // ProgramManager for the full reasoning - it is a decision, not an oversight.
-    auto dir = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory);
-
-   #if JUCE_MAC
-    dir = dir.getChildFile ("Application Support");
-   #endif
-
-    return dir
-               .getChildFile (NF_COMPANY_NAME)
-               .getChildFile (NF_PRODUCT_NAME)
-               .getChildFile ("Programs");
+    // Company and product stay HERE. They are this casting's identity, and core takes them as
+    // arguments precisely so no shared default can exist to drift - CHORUS-60's hand-synced copy
+    // drifted to a dead company name and quietly pointed saved Programs at a directory nothing
+    // reads. The #error at the top of this file is what guarantees they arrive.
+    return nf::userProgramDirectory (NF_COMPANY_NAME, NF_PRODUCT_NAME);
 }
 
 void ProgramManager::refreshUserProgramList()
