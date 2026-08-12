@@ -17,7 +17,7 @@
   a:hover { color: #d9bd75; }
 </style>
 </helmet>
-<div style="width: 1340px; padding: 16px; box-sizing: border-box; background: linear-gradient(#efe6d0, #e2d8bd 60%, #d8cdb0); border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.75), inset 0 -2px 6px rgba(90,70,40,.18); font-family: 'IBM Plex Mono', monospace; color: #332b1e; position: relative; overflow: hidden;">
+<div ref="{{ panelRef }}" style="width: 1340px; padding: 16px; box-sizing: border-box; background: linear-gradient(#efe6d0, #e2d8bd 60%, #d8cdb0); border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.75), inset 0 -2px 6px rgba(90,70,40,.18); font-family: 'IBM Plex Mono', monospace; color: #332b1e; position: relative; overflow: hidden;">
 
   <div style="position: absolute; inset: 0; pointer-events: none; z-index: 3; background: repeating-linear-gradient(0deg, rgba(80,60,25,.035) 0 1px, rgba(255,255,255,0) 1px 3px), radial-gradient(120% 90% at 20% 0%, rgba(255,255,255,.5), rgba(255,255,255,0) 60%);"></div>
 
@@ -37,7 +37,7 @@
       <div style="font-size: 10px; letter-spacing: .30em; color: #d8c18a;">PROGRAM</div>
       <div style="display: flex; align-items: stretch; gap: 8px;">
         <div style="flex: 1; position: relative;">
-          <div onClick="{{ onProgramClick }}" style="height: 34px; box-sizing: border-box; display: flex; align-items: stretch; background: linear-gradient(#0a0f18, #060a11); border: 1px solid rgba(0,0,0,.7); border-radius: 3px; box-shadow: inset 0 2px 7px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.12); cursor: pointer; overflow: hidden; position: relative;" style-hover="background: linear-gradient(#0e1522, #080d16);">
+          <div onClick="{{ onProgramClick }}" ref="{{ lcdRef }}" style="height: 34px; box-sizing: border-box; display: flex; align-items: stretch; background: linear-gradient(#0a0f18, #060a11); border: 1px solid rgba(0,0,0,.7); border-radius: 3px; box-shadow: inset 0 2px 7px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.12); cursor: pointer; overflow: hidden; position: relative;" style-hover="background: linear-gradient(#0e1522, #080d16);">
             <div style="display: flex; align-items: center; padding: 5px 16px; font-size: 16px; letter-spacing: .13em; color: #f2e6c2; text-shadow: 0 0 9px rgba(242,230,194,.3);">{{ bankBadge }}</div>
             <div style="width: 1px; margin: 5px 0; background: rgba(242,230,194,.35);"></div>
             <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 5px 32px 5px 12px; font-size: 16px; letter-spacing: .13em; color: #f2e6c2; text-shadow: 0 0 9px rgba(242,230,194,.3); white-space: nowrap; overflow: hidden;">{{ lcdText }}</div>
@@ -45,13 +45,28 @@
           </div>
 
           <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
-            <div style="position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20; max-height: 260px; overflow: auto; background: linear-gradient(#0d1420, #080d16); border: 1px solid rgba(0,0,0,.75); border-radius: 3px; box-shadow: 0 10px 28px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08); padding: 4px 0;">
-              <sc-for list="{{ menuRows }}" as="r" hint-placeholder-count="6">
-                <div onClick="{{ r.onClick }}" style="display: flex; align-items: center; gap: 10px; padding: {{ r.pad }}; font-size: {{ r.size }}; letter-spacing: {{ r.track }}; color: {{ r.color }}; cursor: {{ r.cursor }};" style-hover="background: rgba(120,160,200,.10);">
-                  <div style="width: 12px; text-align: center;">{{ r.tick }}</div>
-                  <div>{{ r.text }}</div>
+            <div style="position: absolute; left: 0; right: 0; top: 100%; z-index: 20; height: {{ menuH }}; background: linear-gradient(#0a0f18, #070c14 45%, #05080e); border-left: 1px solid rgba(0,0,0,.7); border-right: 1px solid rgba(0,0,0,.7); box-shadow: inset 3px 0 7px rgba(0,0,0,.55), inset -3px 0 7px rgba(0,0,0,.55), inset 0 3px 6px rgba(0,0,0,.7); overflow: hidden;">
+              <div style="position: absolute; inset: 0; z-index: 2; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(198,222,255,.028) 0 1px, rgba(0,0,0,0) 1px 3px), radial-gradient(120% 60% at 50% 0%, rgba(150,190,240,.05), rgba(0,0,0,0) 70%);"></div>
+
+              <div onWheel="{{ onMenuWheel }}" style="position: absolute; inset: 0; overflow: hidden;">
+                <div style="padding: {{ menuPad }} 0; transform: {{ menuShift }};">
+                <sc-for list="{{ menuRows }}" as="r" hint-placeholder-count="8">
+                  <div onClick="{{ r.onClick }}" style="position: relative; box-sizing: border-box; height: {{ r.h }}; display: flex; align-items: center; padding: 0 14px 0 16px; font-size: {{ r.size }}; letter-spacing: {{ r.track }}; white-space: nowrap; color: {{ r.color }}; text-shadow: {{ r.glow }}; background: {{ r.bg }}; cursor: {{ r.cursor }};" style-hover="background: {{ r.hover }};">
+                    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: {{ r.bar }}; box-shadow: {{ r.barGlow }};"></div>
+                    <div>{{ r.text }}</div>
+                  </div>
+                </sc-for>
                 </div>
-              </sc-for>
+              </div>
+
+              <sc-if value="{{ arrowsOn }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ onScrollUp }}" style="position: absolute; left: 0; right: 0; top: 0; z-index: 3; height: 20px; display: flex; align-items: center; justify-content: center; background: #0a0f18; border-bottom: 1px solid rgba(242,230,194,.10); cursor: pointer;">
+                  <div style="width: 9px; height: 9px; margin-top: 4px; border-left: 1.6px solid {{ upInk }}; border-top: 1.6px solid {{ upInk }}; transform: rotate(45deg); filter: {{ upGlow }};"></div>
+                </div>
+                <div onClick="{{ onScrollDown }}" style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; height: 20px; display: flex; align-items: center; justify-content: center; background: #05080e; border-top: 1px solid rgba(242,230,194,.10); cursor: pointer;">
+                  <div style="width: 9px; height: 9px; margin-bottom: 4px; border-right: 1.6px solid {{ downInk }}; border-bottom: 1.6px solid {{ downInk }}; transform: rotate(45deg); filter: {{ downGlow }};"></div>
+                </div>
+              </sc-if>
             </div>
           </sc-if>
         </div>
@@ -276,6 +291,9 @@ class Component extends DCLogic {
       users: [], menuOpen: false, live: null, dirty: false, naming: false, nameDraft: ''
     };
     this.factory = ['01 RAIN ALL DAY', '02 SO LONG', '03 COLD ATMOSPHERE', '04 WORLD GONE MAD'];
+    this._panelRef = React.createRef();
+    this._lcdRef = React.createRef();
+    this._menuRef = React.createRef();
     this.noise = Array.from({ length: 240 }, () => 0.35 + Math.random() * 0.65);
   }
 
@@ -375,6 +393,17 @@ class Component extends DCLogic {
 
   selectProgram(bank, i) { this.setState({ bank, program: i, menuOpen: false, dirty: false }); }
 
+  // The list's extent is display-bottom to panel-bottom, so it is a measurement,
+  // not a max-height. Remeasured whenever it opens.
+  measureMenu() {
+    requestAnimationFrame(() => {
+      const p = this._panelRef.current, l = this._lcdRef.current;
+      if (!p || !l) return;
+      const h = Math.round(p.getBoundingClientRect().bottom - l.getBoundingClientRect().bottom);
+      this.setState({ menuH: h, menuTop: 0 });
+    });
+  }
+
   // Backlit legends: the type IS the lamp. No separate light source, no ink-weight
   // change, never the accent. Unlit reads at 3.91:1 worst case on the button face.
   legend(on) {
@@ -437,23 +466,54 @@ class Component extends DCLogic {
 
     const bank = this.state.bank;
     const list = bank === 'FACT' ? this.factory : this.state.users;
-    const current = list[this.state.program] || this.factory[0];
+    const current = this.state.program === -1 ? 'INIT' : (list[this.state.program] || this.factory[0]);
     const isUser = bank === 'USER';
     const naming = !!this.state.naming;
     // Dirty marker and SAVE's lamp read the same flag, so they cannot disagree.
     const shown = current.toUpperCase() + (this.state.dirty ? ' *' : '');
 
+    // Dropdown rows. Heights are pinned constants — they never grow to the host
+    // platform's standard row height. § 9.
     const rows = [];
-    const head = (t) => ({ text: t, tick: '', pad: '9px 12px 4px', size: '10px', track: '.26em', color: '#c8b177', cursor: 'default', onClick: () => {} });
-    const item = (t, sel, onClick) => ({ text: t, tick: sel ? '\u2713' : '', pad: '6px 12px', size: '13px', track: '.10em', color: '#f2e6c2', cursor: 'pointer', onClick });
+    const head = (t) => ({
+      text: t, h: '22px', size: '10px', track: '.26em', color: '#d8c18a', glow: 'none',
+      bar: 'transparent', barGlow: 'none', bg: 'transparent', hover: 'transparent',
+      cursor: 'default', onClick: () => {}
+    });
+    // Current-Program marker: a 3px lit bar at the row's left edge, not a tick glyph.
+    // It reads straight down the column and costs no character cell.
+    const item = (t, sel, onClick) => ({
+      text: t, h: '26px', size: '13px', track: '.10em',
+      color: sel ? '#fdf7e6' : '#f2e6c2',
+      glow: sel ? '0 0 10px rgba(253,247,230,.45)' : 'none',
+      bar: sel ? '#f2e6c2' : 'transparent',
+      barGlow: sel ? '0 0 8px rgba(242,230,194,.65)' : 'none',
+      bg: sel ? 'rgba(120,160,200,.09)' : 'transparent',
+      hover: sel ? 'rgba(120,160,200,.09)' : 'rgba(120,160,200,.10)',
+      cursor: 'pointer', onClick
+    });
+    const SEP = 'linear-gradient(rgba(0,0,0,0) 4px, rgba(242,230,194,.30) 4px, rgba(242,230,194,.30) 5px, rgba(0,0,0,0) 5px)';
+    const initSel = bank === 'FACT' && this.state.program === -1;
+    rows.push(item('INIT', initSel, () => this.selectProgram('FACT', -1)));
+    rows.push({ text: '', h: '9px', size: '10px', track: '0', color: 'transparent', glow: 'none', bar: 'transparent', barGlow: 'none', bg: SEP, hover: SEP, cursor: 'default', onClick: () => {} });
     rows.push(head('FACTORY'));
     this.factory.forEach((n, i) => rows.push(item(n, bank === 'FACT' && this.state.program === i, () => this.selectProgram('FACT', i))));
     rows.push(head('USER'));
     if (this.state.users.length === 0) {
-      rows.push({ text: '— none saved —', tick: '', pad: '6px 12px 8px', size: '12px', track: '.08em', color: '#8ea0bc', cursor: 'default', onClick: () => {} });
+      rows.push({ text: '— none saved —', h: '26px', size: '12px', track: '.08em', color: '#8ea0bc', glow: 'none', bar: 'transparent', barGlow: 'none', bg: 'transparent', hover: 'transparent', cursor: 'default', onClick: () => {} });
     } else {
       this.state.users.forEach((n, i) => rows.push(item(n, isUser && this.state.program === i, () => this.selectProgram('USER', i))));
     }
+    // Scroll is computed from the pinned row heights, not read off a scroll box:
+    // the list has no platform scrollbar at all — the chevrons and the wheel are
+    // the only way it moves.
+    const MENU_H = this.state.menuH || 520;
+    const ROWS_H = rows.reduce((a, r) => a + parseInt(r.h, 10), 0);
+    const ARROWS = ROWS_H > MENU_H;
+    const BAND = 20;
+    const MAXS = Math.max(0, ROWS_H + (ARROWS ? BAND * 2 : 0) - MENU_H);
+    const MTOP = Math.max(0, Math.min(this.state.menuTop || 0, MAXS));
+    const scrollTo = (t) => this.setState({ menuTop: Math.max(0, Math.min(t, MAXS)) });
 
     return {
       gridV: Array.from({ length: 11 }, (_, i) => ({ x: ((i + 1) * (W / 12)).toFixed(1) })),
@@ -498,7 +558,24 @@ class Component extends DCLogic {
       bankBadge: naming ? 'NAME' : bank,
       menuOpen: this.state.menuOpen,
       menuRows: rows,
-      onProgramClick: () => { if (naming) return; this.setState(s => ({ menuOpen: !s.menuOpen })); },
+      // The list hangs flush off the display's bottom edge and runs to the panel's
+      // bottom — measured, not guessed, so it stays flush at any scale.
+      menuH: (this.state.menuH || 520) + 'px',
+      panelRef: this._panelRef,
+      lcdRef: this._lcdRef,
+      onMenuWheel: (e) => scrollTo(MTOP + e.deltaY),
+      onScrollUp: () => scrollTo(MTOP - 104),
+      onScrollDown: () => scrollTo(MTOP + 104),
+      arrowsOn: ARROWS,
+      // Rows never pass under the chevron bands — the list is inset by their height
+      // instead, so the bands read as fixed furniture at the list's ends.
+      menuPad: ARROWS ? '20px' : '0px',
+      menuShift: 'translateY(' + (-MTOP) + 'px)',
+      upInk: MTOP > 0 ? '#d8c18a' : '#8090ae',
+      downInk: MTOP < MAXS ? '#d8c18a' : '#8090ae',
+      upGlow: MTOP > 0 ? 'drop-shadow(0 0 4px rgba(216,193,138,.55))' : 'none',
+      downGlow: MTOP < MAXS ? 'drop-shadow(0 0 4px rgba(216,193,138,.55))' : 'none',
+      onProgramClick: () => { if (naming) return; this.setState(s => ({ menuOpen: !s.menuOpen }), () => { if (this.state.menuOpen) this.measureMenu(); }); },
       onSave: () => { if (naming) this.commitName(); else if (this.state.dirty) this.startNaming(); },
       legSave: this.legend(!naming && this.state.dirty),
       legStore: this.legend(naming),

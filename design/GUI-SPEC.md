@@ -20,14 +20,25 @@ pass affects it.
 
 ## 1. Canvas and coordinate frame
 
-- Panel **1340 × 645 px** at 100%. Fixed aspect 2.077:1, scales proportionally.
-  Height is content-driven, not pinned: the laid-out panel measures **645.13 px**
-  (the wordmark's `line-height: 0.92` on 42px = 38.64px is the only fractional
-  contributor). 645 is the number to build against; the 0.13 is below the rounding
-  floor at every supported scale.
-- `screenshots/01-panel.png` is the acceptance target: **2680 × 1290, exactly 2× the
-  canvas**, re-cut 12 Aug. X, Y and appearance may all be measured off it. (The
-  earlier re-cut exported 1298 and was not Y-anchorable; that caveat is retired.)
+- Panel **1340 × 649 px** at 100%. Fixed aspect 2.065:1, scales proportionally.
+  Height is content-driven, not pinned: the laid-out panel measures **648.63 px**.
+- **645 was wrong, and so was the "export overshoot" finding on 12 Aug.** Both came
+  from measuring the panel *before its webfonts had applied*. Three text blocks
+  (the model line, the PROGRAM caption row, and the knob-label column) have no
+  pinned `line-height`, so their heights follow the rendering font's metrics: with
+  the fallback monospace the panel lays out at 645.13, with Jost and IBM Plex Mono
+  loaded it lays out at 648.63. The header accounts for ~1px of the difference and
+  the body for ~2.5px — which is the 1 + 3 split the build correlated off the two
+  renders, and the build's reading of it was right.
+- **649 is the canvas.** It is what the plugin renders once fonts are up, which is
+  every frame a user ever sees. Every absolute Y in § 1's frame moves with it.
+- `screenshots/01-panel.png`, `02`, `03` are all **2680 × 1298, exactly 2× the
+  canvas**, re-cut 12 Aug with fonts confirmed applied. X, Y and appearance may all
+  be measured off them.
+- **If the build would rather hold 645**, the fix is to pin `line-height` on those
+  three blocks rather than to pick a number — say so and it will be specified. Do
+  not pin them locally: a canvas that depends on font load state is a defect
+  wherever it is solved, and it should be solved in one place.
 - Scaling range must reach at least **200%** as a genuine accessibility lever
   (BRAND.md § Canvas). 50–200% is the intended range.
 - All coordinates below are **px from the panel's top-left corner at 100%**.
@@ -476,23 +487,102 @@ release**. Parameter names in the readout are the printed control names in full
 readout. No tooltips, no floating value bubbles — the display already on the panel
 does this job.
 
-### Dropdown — follows TapeRot
+### The Program list
 
-Structure and behaviour identical to TapeRot's; only the palette is Reflect-84's.
+**No longer follows TapeRot.** TapeRot's floating menu was a platform dropdown in
+Reflect-84's colours. This one is the display continuing downward: it hangs flush
+off the LCD's bottom edge, at the LCD's width, and runs to the panel's bottom edge.
+Reference render `screenshots/06-panel-menu-open.png` (2×).
 
-- Opens on click anywhere in the LCD cell, anchored flush to the cell's left and right edges, 4px below it. Max height 260px, scrolls beyond that.
-- Menu surface `#0d1420 → #080d16`, 1px `rgba(0,0,0,.75)`, radius 3, `0 10px 28px rgba(0,0,0,.6)` + `inset 0 1px 0 rgba(255,255,255,.08)`, 4px vertical padding.
-- **Two groups, always both present, Factory first.** Group headers `FACTORY` and `USER`: 10px, .26em, `#c8b177`, padding 9px 12px 4px, not selectable.
-- Items: 13px, .10em, `#f2e6c2`, padding 6px 12px, hover `rgba(120,160,200,.10)`. A 12px gutter at the left holds a `✓` on the currently loaded Program.
-- When the User bank is empty the USER group shows a single non-selectable row `— none saved —` in 12px `#8ea0bc`. The group header is never hidden.
-- Selecting an item loads it, sets the bank badge, and closes the menu.
+**Material: phosphor glass, not bezel.** Because the list is physically continuous
+with the display, it is drawn in the display's own well material, not the header's
+navy bezel. A bezel-coloured list at the display's width reads as a panel part that
+has appeared out of nowhere; glass reads as more of the screen.
+
+- Surface `#0a0f18 → #070c14 (45%) → #05080e`. **No top border and no top radius** —
+  the join to the LCD is invisible by design. 1px `rgba(0,0,0,.7)` left and right
+  only; `inset 3px 0 7px rgba(0,0,0,.55)` each side and `inset 0 3px 6px rgba(0,0,0,.7)`
+  at the top, continuing the LCD's recess.
+- Scanline overlay over the whole list: `repeating-linear-gradient(0deg,
+  rgba(198,222,255,.028) 0 1px, transparent 1px 3px)` plus
+  `radial-gradient(120% 60% at 50% 0%, rgba(150,190,240,.05), transparent 70%)`.
+  Same phosphor treatment as the LCD face.
+- **Height is a measurement, not a max-height**: panel bottom minus LCD bottom.
+  **554px** at 100% on the current canvas. It does not shrink-wrap the rows — a
+  short list leaves empty glass below, which is correct and is what `06` shows.
+  Bottom corners are clipped by the panel's own 10px radius; the list draws no
+  radius of its own.
+
+**Row heights are pinned and never grow to the host's standard.**
+
+| Row | Height | Type | Ink |
+|---|---|---|---|
+| Program item | **26px** | 13px, .10em | `#f2e6c2` |
+| Group caption | **22px** | 10px, .26em | `#d8c18a` |
+| Separator | **9px** | — | 1px rule `rgba(242,230,194,.30)`, 4px from the top of the band |
+| `— none saved —` | **26px** | 12px, .08em | `#8ea0bc` |
+| Chevron band | **20px** | — | see *Scroll chevrons* |
+
+Text inset is **16px** at the left on every row — the LCD's own text inset, so the
+list reads as one column with the display above it — and 14px at the right.
+
+**Order, top to bottom.** `INIT` (a 26px item row, **unnumbered**) · 9px separator ·
+`FACTORY` caption · Factory items · `USER` caption · User items, or the
+`— none saved —` placeholder. The USER group is never hidden.
+
+### Current-Program marker — a lit bar, not a tick
+
+A **3px bar at the row's left edge**, full row height, flush at x = 0: `#f2e6c2`
+with `0 0 8px rgba(242,230,194,.65)`. The row's field lifts to
+`rgba(120,160,200,.09)` and its text steps up to `#fdf7e6` with
+`0 0 10px rgba(253,247,230,.45)`.
+
+**Not a tick glyph, and not a gutter.** A tick costs a character cell on every row
+to serve one, and JUCE's own tick is the single most OS-looking mark available. The
+bar reads straight down the column — you find the current Program by scanning one
+edge — and it lights the same way every other live thing on this panel does, so it
+belongs to the instrument rather than to the menu widget.
+
+Hover on a selectable row is `rgba(120,160,200,.10)`; the current row does not
+change on hover (it is already lifted). Captions and the placeholder do not
+respond to hover at all.
+
+### Scroll chevrons
+
+The list has **no platform scrollbar in any state** — it is not scrolled by
+dragging. It moves by the chevrons and by the wheel, and nothing else is drawn.
+
+- **Bands.** 20px tall, full width, opaque: `#0a0f18` at the top with a 1px
+  `rgba(242,230,194,.10)` rule along its lower edge, `#05080e` at the bottom with
+  the same rule along its upper edge. When the bands are present the list is
+  **inset by 20px top and bottom**, so no row ever passes under a band — they are
+  fixed furniture at the ends of the list, not a fade over moving content.
+- **Glyph.** A 9 × 9px box with two **1.6px** borders — left+top for up,
+  right+bottom for down — rotated 45°. This is the **same construction as the LCD
+  cell's own caret**, which is where the list's ink comes from; the up chevron is
+  that caret rotated. Centred in its band, offset 4px toward the band's outer edge
+  so it sits optically centred.
+- **States.** Enabled `#d8c18a` with `drop-shadow(0 0 4px rgba(216,193,138,.55))`.
+  At the end of its travel it is **not removed and not hidden**: it steps back to
+  `#8090ae` with no glow — the same unlit ink as the Program button legends, above
+  the 3:1 state floor, consistent with *nothing on this panel is ever drawn inert*.
+  Renders: `07-menu-scroll-top.png` (up stepped back) and `08-menu-scroll-end.png`
+  (down stepped back), both 2×.
+- **Step.** One click scrolls **104px — exactly four item rows.** Wheel scrolls by
+  the platform delta. Both clamp at the ends.
+
+**When scrolling starts.** With the build's twelve Factory Programs the fixed rows
+come to 391px against 554px of glass, so the list scrolls once the **seventh User
+Program** is saved. Both scroll renders show a 21-entry User bank.
+
+Selecting an item loads it, sets the bank badge, and closes the list. Clicking the
+LCD toggles it. Naming suppresses it (§ *Naming*).
 
 Factory bank: **twelve Programs, names from the build** — the bank is authored
-there, not here. The four listed in v1.0 (`01 RAIN ALL DAY`, `02 SO LONG`,
-`03 COLD ATMOSPHERE`, `04 WORLD GONE MAD`) were illustrative and the prototype
-still shows them; treat the build's twelve as authoritative and ignore the
-prototype's list. Menu geometry above is unaffected — twelve items plus two group
-headers exceed the 260px max height, so the menu scrolls, which is specified.
+there, not here. The four in the renders (`01 RAIN ALL DAY`, `02 SO LONG`,
+`03 COLD ATMOSPHERE`, `04 WORLD GONE MAD`) are illustrative and so are every User
+name shown; treat the build's twelve as authoritative. Geometry above is unaffected
+— only where scrolling begins moves.
 
 ### SAVE / DELETE — naming flow, follows TapeRot
 

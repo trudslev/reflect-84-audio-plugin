@@ -1,5 +1,18 @@
 # REFLECT-84 handoff — revision log
 
+## 12 Aug — Program list rebuilt, canvas corrected to 649
+
+- **The Program dropdown is now the display continuing downward**, not a platform
+  menu in the panel's colours: phosphor glass, flush off the LCD's bottom edge at
+  the LCD's width, running to the panel's bottom. Pinned row heights (26 item /
+  22 caption / 9 separator), `INIT` unnumbered above the separator, current Program
+  marked by a **3px lit bar** at the row's left edge rather than a tick glyph.
+  `GUI-SPEC.md` § 9 *The Program list* replaces *Dropdown — follows TapeRot*.
+- **Scroll chevrons specified and drawn** — the LCD caret's own construction
+  (9 × 9px, 1.6px borders, rotated 45°) in 20px opaque bands at the list's ends,
+  lit `#d8c18a` and stepped back to `#8090ae` at the end of travel. No platform
+  scrollbar in any state. Renders `06`, `07`, `08` at 2×.
+
 Check this file first to confirm which revision you are holding.
 
 ## v1.1 — conformance pass (current)
@@ -7,16 +20,20 @@ Check this file first to confirm which revision you are holding.
 Panel **1340 × 645**, four body columns. Adds `GUI-SPEC.md`, which is the build
 contract and supersedes `README.md` wherever they disagree.
 
-- **All three panel renders re-cut at exactly 2680 × 1290** (2× the 645 canvas);
-  they previously exported 1298. Y is anchorable off them again and the "X and
-  appearance only" caveat is retired. Panel states unchanged — `01-panel` rest on
-  Factory 01 RAIN ALL DAY, `02-panel-blank` bare fascia, `03-panel-lit` edited User
-  Program. These are re-exports of the same three views, not new ones. The five 3×
-  header renders were already correct and are untouched.
-- `GUI-SPEC.md` § 1 — canvas height **confirmed 645**, not 649. Measured off the
-  laid-out panel (645.13; the wordmark line-height is the only fraction). The
-  `01-panel.png` re-cut's extra 4 canvas px are export overshoot — § 1 now says
-  absolute Y is not to be taken off that render. Width 1340 unchanged and exact.
+- **Canvas is 1340 × 649. The 645 answer given earlier the same day was wrong,**
+  and so was the "export overshoot" explanation built on it. Both measurements were
+  taken before the webfonts applied; three unpinned `line-height` blocks lay out
+  ~3.5px shorter under the fallback font. 648.63 with fonts up is what the plugin
+  renders. The build's own row-by-row correlation — 1px in the header, the rest
+  below — was correct and identified real layout, not export noise.
+- **All three panel renders re-cut at 2680 × 1298** with fonts confirmed applied,
+  replacing the 1290 pair cut earlier in the day, which were un-fonted and should be
+  discarded. States unchanged — `01-panel` rest on Factory 01 RAIN ALL DAY,
+  `02-panel-blank` bare fascia, `03-panel-lit` edited User Program. The five 3×
+  header renders are untouched and unaffected.
+- `GUI-SPEC.md` § 1 — restated at 649 with the font-metric cause, and with the
+  alternative (pin the three line-heights and hold 645) offered rather than taken.
+  Width 1340 unchanged and exact in every revision.
 - `GUI-SPEC.md` — **new file in this revision.** If your bundle has no
   `GUI-SPEC.md`, you are holding v1.0 and none of the items below reached you.
 - Printed scales on every knob; standing value readouts removed.
