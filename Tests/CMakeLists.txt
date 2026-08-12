@@ -2,6 +2,7 @@ juce_add_console_app(Reflect84Tests PRODUCT_NAME "Reflect84Tests")
 
 target_sources(Reflect84Tests PRIVATE
     TestMain.cpp
+    PrintedScaleTests.cpp
     ReadoutConformanceTests.cpp
     GrainSpecTests.cpp
     FactoryProgramsTests.cpp

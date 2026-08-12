@@ -695,8 +695,12 @@ namespace Layout
     };
 
     // GUI-SPEC.md section 7, transcribed. The spec supplies both the fractions and the resulting
-    // tick angles, so these are copied rather than derived - and the tick-angle column is what the
-    // PrintedScaleTests assert against.
+    // tick angles, so these are copied rather than derived.
+    //
+    // **Tests/PrintedScaleTests.cpp asserts every numeral below against ParamFormat** - the mapping
+    // that actually drives the pointer - so a curve changing without its ring fails a build. This
+    // comment previously claimed that test existed when it did not, which is worse than claiming
+    // nothing: it stops the next reader looking.
     //
     // Every linear control lands on quarters and so comes out evenly spaced. Two do not, and both
     // are correct:
