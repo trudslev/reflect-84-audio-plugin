@@ -121,37 +121,43 @@ void ProgramHeader::showParameter (const juce::RangedAudioParameter& param)
     if (namingMode)
         return;     // the glass belongs to the name field until it commits or cancels
 
-    // Straight through the parameter's own name and JUCE's own text conversion, so the LCD and the
-    // host's automation lane cannot disagree - the same construction TapeRot uses. Section 9 wants
-    // the printed control names in full (PRE-DELAY, STEREO WIDTH, DAMPING HF), which is what the
-    // parameter names already are.
+    // **Straight through nf::describeParameter**, which is straight through the parameter's own
+    // name and JUCE's own text conversion - so the LCD and the host's automation lane cannot
+    // disagree. Section 9 wants the printed control names in full (PRE-DELAY, STEREO WIDTH,
+    // DAMPING HF), which is what the parameter names already are.
     //
-    // **The value is NOT upper-cased.** Reflect-84's parameters bake their unit into the text
-    // (ParamFormat's dampHFText, decayText, trimText), so upper-casing it produced "4.8 KHZ",
-    // "4.6 S" and "+2.5 DB". A capital S is a different unit from a lowercase one, and KHZ is not
-    // a unit at all. The parameter name above still is, because that is a panel label.
-    const auto name = param.getName (Layout::lcdCharacterBudget).toUpperCase();
-    const auto value = param.getText (param.getValue(), 0);
+    // **The value is NOT upper-cased**, and this casting is why the flag it used to set is named
+    // ValueCase::all in core rather than something that sounds harmless. Reflect-84's parameters
+    // bake their unit into the text (ParamFormat's dampHFText, decayText, trimText), so
+    // upper-casing produced "4.8 KHZ", "4.6 S" and "+2.5 DB". A capital S is a different unit from
+    // a lowercase one, and KHZ is not a unit at all. The parameter NAME still is upper-cased,
+    // because that is a panel label.
+    const auto text = nf::describeParameter (param, ReflectTheme::Layout::readoutFormat());
+    const auto now = juce::Time::getMillisecondCounter();
 
-    liveReadout = name + ": " + value;
-    readoutRevertAtMs = 0;
-    repaint();
+    // Fires on every value change through a drag, not only on grab. Wired to onDragStart alone,
+    // this LCD showed the value the knob held at the instant it was grabbed and never updated
+    // while turning - live but frozen, which reads as a stuck display rather than a missing call.
+    if (text != readout.textAt (now))
+        repaint();
+
+    readout.show (text);
+    readoutWasShowing = true;
 }
 
 void ProgramHeader::releaseParameter()
 {
-    if (liveReadout.isNotEmpty())
-        readoutRevertAtMs = juce::Time::getMillisecondCounter() + Layout::lcdReadoutHoldMs;
+    readout.release (juce::Time::getMillisecondCounter());
 }
 
 void ProgramHeader::timerCallback()
 {
     bool needsRepaint = refreshFromProcessor();
 
-    if (readoutRevertAtMs != 0 && juce::Time::getMillisecondCounter() >= readoutRevertAtMs)
+    if (const bool showing = readout.isShowing (juce::Time::getMillisecondCounter());
+        showing != readoutWasShowing)
     {
-        liveReadout.clear();
-        readoutRevertAtMs = 0;
+        readoutWasShowing = showing;
         needsRepaint = true;
     }
 
@@ -359,6 +365,11 @@ void ProgramHeader::showProgramMenu()
 //==============================================================================
 void ProgramHeader::enterNamingMode()
 {
+    // Cancel the takeover rather than letting paint order hide it: hidden, it returns the moment
+    // naming ends if the revert has not yet fired.
+    readout.suppress();
+    readoutWasShowing = false;
+
     namingMode = true;
     typedName.clear();
     caretVisible = true;
@@ -606,7 +617,8 @@ void ProgramHeader::paint (juce::Graphics& g)
                     : processorRef.getProgramManager().displayLabelFor (displayedId)
                         + (displayedIsModified ? " *" : "");
 
-            const auto label = liveReadout.isNotEmpty() ? liveReadout : programLabel;
+            const auto takeover = readout.textAt (juce::Time::getMillisecondCounter());
+            const auto label = takeover.isNotEmpty() ? takeover : programLabel;
 
             drawPhosphor (label,
                           display.withTrimmedLeft (nameCellLeft)

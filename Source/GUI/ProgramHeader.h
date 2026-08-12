@@ -142,8 +142,13 @@ private:
 
     // The live readout and when it reverts. Held as text rather than a parameter pointer so the
     // display cannot outlive what it is showing.
-    juce::String liveReadout;
-    juce::uint32 readoutRevertAtMs = 0;
+    /** The parameter takeover: what to show, and until when. The deadline is core's; the font, the
+        cell and every pixel of the paint stay here. */
+    nf::ReadoutTimer readout { ReflectTheme::Layout::readoutFormat() };
+
+    /** Whether the takeover was up at the last poll, so the timer repaints on the EDGE rather than
+        every tick. The deadline itself lives in `readout`. */
+    bool readoutWasShowing = false;
 
     bool namingMode = false;
     juce::String typedName;

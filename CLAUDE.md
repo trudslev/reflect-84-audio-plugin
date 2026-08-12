@@ -295,6 +295,23 @@ Plain stereo in/out, no sidechain bus.
   appear in the PROGRAM LCD while a control is moved and nowhere else; the scope clamps its trace to
   the plot region rather than the screen; the panel has a bypass state.
 
+  **The takeover is `nf::describeParameter`** with the deadline in `nf::ReadoutTimer`, reverting
+  900 ms after release — the value this panel already used, now single-sourced in
+  `nf::ReadoutFormat::revertMs`. `ReflectTheme::Layout::readoutFormat()` holds the spelling, not
+  `ProgramHeader`, because `ProgramHeader.h` reaches the processor and its `JucePlugin_*` macros
+  exist only in the plugin target — so a test reading the format from there cannot link, and one
+  declaring its own copy would assert against itself.
+
+  **`ValueCase::asAuthored`, and this casting is why the alternative is named `ValueCase::all`.**
+  The parameters here bake their unit into the value text (`ParamFormat`'s `dampHFText`,
+  `decayText`, `trimText`), so upper-casing it printed `DAMPING HF: 4.8 KHZ`, `DECAY: 4.6 S` and
+  `OUTPUT TRIM: +2.5 DB`. A capital S is a different unit from a lowercase one and KHZ is not a
+  unit at all. `readoutDefects` passes the baked-unit arrangement deliberately: the label is empty,
+  so nothing doubles.
+
+  `enterNamingMode` now cancels the takeover rather than letting paint order hide it — hidden, it
+  returned the moment naming ended if the revert had not yet fired.
+
   **Ticks sit at the labelled values, stored as ROTATION FRACTIONS.** A mark's angle is
   `-135 + f * 270` with no inverse mapping in the drawing code, so a taper change moves the ring
   with the pointer instead of leaving it pointing where the pointer never goes.

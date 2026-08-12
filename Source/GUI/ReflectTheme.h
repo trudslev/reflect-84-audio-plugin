@@ -29,6 +29,8 @@
     - The design's inner elements are CSS content-box, so a declared `width: 336px` plus
       `padding-right: 22px` occupies 358px. Getting that wrong moves every column.
 */
+#include <nf/ParameterReadout.h>
+
 namespace ReflectTheme
 {
 
@@ -437,10 +439,29 @@ namespace Layout
         It read 36, derived at the theme's declared 16px / .13em - which is not what was drawn. */
     inline constexpr int lcdCharacterBudget = 41;
 
-    /** How long the live readout stays after the gesture ends. Section 9 says 900ms; long enough to
-        read the value you just set, short enough that the LCD is back to naming the Program before
-        you look for it. */
-    inline constexpr juce::uint32 lcdReadoutHoldMs = 900;
+    /** **How this panel spells the LCD parameter readout.**
+
+        A presentation decision, so it lives with the other presentation constants - and that
+        placement is load-bearing for the test: ProgramHeader.h reaches the processor, which needs
+        JucePlugin_* macros that only exist in the plugin target, so a test reading the format from
+        there could not link. The test must read the SHIPPING format rather than a copy, or it
+        asserts against itself.
+
+        **`asAuthored`, and this casting is the reason the alternative is named `ValueCase::all`
+        rather than something that sounds harmless.** The parameters here bake their unit into the
+        value text, so upper-casing it printed `DAMPING HF: 4.8 KHZ`, `DECAY: 4.6 S` and
+        `OUTPUT TRIM: +2.5 DB`. A capital S is a different unit from a lowercase one and KHZ is not
+        a unit at all.
+
+        The revert is core's 900 ms, which is what this panel already used - `lcdReadoutHoldMs` is
+        replaced by this rather than deleted silently, so a reader looking for the old constant
+        finds out where it went rather than concluding the revert was removed. */
+    inline nf::ReadoutFormat readoutFormat()
+    {
+        nf::ReadoutFormat f;
+        f.nameCharacterBudget = lcdCharacterBudget;
+        return f;
+    }
 
     /** **Measured off screenshots/header/04-user-edited-save-delete-lit.png at 3x**, not derived
         from the header's padding, and the whole row closes on itself: 357 + 641 = 998, +8 -> SAVE
