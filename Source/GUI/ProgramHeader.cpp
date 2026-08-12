@@ -526,12 +526,20 @@ void ProgramHeader::paint (juce::Graphics& g)
         // **An em-dash where the Program is in neither bank** - INIT, or an unresolved identifier.
         const bool onInit = ! namingMode && (displayedId.bank == ProgramBank::init
                                               || displayedId.bank == ProgramBank::unresolved);
-        const bool showUser = namingMode || displayedId.bank == ProgramBank::user;
 
         const auto font = Font::mono (Layout::lcdTextSize);
         const float tracking = Font::trackingPx (Layout::lcdTextTracking, Layout::lcdTextSize);
-        const juce::String bank = onInit ? Text::emDash()
-                                         : juce::String (showUser ? "USER" : "FACT");
+
+        /*  **NAME while typing, not USER.** The Program is not in the user bank until the name is
+            committed, so USER there claims a thing that does not exist yet - and if the user
+            cancels, it never will. Elmer had this right first and it is the suite standard now.
+
+            Cancelling is what makes the distinction visible: the tag has to go back to whatever
+            bank the Program actually came from, which it does for free because refreshFromProcessor
+            never writes the displayed mirrors while naming. */
+        const juce::String bank = namingMode ? juce::String ("NAME")
+                                : onInit     ? Text::emDash()
+                                : juce::String (displayedId.bank == ProgramBank::user ? "USER" : "FACT");
 
         const float textW = Text::trackedWidth (bank, font, tracking);
         const float cellW = Layout::lcdBankPadX * 2.0f + textW;

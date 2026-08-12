@@ -75,6 +75,30 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
     algorithmAttachment = std::make_unique<APVTS::SliderAttachment> (
         processorRef.apvts, ParamIDs::algorithm, algorithmSwitch);
 
+    /*  **ALGORITHM reports to the LCD too.** BRAND.md: every control that changes a parameter
+        announces itself there, switches included. A rule about which controls are "self-evident"
+        is harder to apply consistently than no rule at all - and a detented switch is often the
+        LEAST obvious thing on a panel, because turning a knob shows you its own scale while
+        flipping a switch shows you nothing.
+
+        Same guard as the knobs, for the same reason: a SliderAttachment fires on Program recall and
+        on every host automation step, so without it the LCD latches onto whichever parameter moved
+        last. noteUserEdit belongs here as well - this is a real user edit and it has to disarm the
+        restore guard exactly as a knob move does. */
+    if (auto* algorithmParam = processorRef.apvts.getParameter (ParamIDs::algorithm))
+    {
+        algorithmSwitch.onValueChange = [this, algorithmParam]
+        {
+            if (! algorithmSwitch.isMouseButtonDown())
+                return;
+
+            processorRef.noteUserEdit();
+            programHeader.showParameter (*algorithmParam);
+        };
+
+        algorithmSwitch.onDragEnd = [this] { programHeader.releaseParameter(); };
+    }
+
     addAndMakeVisible (tankScope);
     addAndMakeVisible (programHeader);
 

@@ -71,11 +71,19 @@ private:
     ReflectTheme::Layout::KnobScale knobScale;
     bool fineDragActive = false;
 
-    /** Full 0-1 travel in pixels of vertical drag, and the multiplier applied while shift is
-        held. design/README.md section 7 specifies 180px; the x0.25 fine mode is this build's
-        addition, per the same section's open items. */
-    static constexpr int coarseDragPixels = 180;
-    static constexpr int fineDragPixels = 720;
+    /** Full 0-1 travel in pixels of vertical drag, and the value while Shift is held.
+
+        **190 / 760 is the suite figure, not this casting's.** Six castings had six drag feels -
+        JUCE's untouched 250 in two, 200, 180, and 190 in two - so the same hand got a different
+        response from each. Nothing about any casting's identity argues for that, which made it the
+        clearest accidental drift in the audit and the cheapest to fix. 190 is the plurality.
+
+        The 4x ratio is this casting's contribution kept whole: Reflect-84 was the only one with a
+        fine mode, and it is behaviour rather than appearance - someone who learns Shift on one
+        casting expects it on the next - so it went to all six and 180/720 moved to 190/760 rather
+        than the ratio bending to fit. GUI-SPEC section 7's 180 is superseded by that ruling. */
+    static constexpr int coarseDragPixels = 190;
+    static constexpr int fineDragPixels = 760;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ReflectKnob)
 };
