@@ -9,6 +9,7 @@ target_sources(Reflect84Tests PRIVATE
     ProgramManagerTests.cpp
     DisplayBudgetTests.cpp
     ReverbEngineTests.cpp
+    EditorWiringTests.cpp
     ../Source/DSP/ProgramManager.cpp
     ../Source/DSP/PlateTank.cpp
     ../Source/DSP/DigitalRoomTank.cpp
