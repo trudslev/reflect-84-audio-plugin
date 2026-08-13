@@ -217,23 +217,23 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createReflect84Parame
                 .withStringFromValueFunction ([format] (float v, int) { return format (v); })));
     };
 
-    addNormalised (ParamIDs::size,       "Size",          ParamDefaults::size,       ParamFormat::sizeText);
-    addNormalised (ParamIDs::decay,      "Decay",         ParamDefaults::decay,      ParamFormat::decayText);
-    addNormalised (ParamIDs::preDelay,   "Pre-Delay",     ParamDefaults::preDelay,   ParamFormat::preDelayText);
-    addNormalised (ParamIDs::density,    "Density",       ParamDefaults::density,    ParamFormat::densityText);
-    addNormalised (ParamIDs::dampHF,     "Damping HF",    ParamDefaults::dampHF,     ParamFormat::dampHFText);
-    addNormalised (ParamIDs::dampLF,     "Damping LF",    ParamDefaults::dampLF,     ParamFormat::dampLFText);
-    addNormalised (ParamIDs::modulation, "Modulation",    ParamDefaults::modulation, ParamFormat::modText);
-    addNormalised (ParamIDs::grain,      "Digital Grain", ParamDefaults::grain,      ParamFormat::grainText);
-    addNormalised (ParamIDs::width,      "Stereo Width",  ParamDefaults::width,      ParamFormat::widthText);
-    addNormalised (ParamIDs::mix,        "Mix",           ParamDefaults::mix,        ParamFormat::mixText);
-    addNormalised (ParamIDs::trim,       "Output Trim",   ParamDefaults::trim,       ParamFormat::trimText);
+    addNormalised (ParamIDs::size,       "SIZE",          ParamDefaults::size,       ParamFormat::sizeText);
+    addNormalised (ParamIDs::decay,      "DECAY",         ParamDefaults::decay,      ParamFormat::decayText);
+    addNormalised (ParamIDs::preDelay,   "PRE-DELAY",     ParamDefaults::preDelay,   ParamFormat::preDelayText);
+    addNormalised (ParamIDs::density,    "DENSITY",       ParamDefaults::density,    ParamFormat::densityText);
+    addNormalised (ParamIDs::dampHF,     "DAMPING HF",    ParamDefaults::dampHF,     ParamFormat::dampHFText);
+    addNormalised (ParamIDs::dampLF,     "DAMPING LF",    ParamDefaults::dampLF,     ParamFormat::dampLFText);
+    addNormalised (ParamIDs::modulation, "MODULATION",    ParamDefaults::modulation, ParamFormat::modText);
+    addNormalised (ParamIDs::grain,      "DIGITAL GRAIN", ParamDefaults::grain,      ParamFormat::grainText);
+    addNormalised (ParamIDs::width,      "STEREO WIDTH",  ParamDefaults::width,      ParamFormat::widthText);
+    addNormalised (ParamIDs::mix,        "MIX",           ParamDefaults::mix,        ParamFormat::mixText);
+    addNormalised (ParamIDs::trim,       "OUTPUT TRIM",   ParamDefaults::trim,       ParamFormat::trimText);
 
     // A detented 4-position switch, not a continuous control - see the Algorithm enum's comment
     // on why the panel's corner order and this order deliberately differ.
     params.push_back (std::make_unique<juce::AudioParameterChoice> (
         juce::ParameterID { ParamIDs::algorithm, 1 },
-        "Algorithm",
+        "ALGORITHM",
         juce::StringArray { "Plate", "Digital Room", "Chamber", "Hall" },
         (int) Algorithm::plate));
 
@@ -246,7 +246,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createReflect84Parame
     // rule (see ../../CLAUDE.md) a parameter belongs in a Program only when the Program's sound
     // depends on it. Bypass is a state you put the plugin into, not part of a patch.
     params.push_back (std::make_unique<juce::AudioParameterBool> (
-        juce::ParameterID { ParamIDs::bypass, 1 }, "Bypass", false));
+        juce::ParameterID { ParamIDs::bypass, 1 }, "BYPASS", false));
 
     // New parameters are APPENDED below this line, never inserted above it - saved Programs and
     // host automation lanes are keyed by position as well as ID.
