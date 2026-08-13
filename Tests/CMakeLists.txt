@@ -1,6 +1,7 @@
 juce_add_console_app(Reflect84Tests PRODUCT_NAME "Reflect84Tests")
 
 target_sources(Reflect84Tests PRIVATE
+    RealtimeSafetyTests.cpp
     TestMain.cpp
     PrintedScaleTests.cpp
     ReadoutConformanceTests.cpp
@@ -52,6 +53,9 @@ target_compile_definitions(Reflect84Tests PRIVATE
 # header includes BinaryData.h for the embedded faces. Linking the real generated header rather
 # than stubbing it is the point: the font a test measures must be the font the panel draws.
 target_link_libraries(Reflect84Tests PRIVATE
+    # The bug sweep's measurement drivers. TEST target only — never the plugin, which must not
+    # carry an operator new override. See nf/testing/ProcessorHarness.h.
+    nf::testing
     Reflect84BinaryData
     # ProgramManager.cpp is compiled into both targets and now calls into core, so both link it.
     nf::core
