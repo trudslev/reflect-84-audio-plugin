@@ -219,7 +219,7 @@ void Reflect84AudioProcessor::setCurrentProgram (int index)
         return;
 
     // The stale-replay guard, disarmed by this call whether or not it is honoured.
-    if (justRestoredState.exchange (false, std::memory_order_relaxed) && index == getCurrentProgram())
+    if (userEdits.consumeRestore() && index == getCurrentProgram())
         return;
 
     programManager.requestProgramChange (ProgramManager::factoryIdAt (index));
@@ -306,7 +306,7 @@ void Reflect84AudioProcessor::setStateInformation (const void* data, int sizeInB
     programManager.setCurrentProgramWithoutApplying (restored);
 
     // **Armed AFTER replaceState**, or the restore's own writes would disarm it.
-    justRestoredState.store (true, std::memory_order_relaxed);
+    userEdits.armRestore();
 }
 
 //==============================================================================

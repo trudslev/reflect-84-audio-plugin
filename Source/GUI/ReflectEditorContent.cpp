@@ -41,22 +41,14 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
             // instant it was grabbed - frozen for the whole gesture, then reverting. Every other
             // casting updates here.
             //
-            // This is also the only place that can tell a person from automation, which is why
-            // noteUserEdit belongs here and nowhere else. It disarms the processor's
-            // justRestoredState guard, and it was **never called anywhere in this plugin** -
-            // so after restoring a session the guard stayed armed indefinitely, and selecting the
-            // currently-loaded Program from the host to revert an edit did nothing at all.
-            // A ValueTree listener cannot be used instead: it fires for automation too, and a host
-            // that writes automation on load before replaying its remembered program would disarm
-            // the guard exactly when it is needed.
-            knob->onValueChange = [this, param, rawKnob]
-            {
-                if (! rawKnob->isMouseButtonDown())
-                    return;
-
-                processorRef.noteUserEdit();
-                programHeader.showParameter (*param);
-            };
+            // This is also the only place that can tell a person from automation, which is why the
+            // guard's disarm rides along with the hand-off rather than sitting beside it. It was
+            // **never called anywhere in this plugin** - so after restoring a session the guard
+            // stayed armed indefinitely, and selecting the currently-loaded Program from the host
+            // to revert an edit did nothing at all. Through nf::connectUserEdit the two are one
+            // call, so that omission is no longer expressible.
+            nf::connectUserEdit (*rawKnob, processorRef.userEdits,
+                                 [this, param] { programHeader.showParameter (*param); });
 
             // Every parameter here is stored 0-1, so the default IS the parameter's own default
             // value - no range conversion needed for double-click-to-default.
@@ -83,18 +75,12 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
 
         Same guard as the knobs, for the same reason: a SliderAttachment fires on Program recall and
         on every host automation step, so without it the LCD latches onto whichever parameter moved
-        last. noteUserEdit belongs here as well - this is a real user edit and it has to disarm the
-        restore guard exactly as a knob move does. */
+        last. The restore guard's disarm comes with it - this is a real user edit and it has to
+        disarm exactly as a knob move does. */
     if (auto* algorithmParam = processorRef.apvts.getParameter (ParamIDs::algorithm))
     {
-        algorithmSwitch.onValueChange = [this, algorithmParam]
-        {
-            if (! algorithmSwitch.isMouseButtonDown())
-                return;
-
-            processorRef.noteUserEdit();
-            programHeader.showParameter (*algorithmParam);
-        };
+        nf::connectUserEdit (algorithmSwitch, processorRef.userEdits,
+                             [this, algorithmParam] { programHeader.showParameter (*algorithmParam); });
 
         algorithmSwitch.onDragEnd = [this] { programHeader.releaseParameter(); };
     }

@@ -3,6 +3,8 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 
+#include <nf/UserEditGate.h>
+
 #include "Parameters.h"
 #include "DSP/ProgramManager.h"
 #include "DSP/ReverbEngine.h"
@@ -96,8 +98,17 @@ public:
 
     ProgramManager& getProgramManager() noexcept { return programManager; }
 
-    /** Clears the stale-replay guard. Called from the editor when a change is USER-originated. */
-    void noteUserEdit() noexcept { justRestoredState.store (false, std::memory_order_relaxed); }
+    /** **Guards a host replaying a stale program index over a just-restored session.** Armed by
+        setStateInformation, consumed by the next setCurrentProgram, disarmed by the first
+        USER-originated edit. Automation must not disarm it: a host may write automation on load
+        before replaying.
+
+        Public because the editor hands it to `nf::connectUserEdit` for every control — which is the
+        point of it living in core. This plugin once carried the guard with **zero** call sites for
+        its disarm, so after restoring a session the guard stayed armed indefinitely and reverting an
+        edit from the host did nothing at all. Wiring the disarm and the LCD hand-off separately is
+        what made that possible; they are one call now. See nf/UserEditGate.h. */
+    nf::UserEditGate userEdits;
 
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
@@ -122,12 +133,6 @@ public:
 
 private:
     //==============================================================================
-    /** **Guards a host replaying a stale program index over a just-restored session.** Armed by
-        setStateInformation, disarmed by the first setCurrentProgram (itself ignored only when it
-        matches what getCurrentProgram reports) or the first USER-originated edit. Automation must
-        not disarm it: a host may write automation on load before replaying. */
-    std::atomic<bool> justRestoredState { false };
-
     ProgramManager programManager { apvts };
 
     //==============================================================================
