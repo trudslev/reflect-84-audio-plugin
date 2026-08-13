@@ -284,6 +284,26 @@ clears its own pending flag, so any test of that path passes while proving nothi
 
 Plain stereo in/out, no sidechain bus.
 
+### The Program list's group caption
+
+**22px, and it is the designers' own figure from GUI-SPEC §9 — not derived from the 26px row.**
+
+This casting is the one that does **not** go through `nf::captionHeight`. Its list is a
+`juce::Component` (`ReflectProgramList`), not a `PopupMenu`, so there is no `MenuMetrics` to fill in
+and the caption is a row kind carrying its own height in `ReflectProgramList::captionHeight`.
+
+**The suite rule still binds, and this satisfies it the stronger way.** The rule is that a caption is
+sized from its own type plus padding and never derived from the row — `nf::captionHeight (font,
+topPad, bottomPad)` is how the four `PopupMenu` castings compute one, with 3/4 as the suite's adopted
+default padding where no design states one. Here a design *does* state one, so the authored figure
+wins over any computed default; that is the same precedence, not an exception to it. What the rule
+rules out is 26 × 1.5 = 39, JUCE's inherited `rowHeight + rowHeight / 2`, which four castings had by
+omission and which makes a caption half again *taller* than a row.
+
+Reflect-84 and Elmer are the suite's only two designer-authored caption paddings, and they disagree
+— 9/4 here against Elmer's 3/4. That disagreement is why 3/4 is recorded as *adopted* rather than
+*derived*: there was no suite constant to derive one from.
+
 ## Status
 
 - **DSP**: all four topologies implemented, no stubs. Delay lengths, diffusion coefficients and
