@@ -302,12 +302,17 @@ Plain stereo in/out, no sidechain bus.
   exist only in the plugin target — so a test reading the format from there cannot link, and one
   declaring its own copy would assert against itself.
 
-  **`ValueCase::asAuthored`, and this casting is why the alternative is named `ValueCase::all`.**
-  The parameters here bake their unit into the value text (`ParamFormat`'s `dampHFText`,
-  `decayText`, `trimText`), so upper-casing it printed `DAMPING HF: 4.8 KHZ`, `DECAY: 4.6 S` and
-  `OUTPUT TRIM: +2.5 DB`. A capital S is a different unit from a lowercase one and KHZ is not a
-  unit at all. `readoutDefects` passes the baked-unit arrangement deliberately: the label is empty,
-  so nothing doubles.
+  **Nothing is re-cased, and this casting is why the flag that used to do it was named
+  `ValueCase::all`.** The parameters here bake their unit into the value text (`ParamFormat`'s
+  `dampHFText`, `decayText`, `trimText`), so upper-casing it printed `DAMPING HF: 4.8 KHZ`,
+  `DECAY: 4.6 S` and `OUTPUT TRIM: +2.5 DB`. A capital S is a different unit from a lowercase one
+  and KHZ is not a unit at all. `readoutDefects` passes the baked-unit arrangement deliberately: the
+  label is empty, so nothing doubles.
+
+  `ValueCase` is gone from core as of 2026-08-13 — case belongs at the source, never at a display
+  site — and the parameter **name** is no longer upper-cased either. **The caps re-authoring in
+  `Parameters.h` that ruling requires is still outstanding here**; see the root `../CLAUDE.md` under
+  "Case belongs at the source".
 
   `enterNamingMode` now cancels the takeover rather than letting paint order hide it — hidden, it
   returned the moment naming ended if the revert had not yet fired.

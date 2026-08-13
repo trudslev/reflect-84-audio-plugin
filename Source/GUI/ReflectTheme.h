@@ -534,11 +534,15 @@ namespace Layout
         there could not link. The test must read the SHIPPING format rather than a copy, or it
         asserts against itself.
 
-        **`asAuthored`, and this casting is the reason the alternative is named `ValueCase::all`
-        rather than something that sounds harmless.** The parameters here bake their unit into the
-        value text, so upper-casing it printed `DAMPING HF: 4.8 KHZ`, `DECAY: 4.6 S` and
-        `OUTPUT TRIM: +2.5 DB`. A capital S is a different unit from a lowercase one and KHZ is not
-        a unit at all.
+        **Nothing is re-cased here, and this casting is why.** The parameters bake their unit into
+        the value text, so the `ValueCase::all` this panel briefly set printed `DAMPING HF: 4.8 KHZ`,
+        `DECAY: 4.6 S` and `OUTPUT TRIM: +2.5 DB`. A capital S is a different unit from a lowercase
+        one and KHZ is not a unit at all.
+
+        `ValueCase` is gone from core as of 2026-08-13: case belongs at the SOURCE, never at a
+        display site, so a choice that should read `SOFT` is authored that way in `Parameters.h`.
+        See the root `../CLAUDE.md` under "Case belongs at the source" — the re-authoring that
+        ruling requires is still outstanding across all six castings.
 
         The revert is core's 900 ms, which is what this panel already used - `lcdReadoutHoldMs` is
         replaced by this rather than deleted silently, so a reader looking for the old constant

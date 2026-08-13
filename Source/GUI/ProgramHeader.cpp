@@ -126,12 +126,15 @@ void ProgramHeader::showParameter (const juce::RangedAudioParameter& param)
     // disagree. Section 9 wants the printed control names in full (PRE-DELAY, STEREO WIDTH,
     // DAMPING HF), which is what the parameter names already are.
     //
-    // **The value is NOT upper-cased**, and this casting is why the flag it used to set is named
-    // ValueCase::all in core rather than something that sounds harmless. Reflect-84's parameters
-    // bake their unit into the text (ParamFormat's dampHFText, decayText, trimText), so
-    // upper-casing produced "4.8 KHZ", "4.6 S" and "+2.5 DB". A capital S is a different unit from
-    // a lowercase one, and KHZ is not a unit at all. The parameter NAME still is upper-cased,
-    // because that is a panel label.
+    // **Nothing is re-cased**, and this casting is why the flag that used to do it was named
+    // ValueCase::all rather than something that sounds harmless. Reflect-84's parameters bake their
+    // unit into the text (ParamFormat's dampHFText, decayText, trimText), so upper-casing produced
+    // "4.8 KHZ", "4.6 S" and "+2.5 DB". A capital S is a different unit from a lowercase one, and
+    // KHZ is not a unit at all.
+    //
+    // The flag is gone from core as of 2026-08-13 and the NAME is no longer upper-cased either:
+    // case belongs at the source, so a panel label is authored in caps in Parameters.h. That
+    // re-authoring is still outstanding here — see the root ../CLAUDE.md.
     const auto text = nf::describeParameter (param, ReflectTheme::Layout::readoutFormat());
     const auto now = juce::Time::getMillisecondCounter();
 
