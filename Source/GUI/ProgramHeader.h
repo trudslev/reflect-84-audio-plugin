@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "ReflectTheme.h"
+#include "ReflectProgramList.h"
 #include "../DSP/FactoryPrograms.h"      // ProgramId / ProgramBank
 
 #include <vector>
@@ -60,46 +61,35 @@ public:
     void showParameter (const juce::RangedAudioParameter& param);
     void releaseParameter();
 
-    /** The component the Program list is laid out inside. Its bounds become the list's parent area,
-        which is what fixes the list's top edge and caps its height - layout, not plumbing. Passing
-        nullptr returns the list to being a free desktop window sized to its own content, which for
-        a long bank overhangs the panel. See ../../CLAUDE.md, "The Program dropdown". */
-    void setMenuParent (juce::Component* parent) noexcept { menuParent = parent; }
+    /** The list this header opens. Set by the editor, which owns it and positions it.
+
+        **It is a Component, not a `juce::PopupMenu`, and the menuHost machinery is gone with it.**
+        `menuAnchorY`, `menuHostTop` and `menuHostHeight` existed only to make JUCE land a popup in
+        the right place: a 1px anchor strip because a zero-height one drops out of align-to-rectangle,
+        an 8px lead because JUCE clamps to `jmax (parentArea.getY() + 1, ...)`, and a parent area
+        sized to the panel because a free desktop window overhangs it. A Component sets its own
+        bounds, so none of that is needed. See ReflectProgramList.h for why the change was forced. */
+    void setProgramList (ReflectProgramList* list) noexcept { programList = list; }
+
+    /** Hides the list and clears the chevron. */
+    void closeProgramMenu();
 
     /** The row the list's top edge lands on, in CANVAS coordinates - the well's own bottom edge, so
-        the two read as one object rather than a bar with a list floating under it.
-
-        Canvas, not local: unlike the siblings this component covers only the header strip, so its
-        own origin is the well's top-left. The anchor rectangle inside showProgramMenu is therefore
-        built in local coordinates while menuHost, which lives in the editor, needs canvas ones. */
-    static int menuAnchorY() noexcept
+        the two read as one object rather than a bar with a list floating under it. */
+    static int listTopY() noexcept
     {
         return (int) std::floor (ReflectTheme::Layout::programWellY
                                  + ReflectTheme::Layout::programWellH);
     }
 
-    /** Where menuHost has to start, and it is NOT the anchor: JUCE clamps a menu to
-        `jmax (parentArea.getY() + 1, ...)`, so a host beginning exactly at the anchor can only open
-        one pixel below it, leaving a hairline of panel between the bar and its list.
-
-        The lead has a floor and a ceiling. Too small and the clamp bites again; too large and the
-        list can grow past the panel, because JUCE sizes it to `parentArea.getHeight() - 24` while
-        the room actually below the anchor is the well's own height less than that. */
-    static int menuHostTop() noexcept { return menuAnchorY() - 8; }
-
-    /** No height cap of our own: the host runs from the anchor to the PANEL's bottom, so the list
-        fills the panel and scrolls beyond it.
-
-        GUI-SPEC.md section 9 asks for a 260px maximum. That is not followed, for the same reason
-        section 9's "4px below the LCD" is not followed - the suite settled this shape across all
-        five castings and the root CLAUDE.md carries it as the contract: "an area running from the
-        display's bottom edge to the panel's bottom". A per-plugin figure that makes one casting's
-        list stop two-thirds of the way down while the others reach the bottom is exactly the drift
-        the contract exists to prevent. Raised with the designers. */
-    static int menuHostHeight (int panelHeight) noexcept { return panelHeight - menuHostTop(); }
+    /** The list runs from that row to the panel's bottom. **A measurement, not a maximum** -
+        GUI-SPEC.md section 9 is explicit that it does not shrink-wrap and a short bank leaves empty
+        glass below. Section 9's earlier 260px cap is not followed, for the same reason its "4px
+        below the LCD" is not: the suite settled this shape and the root CLAUDE.md carries it. */
+    static int listHeight (int panelHeight) noexcept { return panelHeight - listTopY(); }
 
 private:
-    juce::Component* menuParent = nullptr;
+    ReflectProgramList* programList = nullptr;
     bool menuOpen = false;
 
     enum class Region { none, display, save, deleteOrCancel };
@@ -137,7 +127,6 @@ private:
     ProgramId displayedId;
 
     /** The Programs the open menu was built from, in row order. */
-    std::vector<ProgramId> menuRows;
     bool displayedIsModified = false;
 
     // The live readout and when it reverts. Held as text rather than a parameter pointer so the

@@ -135,6 +135,7 @@ target_sources(Reflect84 PRIVATE
     Source/DSP/FdnTank.cpp
     Source/DSP/ReverbEngine.cpp
     Source/GUI/ProgramHeader.cpp
+    Source/GUI/ReflectProgramList.cpp
     Source/GUI/ReflectLookAndFeel.cpp
     Source/GUI/PanelBackground.cpp
     Source/GUI/PanelReadouts.cpp

@@ -111,12 +111,18 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
     // the panel. It opens inside this, so it can neither move its top edge nor grow past the panel.
     // A SIBLING of programHeader, never a child: that component covers only the header strip, so a
     // list parented there would be clipped to a 432x42 box.
-    const int hostTop = ProgramHeader::menuHostTop();
-    menuHost.setBounds (0, hostTop, getWidth(), ProgramHeader::menuHostHeight (getHeight()));
-    menuHost.setInterceptsMouseClicks (false, true);
-    addAndMakeVisible (menuHost);
-    menuHost.toFront (false);
-    programHeader.setMenuParent (&menuHost);
+    // **The Program list is a sibling of the header, at the LCD's width, flush off its bottom
+    // edge and running to the panel's bottom.** A SIBLING and not a child: ProgramHeader narrows
+    // its own hitTest to the header strip, and JUCE stops searching a component's children once
+    // its hitTest rejects the point - so a list parented there would be dead everywhere except
+    // the strip it drops from.
+    programList.setBounds ((int) Layout::programWellX,
+                           ProgramHeader::listTopY(),
+                           (int) Layout::programWellW,
+                           ProgramHeader::listHeight (getHeight()));
+    addChildComponent (programList);      // added hidden; the header shows it
+    programList.toFront (false);
+    programHeader.setProgramList (&programList);
 }
 
 void ReflectEditorContent::paintOverChildren (juce::Graphics& g)

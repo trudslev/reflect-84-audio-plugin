@@ -253,113 +253,51 @@ void ProgramHeader::mouseExit (const juce::MouseEvent&)
 //==============================================================================
 void ProgramHeader::showProgramMenu()
 {
+    if (programList == nullptr)
+        return;
+
     auto& manager = processorRef.getProgramManager();
 
-    juce::PopupMenu menu;
-    menu.setLookAndFeel (&getLookAndFeel());
-
-    const auto current = manager.getCurrentProgramId();
-
-    // **Row IDs are positions in THIS menu, not Program indices.** PopupMenu needs an int per row
-    // and reserves 0 for "dismissed"; the callback maps the row back to the ProgramId it was built
-    // from, so no Program is addressed by a bank position here.
-    //
-    // That also removes a latent collision: the empty-User placeholder used item ID -1, which was
-    // numerically equal to the old initProgramIndex.
-    // A row ID no real Program can take. Row IDs start at 1, so any non-positive value is safe;
-    // this used to be -1, which was numerically equal to the old initProgramIndex.
-    constexpr int menuPlaceholderId = -1000;
-
-    menuRows = manager.listPrograms();
-
-    bool factoryHeaderDone = false;
-    bool userHeaderDone = false;
-
-    for (size_t i = 0; i < menuRows.size(); ++i)
-    {
-        const auto& id = menuRows[i];
-
-        if (id.bank == ProgramBank::factory && ! std::exchange (factoryHeaderDone, true))
-        {
-            menu.addSeparator();
-            menu.addSectionHeader ("Factory");
-        }
-
-        if (id.bank == ProgramBank::user && ! std::exchange (userHeaderDone, true))
-        {
-            menu.addSeparator();
-            menu.addSectionHeader ("User");
-        }
-
-        menu.addItem ((int) i + 1, manager.displayLabelFor (id), true, id == current);
-    }
-
-    // **Both groups are always present, and the USER header is never hidden** - section 9. An empty
-    // bank shows a disabled placeholder rather than vanishing.
-    if (! userHeaderDone)
-    {
-        menu.addSeparator();
-        menu.addSectionHeader ("User");
-        menu.addItem (menuPlaceholderId, Text::emDash() + juce::String (" none saved ") + Text::emDash(),
-                      false, false);
-    }
-
-    const auto well = displayArea().getSmallestIntegerContainer();
-
-    auto options = juce::PopupMenu::Options()
-                       .withTargetComponent (this)
-                       .withTargetScreenArea (localAreaToGlobal (well))
-                       .withMaximumNumColumns (1);
-
-    if (menuParent != nullptr)
-    {
-        // The list is laid out INSIDE menuHost rather than as its own desktop window. JUCE fits a
-        // menu to its parent area, so an area running from the well's bottom edge to the panel's
-        // gives both guarantees at once: the top cannot move and the height cannot exceed the
-        // panel. A bank too long to fit scrolls. See ../../CLAUDE.md, "The Program dropdown".
-        //
-        // Anchor to a 1px strip on the well's bottom EDGE, not the well. With a parent, JUCE first
-        // does constrainedWithin(parentArea), which slides the whole 42px well down into the host
-        // before measuring and opens the list 42px too low. 1px and not zero: a zero-height
-        // rectangle is isEmpty(), which drops the list out of align-to-rectangle into the sideways
-        // placement meant for submenus.
-        //
-        // Built in LOCAL coordinates - this component's origin is the well's own top-left, so the
-        // well's bottom edge is simply well.getBottom(). menuAnchorY() is the canvas-space twin of
-        // the same row, for menuHost.
-        const juce::Rectangle<int> anchor { well.getX(), well.getBottom() - 1, well.getWidth(), 1 };
-
-        options = options.withTargetScreenArea (localAreaToGlobal (anchor))
-                         .withParentComponent (menuParent)
-                         .withMinimumWidth (well.getWidth());
-    }
+    // **The list is a Component now**, so opening it is setting its rows and showing it - no
+    // anchor rectangle, no parent area, no 1px strip. All of that existed to make PopupMenu land
+    // where this panel wanted it; see ReflectProgramList.h.
+    programList->setPrograms (manager.listPrograms(), manager.getCurrentProgramId(),
+                              [&manager] (const ProgramId& id) { return manager.displayLabelFor (id); });
 
     const juce::Component::SafePointer<ProgramHeader> safeThis { this };
 
+    programList->onProgramChosen = [safeThis] (const ProgramId& id)
+    {
+        if (safeThis == nullptr)
+            return;
+
+        safeThis->closeProgramMenu();
+        safeThis->processorRef.getProgramManager().requestProgramChange (id);
+    };
+
+    programList->onDismissRequested = [safeThis]
+    {
+        if (safeThis != nullptr)
+            safeThis->closeProgramMenu();
+    };
+
+    programList->setVisible (true);
+    programList->toFront (false);
+
     menuOpen = true;
     repaint();
+}
 
-    menu.showMenuAsync (options,
-                        [safeThis] (int result)
-                        {
-                            if (safeThis == nullptr)
-                                return;
+void ProgramHeader::closeProgramMenu()
+{
+    if (programList != nullptr)
+        programList->setVisible (false);
 
-                            // Cleared here rather than on selection: JUCE runs this callback on a
-                            // dismissal too, so clicking away cannot leave the mark inverted.
-                            safeThis->menuOpen = false;
-                            safeThis->repaint();
-
-                            if (result == 0)
-                                return;
-
-                            // No forced refresh: the async apply plus the 20 Hz poll handle it.
-                            const auto row = (size_t) (result - 1);
-
-                            if (row < safeThis->menuRows.size())
-                                safeThis->processorRef.getProgramManager()
-                                    .requestProgramChange (safeThis->menuRows[row]);
-                        });
+    // Cleared here rather than on selection, so dismissing cannot leave the chevron inverted -
+    // the same reason the PopupMenu version cleared it in its callback rather than its selection
+    // branch.
+    menuOpen = false;
+    repaint();
 }
 
 //==============================================================================
