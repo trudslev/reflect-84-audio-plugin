@@ -1,6 +1,8 @@
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
 
+#include <nf/UserProgramDirectory.h>
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
 /**
@@ -40,10 +42,12 @@ public:
             // nothing here executed a line of the editor at all, so a null dereference or a failed
             // assertion in layout would have been found by opening the plugin in a DAW.
             //
-            // **This constructs the shipping processor, which reads the user's REAL Programs
-            // directory** - it has no injectable override, only ProgramManager does. That is a
-            // directory scan and nothing else: no test in this file saves, renames or deletes, and
-            // the suite must never gain one that does.
+            // This constructs the shipping processor, which builds its ProgramManager from the
+            // resolved user-Programs path — it has no injectable override, only ProgramManager does.
+            // **That path is redirected to a scratch directory for the whole process**, by the
+            // nf::ScopedUserProgramDirectoryOverride in TestMain, so nothing here can reach real
+            // Programs. ProgramDirectoryRedirectTests below asserts that is true in this binary
+            // rather than trusting it.
             Reflect84AudioProcessor processor;
             auto editor = std::unique_ptr<juce::AudioProcessorEditor> (processor.createEditor());
 
@@ -117,3 +121,44 @@ public:
 };
 
 static EditorWiringTests editorWiringTests;
+
+/** Proves the process-wide redirect is actually in force in THIS binary, rather than merely
+    installed in a file somebody could delete.
+
+    `run_tests.py` refuses a target whose TestMain does not install it, and core's own tests prove
+    the mechanism redirects. Neither of those establishes that *this* process is redirected, which is
+    the thing that keeps a suite off the user's disk — so it is asserted where it matters, against
+    the real processor's real ProgramManager.
+*/
+class ProgramDirectoryRedirectTests final : public juce::UnitTest
+{
+public:
+    ProgramDirectoryRedirectTests() : juce::UnitTest ("Program directory redirect", "programs") {}
+
+    void runTest() override
+    {
+        beginTest ("The shipping processor cannot reach the user's real Programs directory");
+        {
+            expect (nf::userProgramDirectoryOverrideRoot() != juce::File(),
+                    "no redirect is installed in this process — TestMain must install "
+                    "nf::ScopedUserProgramDirectoryOverride before the runner");
+
+            Reflect84AudioProcessor processor;
+            const auto used = processor.getProgramManager().getUserProgramDirectory();
+
+            expect (used.isAChildOf (nf::userProgramDirectoryOverrideRoot()),
+                    "the processor resolved " + used.getFullPathName()
+                        + ", which is outside the redirect root");
+
+            // Named explicitly rather than compared against a rebuilt "real" path: the point is that
+            // the application-data root is not on this path at all.
+            const auto appData =
+                juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory);
+
+            expect (! used.isAChildOf (appData),
+                    "the processor is pointing inside the user's application data");
+        }
+    }
+};
+
+static ProgramDirectoryRedirectTests programDirectoryRedirectTests;
