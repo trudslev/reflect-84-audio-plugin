@@ -214,6 +214,18 @@ public:
         second is the buffer rate, so the walk's noise spectrum moves with the host's buffer setting.
         Also follows from 1, and also has no correct version at any size.
 
+        **The three are filed separately and they are NOT sequenced separately, because a fix for 1
+        dissolves 2 and 3.** A fixed update interval makes the step coefficient and the draw rate
+        time-based by construction, so neither the 0.02 time constant nor the one-draw-per-block
+        spectrum stays buffer-dependent — without either being touched. So the choice is:
+
+          * accept 1 as a CPU trade and give 2 and 3 time-based coefficients — TWO changes, and the
+            stairstep stays, coarsening to 23 Hz at 2048; or
+          * fix 1 with a fixed update interval — ONE change, and 2 and 3 come free.
+
+        Written down because a reader who decides 1 is defensible will otherwise reach for the
+        two-change path without seeing that the one-change path is cheaper and fixes more.
+
         Measured: `blockSizeInvariance` at 64 / 128 / 511 / 2048 is sample-exact with MODULATION at
         0 and diverges at 0.34 (0.153) and 1.00 (0.188), so this path accounts for ALL of the
         casting's block-size divergence and the magnitude scales with depth. See
