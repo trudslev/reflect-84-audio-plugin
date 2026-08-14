@@ -189,8 +189,36 @@ public:
             phase[(size_t) i] = (float) std::fmod (0.7548776662 * (i + 1), 1.0);
     }
 
-    /** Advances once per block and re-targets the random walk; the LFOs themselves are read
-        per sample. */
+    /** Advances once per block and re-targets the random walk.
+
+        **The second sentence of this comment used to read "the LFOs themselves are read per
+        sample", and that is not what the tanks do.** All three read `value (i)` ONCE, outside their
+        sample loop, and hold it across the whole block — PlateTank.cpp:112, FdnTank.cpp:147,
+        DigitalRoomTank.cpp:118. Measured 2026-08-14 during the suite bug sweep; nothing is fixed
+        here yet and the three defects below are filed SEPARATELY, because they have different
+        defensibility and a ruling on the first must not dispose of the other two.
+
+        **1 · The block's boundary phase is held across the block.** Defensible: an LFO updated once
+        per buffer is a recognised CPU trade and plenty of shipping code makes it. What is not
+        defensible is leaving it unstated, because the cost is larger than an invariance failure —
+        **the modulation update rate IS the buffer rate**: 750 Hz at 64 samples, 23 Hz at 2048. That
+        is a stairstep on a modulator that coarsens as the buffer grows, which a player hears before
+        anybody measures it. If it stays, it wants a fixed update interval rather than the host's
+        buffer.
+
+        **2 · The random walk steps by a fixed 0.02 per BLOCK.** Not defensible at any buffer size:
+        the coefficient is a time constant, so the rate's smoothing runs 32x faster at 2048 samples
+        than at 64. Nobody chose this — it follows from 1.
+
+        **3 · One `random.nextFloat()` per BLOCK.** Not defensible either: the number of draws per
+        second is the buffer rate, so the walk's noise spectrum moves with the host's buffer setting.
+        Also follows from 1, and also has no correct version at any size.
+
+        Measured: `blockSizeInvariance` at 64 / 128 / 511 / 2048 is sample-exact with MODULATION at
+        0 and diverges at 0.34 (0.153) and 1.00 (0.188), so this path accounts for ALL of the
+        casting's block-size divergence and the magnitude scales with depth. See
+        Tests/InvarianceTests.cpp.
+    */
     void advanceBlock (int numSamples) noexcept
     {
         for (int i = 0; i < N; ++i)

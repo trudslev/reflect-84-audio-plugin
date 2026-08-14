@@ -223,6 +223,60 @@ public:
                         "produced different output: " + r.describe());
         }
 
+        beginTest ("Block size — is the LFO the WHOLE story, or only the first cause?");
+        {
+            // **Consistent is not established.** All three failing rows differ first at sample 1891,
+            // which fits a single cause and does not demonstrate one. A second cause sitting behind
+            // the first would be closed along with it and never measured.
+            //
+            // Modulation depth is the switch: at mod01 = 0 every tank's modOffset is zero, so the
+            // LFO's value reaches the audio path nowhere and all three members are removed at once.
+            // If the rows go sample-exact there, the modulation path accounts for all of it.
+            //
+            // **What this arm does NOT separate**, said rather than left to be assumed: it removes
+            // the three members together, so it establishes the PATH and not which member dominates.
+            // And a block dependence living in the fractional-delay interpolation would be masked
+            // by it, because at zero depth the read positions stop moving. The rising arm below is
+            // what makes that visible — if the divergence scales with depth it is the modulator, not
+            // a fixed-position artefact.
+            nf::testing::RenderSpec spec;
+            spec.blockSize = 512;
+            spec.numBlocks = 64;
+
+            for (float mod : { 0.0f, 0.34f, 1.0f })
+            {
+                Reflect84AudioProcessor processor;
+                set (processor, ParamIDs::modulation, mod);
+                warm (processor);
+
+                const auto results = nf::testing::blockSizeInvariance (processor, spec,
+                                                                       { 64, 128, 511, 2048 });
+
+                double worst = 0.0;
+                bool allExact = true;
+
+                for (const auto& r : results)
+                {
+                    worst = juce::jmax (worst, r.maxAbsDifference);
+                    allExact = allExact && r.sampleExact;
+                }
+
+                logMessage ("  MODULATION " + juce::String (mod, 2) + " -> "
+                                + (allExact ? juce::String ("all four sizes sample-exact")
+                                            : "worst |delta| " + juce::String (worst, 9)));
+
+                if (mod == 0.0f)
+                    expect (allExact,
+                            "block-size divergence SURVIVES modulation at zero, so the LFO is not "
+                            "the whole story and a second cause is hidden behind it: worst |delta| "
+                                + juce::String (worst, 9));
+                else
+                    expect (! allExact,
+                            "modulation at " + juce::String (mod, 2) + " produced no divergence, so "
+                            "the zero arm proved nothing — a comparison never shown able to fail");
+            }
+        }
+
         beginTest ("Sample rate — the decay measured in SECONDS at 44.1 / 48 / 96 / 192");
         {
             Reflect84AudioProcessor processor;
