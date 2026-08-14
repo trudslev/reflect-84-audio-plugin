@@ -107,6 +107,21 @@ public:
             // not a dropout on its own; one costing milliseconds would be.
             logMessage ("  for scale, one 512-sample block at 48 kHz is 10667 us of real time");
 
+            // **The figure REFRAMES the ruling rather than settling it, and both halves belong in
+            // the report.**
+            //
+            // Negligible today — and negligible *because a juce::String refcount release happens to
+            // be cheap*, not because anything guarantees this path stays heap-free. Nothing stops a
+            // future ProgramId field, a longer name, or an allocator under pressure from changing
+            // that number.
+            //
+            // And the case for changing it was never dropout risk. It is that a path a host can
+            // deliver on the AUDIO THREAD does heap work at all. 0.12 us does not answer that; it
+            // says only that today's cost is small.
+            //
+            // A sequencing pass reading only the figure closes this as "not worth it". One reading
+            // only the principle treats it as urgent. It is neither.
+
             expect (cost.samples > 0);
         }
     }
