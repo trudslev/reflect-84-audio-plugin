@@ -3,6 +3,7 @@ juce_add_console_app(Reflect84Tests PRODUCT_NAME "Reflect84Tests")
 target_sources(Reflect84Tests PRIVATE
     RealtimeSafetyTests.cpp
     NumericalRobustnessTests.cpp
+    LockContentionTests.cpp
     TestMain.cpp
     PrintedScaleTests.cpp
     ReadoutConformanceTests.cpp
