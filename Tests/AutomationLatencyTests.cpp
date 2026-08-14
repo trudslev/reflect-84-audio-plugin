@@ -1,4 +1,5 @@
 #include "../Source/PluginProcessor.h"
+#include "../Source/Parameters.h"
 
 #include <nf/testing/ProcessorHarness.h>
 
@@ -34,6 +35,99 @@ public:
 
     void runTest() override
     {
+        beginTest ("Zipper — a gain parameter swept once per block");
+        {
+            // **Elmer uses juce::SmoothedValue NOWHERE.** TapeRot has it in 9 files, Fifth Member 3,
+            // Reflect-84 3, Chorus-60 2, Gatecrasher 1, Elmer 0 — the one-of-six shape the audit
+            // kept finding. Whether it matters is a measurement: a compressor whose output gain is
+            // ridden may or may not zipper, and the way to know is to ride it.
+            //
+            // ## The instrument
+            //
+            // A steady sine in, so any discontinuity is the plugin's and not the input's. The gain
+            // parameter is swept once per block. An unsmoothed gain then steps at every block
+            // boundary, so the test compares |y[n] - y[n-1]| AT boundaries against the same figure
+            // everywhere else. A smoothed gain shows no excess; an unsmoothed one shows a spike
+            // exactly at the boundaries and nowhere else.
+            //
+            // ## Known case, named before the run
+            //
+            // **Reflect-84's OUTPUT TRIM is smoothed** (trimSmoothed, PluginProcessor.cpp:52) and
+            // carries the same test. It must come back with no boundary excess. If it does not, the
+            // instrument is reading something other than smoothing and Elmer's figure means nothing.
+            // The static arm below is the second control: with the parameter held still there is
+            // nothing to zipper, so any excess there is the instrument's own.
+            constexpr double fs = 48000.0;
+            constexpr int blockSize = 256;
+
+            const auto boundaryExcess = [&] (const char* label, bool sweep)
+            {
+                Reflect84AudioProcessor p;
+
+                nf::testing::RenderSpec warmSpec;
+                warmSpec.blockSize = blockSize;
+                warmSpec.numBlocks = 8;
+                nf::testing::render (p, warmSpec);
+
+                nf::testing::RenderSpec spec;
+                spec.sampleRate = fs;
+                spec.blockSize = blockSize;
+                spec.numBlocks = 48;
+
+                auto* param = p.apvts.getParameter (ParamIDs::trim);
+
+                spec.fillInput = [&param, sweep] (juce::AudioBuffer<float>& buffer, int blockIndex)
+                {
+                    if (sweep && param != nullptr)
+                        param->setValueNotifyingHost ((blockIndex % 2) == 0 ? 0.15f : 0.85f);
+
+                    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+                        for (int i = 0; i < buffer.getNumSamples(); ++i)
+                        {
+                            const double n = blockIndex * buffer.getNumSamples() + i;
+                            buffer.setSample (ch, i, 0.5f * (float) std::sin (2.0 * juce::MathConstants<double>::pi
+                                                                              * 200.0 * n / fs));
+                        }
+                };
+
+                const auto out = nf::testing::render (p, spec);
+
+                double worstBoundary = 0.0, worstInterior = 0.0;
+
+                for (size_t i = 1; i < out[0].size(); ++i)
+                {
+                    const double step = std::abs ((double) out[0][i] - out[0][i - 1]);
+
+                    if ((i % (size_t) blockSize) == 0)
+                        worstBoundary = juce::jmax (worstBoundary, step);
+                    else
+                        worstInterior = juce::jmax (worstInterior, step);
+                }
+
+                const double ratio = worstInterior > 0.0 ? worstBoundary / worstInterior : 0.0;
+
+                logMessage ("  " + juce::String (label).paddedRight (' ', 22)
+                                + "boundary " + juce::String (worstBoundary, 6)
+                                + ", interior " + juce::String (worstInterior, 6)
+                                + ", ratio x" + juce::String (ratio, 2));
+
+                return ratio;
+            };
+
+            const auto still = boundaryExcess ("parameter held still", false);
+            const auto swept = boundaryExcess ("parameter swept", true);
+
+            logMessage (juce::String ("  => ") + (swept > 3.0 && still < 3.0
+                            ? "ZIPPER: a per-block step reaches the output undamped"
+                            : still >= 3.0 ? "the STATIC control shows boundary excess too — the "
+                                             "instrument is not isolating smoothing and proves nothing"
+                                           : "no zipper: the step is damped before it reaches the output"));
+
+            expectLessThan (still, 3.0,
+                            "the static control showed boundary excess with nothing being swept, so "
+                            "this instrument does not isolate smoothing");
+        }
+
         beginTest ("Declared latency against an impulse");
         {
             Reflect84AudioProcessor processor;
