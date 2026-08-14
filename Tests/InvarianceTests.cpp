@@ -270,9 +270,36 @@ public:
 
         beginTest ("dampHF across BOTH ends of its range and BOTH rate extremes — the 2x2");
         {
+            // **Classified from the CORNER, and the first version could not be.**
+            //
+            // All three pre-stated readings turn on WHERE the curve moved — both ends together,
+            // only the top corner at 44.1, or all four holding. `largestResponseDifferenceDb`
+            // returns one number for a whole curve, so it cannot separate a corner that has shifted
+            // from a far field whose shape differs, which is the only distinction the readings are
+            // built on. It said "both ends move, 1.861 dB and 1.376 dB" — and the 2 kHz corner is
+            // correct at BOTH rates, so that reading was wrong in the direction that would have
+            // filed a range defect as a rate defect.
+            //
+            // This is not the fourth rule. That rule covers a PATTERN the readings do not name; an
+            // aggregate that cannot produce any of them is a broken instrument, and reporting
+            // "unclassified" from one would dress the failure up as a result.
+            //
+            // Second instance of the same shape, after gradient-per-pixel. Aggregates are where it
+            // keeps happening: a single number reads as a finding, survives review because it is
+            // precise, and is silent about the axis it collapsed.
+            //
+            // A correct one-pole reads -3.01 dB AT its own cutoff, whatever the sample rate. That
+            // is the number the classification uses. The full curves are reported beside it so the
+            // far field is visible and separable rather than folded in.
             const std::vector<double> probes { 500.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0 };
 
-            const auto responseAt = [&probes] (float cutoffHz, double fs)
+            struct Cell { const char* name; float cutoffHz; double fs; };
+            const Cell cells[] = {
+                { " 2k @ 44.1k", 2000.0f,  44100.0 }, { " 2k @  192k", 2000.0f,  192000.0 },
+                { "16k @ 44.1k", 16000.0f, 44100.0 }, { "16k @  192k", 16000.0f, 192000.0 }
+            };
+
+            const auto responseAt = [] (float cutoffHz, double fs, const std::vector<double>& at)
             {
                 ReverbPrimitives::OnePoleLP filter;
                 filter.setCutoff (cutoffHz, fs);
@@ -280,55 +307,83 @@ public:
                 return nf::testing::measureMagnitudeResponse (
                     [&filter] (float x) { return filter.process (x); },
                     [&filter] { filter.reset(); },
-                    fs, probes);
+                    fs, at);
             };
 
-            const auto lo441 = responseAt (2000.0f, 44100.0);
-            const auto lo192 = responseAt (2000.0f, 192000.0);
-            const auto hi441 = responseAt (16000.0f, 44100.0);
-            const auto hi192 = responseAt (16000.0f, 192000.0);
+            // --- the four curves, reported in full -------------------------------------------
+            std::vector<std::vector<nf::testing::MagnitudeRow>> curves;
+            for (const auto& cell : cells)
+                curves.push_back (responseAt (cell.cutoffHz, cell.fs, probes));
 
-            const auto loDelta = nf::testing::largestResponseDifferenceDb (lo441, lo192);
-            const auto hiDelta = nf::testing::largestResponseDifferenceDb (hi441, hi192);
+            juce::String header ("     probe |");
+            for (const auto& cell : cells)
+                header += juce::String (cell.name).paddedLeft (' ', 13) + " |";
+            logMessage ("  " + header);
 
-            logMessage ("  dampHF  2 kHz, 44.1k vs 192k -> " + juce::String (loDelta, 3) + " dB");
-            logMessage ("  dampHF 16 kHz, 44.1k vs 192k -> " + juce::String (hiDelta, 3) + " dB");
-
-            // The control: nowhere near Nyquist at any rate, so it cannot produce a Nyquist artefact.
-            const auto lfResponseAt = [&] (float cutoffHz, double fs)
+            for (size_t i = 0; i < probes.size(); ++i)
             {
-                ReverbPrimitives::OnePoleLP filter;
-                filter.setCutoff (cutoffHz, fs);
-                return nf::testing::measureMagnitudeResponse (
-                    [&filter] (float x) { return filter.process (x); },
-                    [&filter] { filter.reset(); },
-                    fs, { 50.0, 100.0, 200.0, 500.0, 1000.0 });
-            };
+                juce::String row = (juce::String (probes[i], 0) + " Hz").paddedLeft (' ', 10) + " |";
 
-            const auto lfDelta = nf::testing::largestResponseDifferenceDb (
-                lfResponseAt (500.0f, 44100.0), lfResponseAt (500.0f, 192000.0));
+                for (const auto& curve : curves)
+                    row += (juce::String (curve[i].gainDb, 3) + " dB").paddedLeft (' ', 13) + " |";
 
-            logMessage ("  dampLF 500 Hz, 44.1k vs 192k -> " + juce::String (lfDelta, 3)
-                            + " dB  (the control)");
+                logMessage ("  " + row);
+            }
 
-            const bool loHolds = loDelta < 1.0;
-            const bool hiHolds = hiDelta < 1.0;
-            const bool lfHolds = lfDelta < 1.0;
+            // --- the corners, which are what classify ----------------------------------------
+            constexpr double idealCornerDb = -3.01;
+            constexpr double cornerToleranceDb = 0.25;
 
-            if (loHolds && hiHolds && lfHolds)
-                logMessage ("  -> all hold: rate-correct across the whole range");
-            else if (! loHolds && ! hiHolds)
-                logMessage ("  -> BOTH ENDS MOVE: a rate bug");
-            else if (loHolds && ! hiHolds && lfHolds)
-                logMessage ("  -> ONLY THE TOP END MOVES: a RANGE finding, not a rate finding");
+            std::array<bool, 4> cornerHolds {};
+
+            for (size_t c = 0; c < 4; ++c)
+            {
+                const auto atCorner = responseAt (cells[c].cutoffHz, cells[c].fs,
+                                                  { (double) cells[c].cutoffHz }).front().gainDb;
+                const auto error = std::abs (atCorner - idealCornerDb);
+                cornerHolds[c] = error <= cornerToleranceDb;
+
+                logMessage ("  corner " + juce::String (cells[c].name) + " -> "
+                                + juce::String (atCorner, 3) + " dB, "
+                                + juce::String (error, 3) + " dB from -3.01  "
+                                + (cornerHolds[c] ? "(holds)" : "(WRONG)"));
+            }
+
+            // The control: dampLF's corner is nowhere near Nyquist at either rate, so it cannot
+            // produce a Nyquist artefact and a move there would mean something else entirely.
+            const auto lfHolds = [&]
+            {
+                bool holds = true;
+
+                for (double fs : { 44100.0, 192000.0 })
+                {
+                    const auto atCorner = responseAt (500.0f, fs, { 500.0 }).front().gainDb;
+                    holds = holds && std::abs (atCorner - idealCornerDb) <= cornerToleranceDb;
+                    logMessage ("  control dampLF 500 Hz @ " + juce::String (fs / 1000.0, 1)
+                                    + "k -> " + juce::String (atCorner, 3) + " dB");
+                }
+
+                return holds;
+            }();
+
+            const bool lo441 = cornerHolds[0], lo192 = cornerHolds[1];
+            const bool hi441 = cornerHolds[2], hi192 = cornerHolds[3];
+
+            if (lo441 && lo192 && hi441 && hi192 && lfHolds)
+                logMessage ("  => ALL FOUR CORNERS HOLD: rate-correct across the whole range");
+            else if (! lo441 && ! lo192 && ! hi441 && ! hi192)
+                logMessage ("  => BOTH ENDS MOVE AT BOTH RATES: a rate bug");
+            else if (lo441 && lo192 && hi192 && ! hi441 && lfHolds)
+                logMessage ("  => ONLY THE TOP CORNER AT 44.1k MOVES: a RANGE finding, not a rate "
+                            "finding. dampHF's own maximum is reachable at every supported rate, so "
+                            "the range is what is wrong rather than the rate handling.");
             else
-                logMessage ("  -> UNCLASSIFIED — reporting the figures and stopping, per the rule");
+                logMessage ("  => UNCLASSIFIED — a pattern the four readings do not name. Figures "
+                            "reported, nothing assigned, per the rule.");
 
-            expect (loHolds && hiHolds && lfHolds,
-                    "dampHF or dampLF changed its response across rates. lo " + juce::String (loDelta, 3)
-                        + " dB, hi " + juce::String (hiDelta, 3) + " dB, LF control "
-                        + juce::String (lfDelta, 3) + " dB — read the pattern against this test's "
-                        "four-row table rather than assigning it");
+            expect (lo441 && lo192 && hi441 && hi192 && lfHolds,
+                    "a dampHF corner is not where its cutoff says it is — read the four corner "
+                    "lines above against this test's table rather than assigning it");
         }
 
         beginTest ("Offline against real-time");
