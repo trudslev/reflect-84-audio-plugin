@@ -4,6 +4,7 @@ target_sources(Reflect84Tests PRIVATE
     RealtimeSafetyTests.cpp
     NumericalRobustnessTests.cpp
     LockContentionTests.cpp
+    InvarianceTests.cpp
     TestMain.cpp
     PrintedScaleTests.cpp
     ReadoutConformanceTests.cpp
