@@ -199,6 +199,54 @@ public:
                                     + "  (a correct one-pole reads -3.01)");
                 }
         }
+        beginTest ("Is Reflect-84's algorithm crossfade the same LATENT defect as Gatecrasher's?");
+        {
+            // **Gatecrasher's first-run difference was its switch crossfade firing on the first
+            // block**, because ReverbEngine constructs currentAlgorithm = plate while the Program
+            // applied at construction selects ROOM — so an instance's first playback blends 60 ms
+            // of a tank nobody selected into the one they did.
+            //
+            // This casting has the identical structure: `int currentAlgorithm = 0;` and no
+            // assignment in prepare. Its own first-run difference was fully accounted for by the
+            // pre-delay smoother (proved at the 2400-sample ramp boundary), so the crossfade does
+            // NOT fire here — which can only be because its constructed 0 happens to match the
+            // algorithm its default Program selects. That is luck, not design, and the same edit
+            // that changes the default Program's algorithm arms it.
+            //
+            // Driving the algorithm says so directly: if the crossfade is latent, exactly one of
+            // the four values must be free of it and it must be the constructed one.
+            nf::testing::RenderSpec spec;
+            spec.blockSize = 512;
+            spec.numBlocks = 16;
+
+            {
+                Reflect84AudioProcessor fresh;
+                auto* algo = fresh.apvts.getParameter (ParamIDs::algorithm);
+                logMessage ("  default algorithm reads -> \"" + algo->getCurrentValueAsText()
+                                + "\", normalised " + juce::String (algo->getValue(), 4));
+            }
+
+            // Pre-delay is driven to zero throughout, so the smoother finding cannot mask or be
+            // mistaken for the crossfade — one known cause removed to look for another.
+            for (float v : { 0.0f, 0.34f, 0.67f, 1.0f })
+            {
+                Reflect84AudioProcessor cold, warmRef;
+
+                for (auto* p : { &cold, &warmRef })
+                {
+                    set (*p, ParamIDs::algorithm, v);
+                    set (*p, ParamIDs::preDelay, 0.0f);
+                }
+
+                warm (warmRef);
+
+                const auto r = nf::testing::compareRenders (nf::testing::render (cold, spec),
+                                                            nf::testing::render (warmRef, spec));
+
+                logMessage ("  algorithm = " + juce::String (v, 2) + " -> " + r.describe());
+            }
+        }
+
         beginTest ("Block size — sample-exact at 64 / 128 / 511 / 2048");
         {
             Reflect84AudioProcessor processor;
