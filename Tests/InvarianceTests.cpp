@@ -313,15 +313,52 @@ public:
                                 + (allExact ? juce::String ("all four sizes sample-exact")
                                             : "worst |delta| " + juce::String (worst, 9)));
 
-                if (mod == 0.0f)
-                    expect (allExact,
-                            "block-size divergence SURVIVES modulation at zero, so the LFO is not "
-                            "the whole story and a second cause is hidden behind it: worst |delta| "
-                                + juce::String (worst, 9));
-                else
-                    expect (! allExact,
-                            "modulation at " + juce::String (mod, 2) + " produced no divergence, so "
-                            "the zero arm proved nothing — a comparison never shown able to fail");
+                // **RE-AIMED 2026-08-15, and re-aimed is not relaxed.** While `LfoBank` stepped per
+                // block this arm asserted the OPPOSITE for the two non-zero depths — that they MUST
+                // diverge — because its job was locating: zero exact and non-zero divergent is what
+                // proved the modulation path accounted for all of it. The fix landed and both
+                // non-zero arms went sample-exact, so the old assertion started failing with the
+                // message *"a comparison never shown able to fail"*, which is the test correctly
+                // reporting that its own diagnostic premise is spent.
+                //
+                // The property asserted now is stronger, not weaker: **modulation is sample-exact at
+                // every depth**, where before only depth zero was. Loosening a bound to match the
+                // code would have been the forbidden move; asserting the correctness property the
+                // fix was made to deliver is the opposite of it.
+                expect (allExact,
+                        "block-size divergence at MODULATION " + juce::String (mod, 2)
+                            + ": the same sample stream cut differently produced different output, "
+                              "so something on the modulation path is stepping per block again. "
+                              "worst |delta| " + juce::String (worst, 9));
+            }
+
+            // **The known case moves with the assertion.** Three exact rows are also what a
+            // comparison that cannot fail reports, and that is precisely the trap the old wording
+            // named. So: two DIFFERENT modulation depths must produce DIFFERENT audio. It exercises
+            // the same driver at the same sizes and its input is the parameter rather than the
+            // quantity under test, so it cannot pass by the mechanism it is guarding.
+            {
+                Reflect84AudioProcessor dry, wet;
+                set (dry, ParamIDs::modulation, 0.0f);
+                set (wet, ParamIDs::modulation, 1.0f);
+                warm (dry);
+                warm (wet);
+
+                const auto a = nf::testing::render (dry, spec);
+                const auto b = nf::testing::render (wet, spec);
+
+                double worst = 0.0;
+
+                for (size_t ch = 0; ch < juce::jmin (a.size(), b.size()); ++ch)
+                    for (size_t i = 0; i < juce::jmin (a[ch].size(), b[ch].size()); ++i)
+                        worst = juce::jmax (worst, (double) std::abs (a[ch][i] - b[ch][i]));
+
+                logMessage ("  KNOWN CASE, mod 0.00 against 1.00 -> " + juce::String (worst, 9));
+
+                expectGreaterThan (worst, 1.0e-4,
+                                   "two different modulation depths produced the same audio, so this "
+                                   "comparison cannot distinguish anything and the exact rows above "
+                                   "mean nothing");
             }
         }
 

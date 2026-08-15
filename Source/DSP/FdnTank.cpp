@@ -130,7 +130,6 @@ void FdnTank::process (juce::AudioBuffer<float>& buffer, const TankParameters& p
         return;
 
     grain.setGrain (p.grain01);
-    lfo.advanceBlock (numSamples);
 
     const int n = cfg.numLines;
 
@@ -138,13 +137,15 @@ void FdnTank::process (juce::AudioBuffer<float>& buffer, const TankParameters& p
     std::array<float, maxLines> feedback {};
     std::array<float, maxLines> modOffset {};
 
+    const float modScale = msToSamples (cfg.modDepthMs, sampleRate) * p.mod01;
+
     for (int i = 0; i < n; ++i)
     {
         const size_t s = (size_t) i;
 
         lengthSamples[s] = msToSamples (cfg.lineMs[s] * p.sizeScale, sampleRate);
         feedback[s] = feedbackForRT60 (lengthSamples[s], p.decaySeconds, sampleRate);
-        modOffset[s] = msToSamples (cfg.modDepthMs, sampleRate) * p.mod01 * lfo.value (i);
+        modOffset[s] = modScale * lfo.value (i);
 
         damping[s].setCutoff (p.dampHFHz, sampleRate);
         lowCut[s].setCutoff (p.dampLFHz, sampleRate);
@@ -161,6 +162,12 @@ void FdnTank::process (juce::AudioBuffer<float>& buffer, const TankParameters& p
 
     for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
     {
+        // Only the modulation offsets follow the bank; lengths, feedback and the filters are
+        // parameter-driven and stay per block.
+        if (lfo.tick())
+            for (int i = 0; i < n; ++i)
+                modOffset[(size_t) i] = modScale * lfo.value (i);
+
         float mono = 0.0f;
 
         for (int ch = 0; ch < numChannels; ++ch)

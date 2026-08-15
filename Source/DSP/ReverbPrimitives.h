@@ -169,10 +169,49 @@ template <int N>
 class LfoBank
 {
 public:
+    /** How often the bank re-targets and re-phases, in HERTZ rather than in samples.
+
+        **Both figures here were CHOSEN, not derived, and they are named in their own units so that
+        stays visible.** The defect this replaced was `0.02f` applied once per block — a time
+        constant whose value in seconds was whatever buffer the host happened to hand over. Making it
+        time-based is half the fix; making the figure legible as time is the other half, because an
+        interval in samples would have been the identical defect one axis over.
+
+        **1 kHz.** Above today's best case, so no buffer size gets worse: the current update rate IS
+        the buffer rate, 750 Hz at 64 samples down to 23 Hz at 2048. It costs one update per 48
+        samples at 48 kHz, where the host currently decides anything between 1-in-64 and 1-in-2048.
+        Expressed in Hz so it holds across sample rates — a fixed sample interval would make the
+        update rate sample-rate-dependent, which is this defect on the other axis.
+    */
+    static constexpr double lfoUpdateRateHz = 1000.0;
+
+    /** The rate random-walk's time constant, in SECONDS.
+
+        **500 ms, chosen for what the control does rather than to preserve any buffer's accident.**
+        This is a slow drift in the modulation rate — a transport's speed wandering — so its musical
+        range is hundreds of milliseconds to seconds. Inheriting the 64-sample buffer's behaviour
+        would give ~67 ms, which reads as wobble in the modulation itself rather than as drift;
+        inheriting the 512-sample one gives ~535 ms.
+
+        500 ms sits close enough to that 512 figure that anything authored on a common default buffer
+        keeps its character, and it is defensible on its own terms rather than because 512 happened
+        to be the buffer somebody used. **If it sounds wrong once the tanks are running it is a
+        number to tune, not one to reverse-engineer.**
+    */
+    static constexpr double rateWalkTimeConstantSeconds = 0.5;
+
     void prepare (double sr, int seedOffset = 0)
     {
         sampleRate = sr;
         random = juce::Random (seedFor (seedOffset));
+
+        updateIntervalSamples = juce::jmax (1, (int) std::round (sr / lfoUpdateRateHz));
+        samplesSinceUpdate = 0;
+
+        // One-pole coefficient for the chosen time constant at the chosen update interval. Both
+        // sides are now times, so neither moves when the host changes its buffer.
+        const double updateSeconds = (double) updateIntervalSamples / sr;
+        walkCoefficient = (float) (1.0 - std::exp (-updateSeconds / rateWalkTimeConstantSeconds));
 
         for (int i = 0; i < N; ++i)
         {
@@ -185,18 +224,48 @@ public:
 
     void reset() noexcept
     {
+        // The counter resets with the phase. A render that began mid-interval would put the first
+        // update at a different absolute sample than a render that began at one, which is exactly
+        // the buffer dependence this class was fixed for — arriving through the back door.
+        samplesSinceUpdate = 0;
+
         for (int i = 0; i < N; ++i)
             phase[(size_t) i] = (float) std::fmod (0.7548776662 * (i + 1), 1.0);
     }
 
-    /** Advances once per block and re-targets the random walk.
+    /** Advances the bank by ONE sample; returns true on the samples where its values changed.
 
-        **The second sentence of this comment used to read "the LFOs themselves are read per
-        sample", and that is not what the tanks do.** All three read `value (i)` ONCE, outside their
-        sample loop, and hold it across the whole block — PlateTank.cpp:112, FdnTank.cpp:147,
-        DigitalRoomTank.cpp:118. Measured 2026-08-14 during the suite bug sweep; nothing is fixed
-        here yet and the three defects below are filed SEPARATELY, because they have different
-        defensibility and a ruling on the first must not dispose of the other two.
+        Call it once per sample and re-read `value (i)` when it returns true. The sine is only
+        recomputed at an update, so the per-sample cost is an increment and a compare.
+
+        ## FIXED 2026-08-15. What was here, and why one change closed all three
+
+        Three defects, filed separately during the sweep because they had different defensibility
+        and a ruling on the first must not dispose of the other two:
+
+        **1 · The block's boundary phase was held across the whole block.** `advanceBlock` ran once
+        per buffer and all three tanks read `value (i)` ONCE, outside their sample loop —
+        PlateTank.cpp:112, FdnTank.cpp:147, DigitalRoomTank.cpp:118. Defensible as a CPU trade in
+        itself, and plenty of shipping code makes it. What was not defensible was leaving it
+        unstated, because **the modulation update rate WAS the buffer rate**: 750 Hz at 64 samples,
+        23 Hz at 2048 — a stairstep on a modulator that coarsens as the buffer grows.
+
+        **2 · The random walk stepped by a fixed `0.02f` per BLOCK.** A time constant whose value in
+        seconds was whatever the buffer happened to be: ~67 ms at 64 samples, ~535 ms at 512.
+
+        **3 · One `random.nextFloat()` per BLOCK**, so the walk's noise spectrum moved with the
+        host's buffer setting.
+
+        **A fixed update interval fixes 1, and 2 and 3 come free** — the step coefficient and the
+        draw rate become time-based by construction. The alternative was accepting 1 and giving 2
+        and 3 time-based coefficients, two changes with the stairstep left in; **the pre-stated
+        discriminator closed that.** The sweep recorded that this casting's three block-size rows all
+        begin at sample 1891 — one origin, not three — and required that index to VANISH rather than
+        move. A phase held across a block is buffer-dependent whatever the coefficients do, so the
+        two-change path could not have satisfied it.
+
+        Before: sample-exact with MODULATION at 0, and 0.025 / 0.063 / 0.145 at 128 / 511 / 2048,
+        every row first differing at sample 1891.
 
         **1 · The block's boundary phase is held across the block.** Defensible: an LFO updated once
         per buffer is a recognised CPU trade and plenty of shipping code makes it. What is not
@@ -214,33 +283,26 @@ public:
         second is the buffer rate, so the walk's noise spectrum moves with the host's buffer setting.
         Also follows from 1, and also has no correct version at any size.
 
-        **The three are filed separately and they are NOT sequenced separately, because a fix for 1
-        dissolves 2 and 3.** A fixed update interval makes the step coefficient and the draw rate
-        time-based by construction, so neither the 0.02 time constant nor the one-draw-per-block
-        spectrum stays buffer-dependent — without either being touched. So the choice is:
-
-          * accept 1 as a CPU trade and give 2 and 3 time-based coefficients — TWO changes, and the
-            stairstep stays, coarsening to 23 Hz at 2048; or
-          * fix 1 with a fixed update interval — ONE change, and 2 and 3 come free.
-
-        Written down because a reader who decides 1 is defensible will otherwise reach for the
-        two-change path without seeing that the one-change path is cheaper and fixes more.
-
-        Measured: `blockSizeInvariance` at 64 / 128 / 511 / 2048 is sample-exact with MODULATION at
-        0 and diverges at 0.34 (0.153) and 1.00 (0.188), so this path accounts for ALL of the
-        casting's block-size divergence and the magnitude scales with depth. See
-        Tests/InvarianceTests.cpp.
     */
-    void advanceBlock (int numSamples) noexcept
+    bool tick() noexcept
     {
+        if (++samplesSinceUpdate < updateIntervalSamples)
+            return false;
+
+        samplesSinceUpdate = 0;
+
         for (int i = 0; i < N; ++i)
         {
-            rate[(size_t) i] += 0.02f * (nominalRate[(size_t) i]
-                                         * (0.85f + 0.3f * random.nextFloat()) - rate[(size_t) i]);
+            rate[(size_t) i] += walkCoefficient * (nominalRate[(size_t) i]
+                                                   * (0.85f + 0.3f * random.nextFloat())
+                                                   - rate[(size_t) i]);
             phase[(size_t) i] = std::fmod (phase[(size_t) i]
-                                           + rate[(size_t) i] * (float) numSamples / (float) sampleRate,
+                                           + rate[(size_t) i] * (float) updateIntervalSamples
+                                                              / (float) sampleRate,
                                            1.0f);
         }
+
+        return true;
     }
 
     /** Sine value for line i at the current block phase, -1 .. 1. */
@@ -251,6 +313,9 @@ public:
 
 private:
     double sampleRate = 44100.0;
+    int updateIntervalSamples = 44;
+    int samplesSinceUpdate = 0;
+    float walkCoefficient = 0.002f;
     juce::Random random { 1 };
     std::array<float, (size_t) N> nominalRate {};
     std::array<float, (size_t) N> rate {};

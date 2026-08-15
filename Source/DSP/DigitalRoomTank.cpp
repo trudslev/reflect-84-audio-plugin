@@ -84,7 +84,6 @@ void DigitalRoomTank::process (juce::AudioBuffer<float>& buffer, const TankParam
         return;
 
     grain.setGrain (p.grain01);
-    lfo.advanceBlock (numSamples);
 
     for (int ch = 0; ch < 2; ++ch)
     {
@@ -111,11 +110,13 @@ void DigitalRoomTank::process (juce::AudioBuffer<float>& buffer, const TankParam
     std::array<float, numCombs> combSamples {};
     std::array<float, numCombs> modOffset {};
 
+    const float modScale = msToSamples (modDepthMs, sampleRate) * p.mod01;
+
     for (int c = 0; c < numCombs; ++c)
     {
         combSamples[(size_t) c] = msToSamples (combMs[(size_t) c] * p.sizeScale, sampleRate);
         combFeedback[(size_t) c] = feedbackForRT60 (combSamples[(size_t) c], p.decaySeconds, sampleRate);
-        modOffset[(size_t) c] = msToSamples (modDepthMs, sampleRate) * p.mod01 * lfo.value (c);
+        modOffset[(size_t) c] = modScale * lfo.value (c);
     }
 
     std::array<float*, 2> out {};
@@ -127,6 +128,10 @@ void DigitalRoomTank::process (juce::AudioBuffer<float>& buffer, const TankParam
 
     for (int n = 0; n < numSamples; ++n)
     {
+        if (lfo.tick())
+            for (int c = 0; c < numCombs; ++c)
+                modOffset[(size_t) c] = modScale * lfo.value (c);
+
         float mono = 0.0f;
 
         for (int ch = 0; ch < numChannels; ++ch)

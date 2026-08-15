@@ -90,7 +90,6 @@ void PlateTank::process (juce::AudioBuffer<float>& buffer, const TankParameters&
     }
 
     grain.setGrain (p.grain01);
-    lfo.advanceBlock (numSamples);
 
     // Diffusion coefficients: DENSITY controls how hard the input is smeared before it reaches
     // the tank, which on a plate is most of what "density" means.
@@ -109,12 +108,17 @@ void PlateTank::process (juce::AudioBuffer<float>& buffer, const TankParameters&
     for (int ch = 0; ch < numChannels; ++ch)
         out[(size_t) ch] = buffer.getWritePointer (ch);
 
+    // Re-read on the samples the bank actually updates. `tick()` is an increment and a compare;
+    // the sine only recomputes at an update, so this is per-sample correctness at per-update cost.
     std::array<float, 2> lfoValue { lfo.value (0), lfo.value (1) };
 
     float peak = 0.0f;
 
     for (int n = 0; n < numSamples; ++n)
     {
+        if (lfo.tick())
+            lfoValue = { lfo.value (0), lfo.value (1) };
+
         // Mono sum into the diffusers - a plate is driven at one point, not two.
         float x = 0.0f;
 
