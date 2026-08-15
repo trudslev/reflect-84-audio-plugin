@@ -1,6 +1,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include <nf/BlockChunking.h>
+
 #include <cmath>
 
 Reflect84AudioProcessor::Reflect84AudioProcessor()
@@ -114,25 +116,46 @@ void Reflect84AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     tank.mod01        = modulationParam->load();
     tank.grain01      = grainParam->load();
 
+    // **The over-delivery policy.** dryBuffer.setSize grows when a host sends more samples than it
+    // declared. Chunking removes it: no span is longer than the prepared size, so the growth path
+    // is never reached.
+    //
+    // **THE BUS QUESTION, ASKED HERE.** Gatecrasher had to move its getBusBuffer calls inside the
+    // loop; Fifth Member had none to move because it has no second bus. **Reflect-84's answer is
+    // Fifth Member's ANSWER for Fifth Member's REASON, and both halves were checked rather than
+    // predicted from the layout:** there is no getBusBuffer call anywhere in this processBlock, and
+    // its channel count comes from getTotalNumInput/OutputChannels — the processor, not the buffer —
+    // which is span-invariant by construction. Plain stereo in and out, no sidechain, so the
+    // extraction that would have needed moving does not exist. A casting can call getBusBuffer for
+    // its main bus without having a second one, which is why the call site was looked for rather
+    // than inferred from the bus count.
+    //
+    // ScopedNoDenormals, the unused-channel clear, the bypass path and the parameter reads all stay
+    // OUTSIDE: the guard is scoped, the clear operates on the whole buffer, and bypass returns
+    // before any of this is reached.
+    nf::processInChunks (buffer, getBlockSize(), [&] (juce::AudioBuffer<float>& span)
+    {
+    const int numSamples = span.getNumSamples();
+
     dryBuffer.setSize (numChannels, numSamples, false, false, true);
 
     for (int ch = 0; ch < numChannels; ++ch)
-        dryBuffer.copyFrom (ch, 0, buffer, ch, 0, numSamples);
+        dryBuffer.copyFrom (ch, 0, span, ch, 0, numSamples);
 
     mixSmoothed.setTargetValue (mix01);
     trimSmoothed.setTargetValue (trimGain);
     widthSmoothed.setTargetValue (width);
 
-    reverbEngine.process (buffer, algorithm, tank, ParamFormat::preDelayMs (preDelayParam->load()));
+    reverbEngine.process (span, algorithm, tank, ParamFormat::preDelayMs (preDelayParam->load()));
 
-    StereoWidthStage::process (buffer, widthSmoothed);
+    StereoWidthStage::process (span, widthSmoothed);
 
     std::array<float*, 2> out {};
     std::array<const float*, 2> dry {};
 
     for (int ch = 0; ch < numChannels; ++ch)
     {
-        out[(size_t) ch] = buffer.getWritePointer (ch);
+        out[(size_t) ch] = span.getWritePointer (ch);
         dry[(size_t) ch] = dryBuffer.getReadPointer (ch);
     }
 
@@ -150,7 +173,8 @@ void Reflect84AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         }
     }
 
-    updateDisplayState (dryBuffer, buffer, numSamples);
+    updateDisplayState (dryBuffer, span, numSamples);
+    });
 }
 
 void Reflect84AudioProcessor::updateDisplayState (const juce::AudioBuffer<float>& dry,
