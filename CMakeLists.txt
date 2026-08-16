@@ -101,8 +101,8 @@ set(REFLECT84_VERSION_SHORT "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
 juce_add_plugin(Reflect84
     PRODUCT_NAME "${REFLECT84_PRODUCT_NAME}"
     COMPANY_NAME "${REFLECT84_COMPANY_NAME}"
-    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/design/icon/icon-1024.png"
-    ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/design/icon/icon-256.png"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/design/icons/reflect84-icon-1024.png"
+    ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/design/icons/reflect84-icon-256.png"
     BUNDLE_ID "com.neonfoundry.reflect84"
     # **Without this the Standalone is silent and the meters look broken.** An app whose Info.plist
     # carries no NSMicrophoneUsageDescription is never granted capture access on macOS - the OS does
