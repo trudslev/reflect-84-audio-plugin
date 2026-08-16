@@ -1166,3 +1166,31 @@ namespace Paint
 }
 
 } // namespace ReflectTheme
+
+/*  **The IN/OUT readout's string, and it lives HERE rather than in the .cpp.**
+
+    Same reason the parameter readout format does: the component header reaches `PluginProcessor.h`,
+    whose `JucePlugin_*` macros exist only in the plugin target, so a test reading the format from
+    there cannot link — and a test declaring its own copy asserts against itself and passes while the
+    panel prints something else.
+
+    Suite ruling 2026-08-14: floor sentinel, +99.9 ceiling, one decimal always, an explicit sign
+    decision. Widest string FIVE, as a guarantee rather than a range.
+
+    **The FLOOR here was already safe by construction rather than by coincidence.** The clamp at
+    -99.0 catches everything below it regardless of where the DSP floors, so moving the DSP floor
+    cannot arm it — unlike TapeRot, whose GUI had no clamp at all and printed "-100.0" in a
+    0.58 %-wide band crossed at the end of every note. The ceiling is the half that was missing.
+
+    No plus sign at any level, which is this panel's own convention: the ruling settles the
+    COMPARISON for castings that print one, not whether to print one. */
+namespace ReflectTheme
+{
+    inline juce::String formatMeterDb (float db)
+    {
+        if (db <= -99.0f)
+            return juce::String ("-99.0");
+
+        return juce::String (juce::jmin (db, 99.9f), 1);
+    }
+}

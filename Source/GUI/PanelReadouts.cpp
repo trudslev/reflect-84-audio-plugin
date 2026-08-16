@@ -32,7 +32,7 @@ namespace
         parks at its bottom reading, it does not go blank. */
     juce::String formatMeter (float db)
     {
-        return db <= -99.0f ? juce::String ("-99.0") : juce::String (db, 1);
+        return ReflectTheme::formatMeterDb (db);
     }
 }
 
