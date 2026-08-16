@@ -143,9 +143,32 @@ public:
                                 + (glideShows ? "inside" : "outside") + " the 2400-sample ramp: "
                                 + result.describe());
 
-                expect (result.sampleExact != glideShows,
-                        "the first-run difference did not follow the ramp boundary at "
-                            + juce::String (delaySamples, 1) + " samples: " + result.describe());
+                /*  **FIXED 2026-08-16, and this arm now asserts the opposite of what it was
+                    written to characterise.**
+
+                    The finding was that `preDelaySmoothed` glided up from zero on an instance's
+                    FIRST render and never again, because `reset (rate, seconds)` sets the ramp
+                    length and snaps the value to the smoother's last target — zero on a constructed
+                    object. `ReverbEngine::prepare` takes the pre-delay it is prepared for now, so
+                    there is no glide at any setting.
+
+                    This block characterised the defect rather than merely detecting it: the
+                    divergence appeared exactly where the requested delay fell INSIDE the 2400-sample
+                    ramp and vanished outside it, which is what proved the smoother was the cause
+                    rather than something else that happened to be first-run-only. That
+                    characterisation is why `glideShows` exists, and it is kept as the record of how
+                    the cause was established — the assertion it feeds is now that no setting
+                    diverges, inside the ramp or out.
+
+                    Seventh vacuity-shaped inversion in this stage, and the widest: five arms at
+                    once, all asserting properties OF a defect. */
+                expect (result.sampleExact,
+                        "an instance's first render differs from its second at pre-delay "
+                            + juce::String (delaySamples, 1) + " samples ("
+                            + (glideShows ? "inside" : "outside")
+                            + " the 2400-sample ramp). ReverbEngine::prepare takes its initial "
+                              "pre-delay precisely so the smoother does not glide up from zero: "
+                            + result.describe());
             }
         }
 

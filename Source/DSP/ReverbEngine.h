@@ -24,7 +24,18 @@ class ReverbEngine
 public:
     ReverbEngine();
 
-    void prepare (const juce::dsp::ProcessSpec& spec);
+    /*  **`initialPreDelayMs` is an argument, because `reset (rate, seconds)` does not set a value.**
+
+        It is `setCurrentAndTargetValue (this->target)` internally — it sets the ramp LENGTH and
+        snaps to whatever target the smoother last held, which is zero on a constructed object. So
+        `preDelaySmoothed` glided up from zero across an instance's first render and never again:
+        the first-run-only defect this casting's own premise check has to warm past, measured at
+        0.392414443 first at sample 351.
+
+        **`switchCrossfade` two lines above it was guarded all along**, with a literal 1.0. Nobody
+        misunderstood the API — the correct form was written adjacent to the incorrect one — which is
+        why a rule saying "know what reset does" would not have caught this and a grep did. */
+    void prepare (const juce::dsp::ProcessSpec& spec, float initialPreDelayMs);
     void reset();
 
     void process (juce::AudioBuffer<float>& buffer,

@@ -15,7 +15,7 @@ ReverbTank* ReverbEngine::tankFor (int index) noexcept
     return tanks[(size_t) juce::jlimit (0, (int) tanks.size() - 1, index)].get();
 }
 
-void ReverbEngine::prepare (const juce::dsp::ProcessSpec& spec)
+void ReverbEngine::prepare (const juce::dsp::ProcessSpec& spec, float initialPreDelayMs)
 {
     sampleRate = spec.sampleRate;
 
@@ -34,6 +34,7 @@ void ReverbEngine::prepare (const juce::dsp::ProcessSpec& spec)
     // Pre-delay moves a read position, so it is smoothed per sample: stepping it per block turns
     // a Pre-Delay automation ramp into a series of clicks.
     preDelaySmoothed.reset (spec.sampleRate, 0.05);
+    preDelaySmoothed.setCurrentAndTargetValue (initialPreDelayMs);
 
     reset();
 }
