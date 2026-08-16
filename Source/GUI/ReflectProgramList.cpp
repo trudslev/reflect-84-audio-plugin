@@ -1,5 +1,7 @@
 #include "ReflectProgramList.h"
 
+#include <nf/HeaderPart.h>
+
 using namespace ReflectTheme;
 
 namespace
@@ -291,33 +293,25 @@ void ReflectProgramList::paintBands (juce::Graphics& g) const
 void ReflectProgramList::paintChevron (juce::Graphics& g, juce::Rectangle<int> band,
                                        bool pointingUp, bool enabled) const
 {
-    // **The LCD caret's own construction**, which is where the list's ink comes from: a 9 x 9 box
-    // with two 1.6px borders, rotated 45 degrees. Left+top for up, right+bottom for down - the up
-    // chevron is literally the caret rotated.
-    constexpr float box = 9.0f, stroke = 1.6f;
+    /*  **`nf::Chevron`, and these were two of §10's nine sites.**
 
-    juce::Path p;
+        This drew a 9 x 9 box rotated 45 degrees, with a comment saying the up chevron *"is
+        literally the caret rotated"*. That description was already retired — §10 item 12 of this
+        casting's spec records it as describing a construction that existed on neither side, since
+        the caret is a block and always was. The glyph is the shared 14 x 8 path in all three of
+        this panel's sites now.
 
-    if (pointingUp)
-    {
-        p.startNewSubPath (0.0f, box);
-        p.lineTo (0.0f, 0.0f);
-        p.lineTo (box, 0.0f);
-    }
-    else
-    {
-        p.startNewSubPath (box, 0.0f);
-        p.lineTo (box, box);
-        p.lineTo (0.0f, box);
-    }
+        **§4.1's hazard is exactly why this needed doing by hand.** The list is a Component rather
+        than a PopupMenu, so nothing carries a shared look-and-feel into it: a chevron change made
+        centrally reaches five castings and silently not this one. Reading the path from core is
+        what removes that — there is no longer a central change for this file to miss.
 
-    // Offset 4px toward the band's OUTER edge so the glyph sits optically centred rather than
-    // geometrically - the rotated box's ink is not centred in its own bounds.
-    const float cx = (float) band.getCentreX();
-    const float cy = (float) band.getCentreY() + (pointingUp ? -4.0f : 4.0f);
+        The optical offset is gone with the rotation that needed it. A rotated box's ink is not
+        centred in its own bounds, which is what the 4 px was correcting; the path's is. */
+    constexpr float stroke = 1.6f;
 
-    p.applyTransform (juce::AffineTransform::rotation (pi * 0.25f, box * 0.5f, box * 0.5f)
-                          .translated (cx - box * 0.5f, cy - box * 0.5f));
+    auto p = pointingUp ? nf::Chevron::up (band.toFloat())
+                        : nf::Chevron::down (band.toFloat());
 
     if (enabled)
     {

@@ -1,6 +1,8 @@
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
+#include "../Source/GUI/ReflectTheme.h"
 
+#include <nf/HeaderPart.h>
 #include <nf/UserProgramDirectory.h>
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -36,6 +38,80 @@ public:
 
     void runTest() override
     {
+        beginTest ("This panel READS the shared header part, rather than agreeing with it");
+        {
+            /*  **Core owns the mechanism; this proves the wiring** — the same split as
+                `nf::connectUserEdit`, where core's own tests prove the gate works and each casting's
+                test proves that casting actually calls it.
+
+                It matters here more than most places. A panel can compile against
+                `nf::HeaderGeometry` and still hold its own literals: that is precisely what six
+                panels did before this round, and §10 records three figures that reached some copies
+                and not others. So the assertions below compare this panel's theme against core, and
+                a theme that stopped aliasing and went back to literals would fail them the moment
+                the part's figure moved — which is the only failure mode worth guarding.
+
+                **This is NOT the same test as core's own.** Core asserts its figures against
+                HEADER-PART's published literals; this asserts that this panel is downstream of
+                those figures. Neither implies the other, and the pair is what makes the extraction
+                a guarantee rather than a convention. */
+            namespace L = ReflectTheme::Layout;
+
+            expectEquals ((int) L::programWellX, nf::HeaderGeometry::lcdX);
+            expectEquals ((int) L::programWellY, nf::HeaderGeometry::bandY);
+            expectEquals ((int) L::programWellW, nf::HeaderGeometry::lcdW);
+            expectEquals ((int) L::programWellH, nf::HeaderGeometry::bandH);
+
+            expectEquals ((int) L::saveButtonX, nf::HeaderGeometry::saveX);
+            expectEquals ((int) L::saveButtonW, nf::HeaderGeometry::saveW);
+            expectEquals ((int) L::deleteButtonX, nf::HeaderGeometry::deleteX);
+            expectEquals ((int) L::deleteButtonW, nf::HeaderGeometry::deleteW);
+
+            expectEquals ((int) L::meterInX, nf::HeaderGeometry::inWellX);
+            expectEquals ((int) L::meterOutX, nf::HeaderGeometry::outWellX);
+            expectEquals ((int) L::meterWellW, nf::HeaderGeometry::meterWellW);
+
+            expectEquals ((int) L::programLabelH, nf::HeaderGeometry::captionH);
+            expectEquals ((int) L::meterLabelH, nf::HeaderGeometry::captionH);
+
+            // **The two the round actually moved**, named so the change is findable later: the
+            // meters sat at 1162 / 1236 on a 16 px DELETE gap measured off the 3x render, and the
+            // part states 18. The render was out of date rather than the measurement wrong.
+            expectEquals ((int) L::meterInX, 1164, "the IN well moved 2 px right this round");
+            expectEquals ((int) L::meterOutX, 1238, "the OUT well moved with it");
+
+            // The canvas: 648 pinned, closing the 645.13 / 648.63 font-load split.
+            expectEquals ((int) L::canvasWidth, nf::HeaderGeometry::canvasWidth);
+            expectEquals ((int) L::canvasHeight, 648);
+        }
+
+        beginTest ("The LCD budget is this panel's OWN measurement until the shared face lands");
+        {
+            /*  **Deliberately NOT `nf::LcdCell::characterBudget()`, and this is the one place the
+                panel is allowed to disagree with the part.**
+
+                §5's budget of 49 and cap of 47 are measured on Share Tech Mono at 17 px with
+                1.700 px tracking. That binary was not delivered for this casting — see
+                `design-asks/shared-font-binaries-missing.md` — so this panel still draws IBM Plex
+                Mono, whose advance is 12.78 px at 17 px / .16 em, giving a measured 41.
+
+                Adopting 47 now would overflow the cell. Worse, it would be **unrecoverable**: a cap
+                may never shrink, because lowering one orphans names already saved — they load, and
+                then fail to save back under their own name. So the cap follows the face, and the
+                assertion is that the two are consistent rather than that either is a particular
+                number.
+
+                When the font arrives this becomes `nf::LcdCell::characterBudget()` and the arm
+                below flips to asserting equality. */
+            expectEquals (ReflectTheme::Layout::lcdCharacterBudget, 41,
+                          "this panel's budget is measured against the face it actually draws");
+
+            expectNotEquals (ReflectTheme::Layout::lcdCharacterBudget,
+                             nf::LcdCell::characterBudget(),
+                             "if these now agree, the shared face has landed and this arm plus the "
+                             "theme's budget should move to core's figure — see the font ask");
+        }
+
         beginTest ("The real editor constructs, lays out and tears down");
         {
             // Worth its own case even though it asserts almost nothing: until the harness port,

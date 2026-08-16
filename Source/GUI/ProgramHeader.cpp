@@ -529,7 +529,7 @@ void ProgramHeader::paint (juce::Graphics& g)
         {
             // Left-aligned while typing, so the caret does not jump about as the name grows.
             const auto field = display.withTrimmedLeft (nameCellLeft + 16.0f)
-                                      .withTrimmedRight (Layout::lcdChevronInsetRight + 18.0f);
+                                      .withTrimmedRight (nf::LcdCell::chevronTrim);
 
             const auto caret = juce::String::charToString ((juce::juce_wchar) 0x2588);   // U+2588 FULL BLOCK
             drawPhosphor (typedName + (caretVisible ? caret : juce::String()),
@@ -563,7 +563,7 @@ void ProgramHeader::paint (juce::Graphics& g)
 
             drawPhosphor (label,
                           display.withTrimmedLeft (nameCellLeft)
-                                 .withTrimmedRight (Layout::lcdChevronInsetRight + 18.0f),
+                                 .withTrimmedRight (nf::LcdCell::chevronTrim),
                           juce::Justification::centred);
         }
     }
@@ -571,20 +571,27 @@ void ProgramHeader::paint (juce::Graphics& g)
     // --- Chevron -------------------------------------------------------------
     if (! namingMode)
     {
-        const float s = Layout::chevronSize;
-        const float x = display.getRight() - Layout::chevronInsetX - s;
-        const float y = display.getCentreY() - s * 0.3f;
+        /*  **`nf::Chevron`, the shared 14 x 8 path — this was one of the nine sites.**
 
-        // It inverts while the list is open, mirrored about the mark's own centre line rather than
-        // rotated, so the apex stays on one vertical axis and it reads as flipping in place.
-        // Without it the mark still points down at a list that is already down.
-        const float outerY = menuOpen ? y + s * 0.55f : y;
-        const float apexY = menuOpen ? y : y + s * 0.55f;
+            HEADER-PART §10 leads its propagation argument with this glyph: it reached one casting
+            and missed nine sites, which drew a 9 x 9 rotated box at 84.5 degrees against the drawn
+            path's 77. Two of those nine are this panel's scroll chevrons and the third is here.
 
-        juce::Path chevron;
-        chevron.startNewSubPath (x, outerY);
-        chevron.lineTo (x + s * 0.5f, apexY);
-        chevron.lineTo (x + s, outerY);
+            **The box inset is 16 px and the trim is 30**, per §5. Those are one figure seen twice:
+            a 14-wide glyph whose box ends 16 px from the cell's inner right edge starts 30 px from
+            it, which is exactly the trim the name area is measured against. Deriving the box from
+            the inset rather than restating 30 is what keeps the two from drifting — the budget is
+            538.00 only while they agree.
+
+            It still inverts while the list is open, and core's `up` is the path **mirrored, not
+            rotated**: a rotated V puts its round caps on the wrong axis. */
+        const float boxRight = display.getRight() - 16.0f;
+        const juce::Rectangle<float> chevronBox { boxRight - nf::Chevron::width,
+                                                  display.getCentreY() - nf::Chevron::height * 0.5f,
+                                                  nf::Chevron::width, nf::Chevron::height };
+
+        const auto chevron = menuOpen ? nf::Chevron::up (chevronBox)
+                                      : nf::Chevron::down (chevronBox);
 
         g.setColour (Colour::bezelGoldBright);
         g.strokePath (chevron, { 1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::square });
@@ -608,13 +615,25 @@ void ProgramHeader::paint (juce::Graphics& g)
         The naming row is why STORE and CANCEL are gated on `namingMode` rather than on the region
         being enabled: while naming, `isRegionEnabled` reports both regions live, and it is the row
         of the matrix that decides which of each button's two legends that liveness belongs to. */
-    const bool naming = namingMode;
+    /*  **The matrix itself is `nf::programButtonLegends` now.** It is a decision table, and a
+        decision table held six times is the shape that had one casting printing the meter's plus
+        sign at `db >= 0.0f` and another at `db > 0.0f` — one value, two castings, no reason.
 
-    paintButton (g, saveArea(), "SAVE", "STORE",
-                 ! naming && isRegionEnabled (Region::save),   // SAVE:   the Program is edited
-                 naming);                                      // STORE:  always live while naming
+        What stays here is the panel's own knowledge: which region is live, and that a lit legend
+        must never sit on something that will ignore the click. The assertion below is what keeps
+        those two in step now that they come from different places. */
+    const nf::ProgramPanelState panelState { displayedId.bank == ProgramBank::user,
+                                             displayedIsModified,
+                                             namingMode };
 
-    paintButton (g, deleteArea(), "DELETE", "CANCEL",
-                 ! naming && isRegionEnabled (Region::deleteOrCancel),  // DELETE: a User Program
-                 naming);                                              // CANCEL: live while naming
+    const auto legends = nf::programButtonLegends (panelState);
+
+    // A lit legend on a dead region is the defect the old single-source construction ruled out by
+    // construction; sourcing the matrix from core reopens the possibility, so it is asserted rather
+    // than assumed. Debug-only: it is an invariant between two pure functions, not a runtime risk.
+    jassert (! legends.save || isRegionEnabled (Region::save));
+    jassert (! legends.deleteLegend || isRegionEnabled (Region::deleteOrCancel));
+
+    paintButton (g, saveArea(), "SAVE", "STORE", legends.save, legends.store);
+    paintButton (g, deleteArea(), "DELETE", "CANCEL", legends.deleteLegend, legends.cancel);
 }

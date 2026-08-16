@@ -1,3 +1,4 @@
+#include <nf/HeaderPart.h>
 #include "TestUtils.h"
 #include "../Source/GUI/ReflectTheme.h"
 #include "../Source/DSP/FactoryPrograms.h"
@@ -37,8 +38,11 @@ public:
         // at runtime), less the chevron inset.
         const float bankCellW = Layout::lcdBankPadX * 2.0f
                                  + Text::trackedWidth ("FACT", bankFont, bankTracking);
+        // **The trim is `nf::LcdCell::chevronTrim` now**, where this read `lcdChevronInsetRight + 18`.
+        // 12 + 18 = 30 and 30 is the part's own figure — holding it as two numbers that are only
+        // correct summed is how a term of the budget drifts while both halves still look chosen.
         const float nameAreaW = Layout::programWellW - (bankCellW + 1.0f)
-                                 - (Layout::lcdChevronInsetRight + 18.0f);
+                                 - nf::LcdCell::chevronTrim;
 
         // Per character, from the font itself rather than a quoted figure. A 20-character sample
         // divided by 20 averages out any single glyph's width.

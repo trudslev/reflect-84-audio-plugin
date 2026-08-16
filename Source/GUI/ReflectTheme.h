@@ -3,6 +3,8 @@
 #include <juce_graphics/juce_graphics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include <nf/HeaderPart.h>
+
 #include <BinaryData.h>
 
 #include <array>
@@ -406,7 +408,12 @@ namespace Layout
     // landmarks before moving coordinates: the render is not automatically the authority when it
     // may have been shot in a different font state.
     inline constexpr float canvasWidth  = 1340.0f;
-    inline constexpr float canvasHeight = 649.0f;
+    /** **648, pinned by the round, and this closes the panel's one real defect.** It previously
+        measured 645.13 before webfonts applied and 648.63 after, because three text blocks carried
+        no pinned line-height — so the canvas had two heights depending on font-load state, and the
+        earlier 649 here was the taller of them rounded. Call 4 makes every size a pair, so the
+        two-height render is no longer expressible. */
+    inline constexpr float canvasHeight = 648.0f;
     inline constexpr float panelRadius  = 10.0f;
     inline constexpr float panelPadding = 14.0f;
 
@@ -452,12 +459,28 @@ namespace Layout
     // LCD cell and both meter wells share a single 33px band at y 61. Those two shared baselines
     // are the point: the header previously had the captions and wells on three different rows, so
     // nothing lined up across the columns.
-    inline constexpr float programLabelX = 357.0f;
-    inline constexpr float programLabelY = 41.0f;
-    inline constexpr float programLabelH = 12.0f;
-    inline constexpr float programWellX = 357.0f;
-    inline constexpr float programWellY = 61.0f;
-    inline constexpr float programWellW = 641.0f;
+    /*  **THE HEADER PART'S GEOMETRY IS `nf::HeaderGeometry` NOW, AND THESE ARE ALIASES.**
+
+        Every figure below used to be a literal here, and the same literal was held in five sibling
+        panels, in `design/HEADER-PART.md`, and again in the parts strip — seven copies, with nothing
+        carrying a change between them. §10 records three propagation failures in one round from
+        exactly that: the chevron glyph reached one casting and missed nine sites, the model-line ink
+        landed in the strip for four castings and the bodies for two, and the 1340 canvas reached the
+        panels but neither exported plate.
+
+        **Aliased rather than replaced at the call sites**, deliberately: several hundred references
+        across this panel's components read these unqualified names, and renaming them all would bury
+        the one change that matters in noise. That is the same choice `FactoryPrograms.h` made for
+        `ProgramId`. What changes is that the *value* now has one home. */
+    inline constexpr float programLabelX = (float) nf::HeaderGeometry::lcdX;
+    inline constexpr float programLabelY = (float) nf::HeaderGeometry::captionY;
+
+    /** 13, not 12. The caption line box is the part's, and this panel carried 12. */
+    inline constexpr float programLabelH = (float) nf::HeaderGeometry::captionH;
+
+    inline constexpr float programWellX = (float) nf::HeaderGeometry::lcdX;
+    inline constexpr float programWellY = (float) nf::HeaderGeometry::bandY;
+    inline constexpr float programWellW = (float) nf::HeaderGeometry::lcdW;
 
     /** **34, and it is the suite's figure rather than this panel's.** BRAND.md fixes the header
         part height at 34px in every casting - not a proportion of the panel, because the castings
@@ -469,7 +492,7 @@ namespace Layout
         Border-box, so the 1px border is inside it and the content is 32. That distinction is not
         pedantry here: reconstructing border-box from a content figure by adding padding is where
         four castings picked up 0.5-2px of drift between row-mates. */
-    inline constexpr float programWellH = 34.0f;
+    inline constexpr float programWellH = (float) nf::HeaderGeometry::bandH;
 
     /** The bank indicator is printed ON the LCD glass now, not a badge beside it: same 16px face as
         the program name, 16px padding either side, separated from the name by a 1px vertical rule.
@@ -514,7 +537,13 @@ namespace Layout
         describe the panel. */
     inline constexpr float lcdNameTextSize = 17.0f;
     inline constexpr float lcdNameTextTracking = 0.16f;
-    inline constexpr float lcdChevronInsetRight = 12.0f;
+    /*  **`lcdChevronInsetRight` is gone: it was 12, and every use added 18 to it.**
+
+        12 + 18 = 30, which is `nf::LcdCell::chevronTrim` — the part's own figure, and a term in the
+        LCD budget. Holding it as two numbers that are only correct summed is how a figure drifts
+        while both halves still look deliberate, and this one is load-bearing: the name area is
+        538.00 exactly while the trim is 30, and the budget of 49 has 6.58 px of slack with no room
+        for a second mistake. The trim is read from core at the two sites that used it. */
 
     /** Section 9's capacity note: the cell holds 36 characters at 16px against a longest readout of
         19 ("DIGITAL GRAIN: 100"), so the live readout never needs the name cell to widen. */
@@ -572,10 +601,10 @@ namespace Layout
         well 65 wide and the OUT well 64, which cannot both be right on a row whose spec table
         gives one figure for the pair. 64 is taken from the spec; the odd pixel is sub-pixel
         rounding in the export and is raised with the designers. */
-    inline constexpr float saveButtonX = 1006.0f;
-    inline constexpr float saveButtonW = 62.0f;
-    inline constexpr float deleteButtonX = 1076.0f;
-    inline constexpr float deleteButtonW = 70.0f;
+    inline constexpr float saveButtonX = (float) nf::HeaderGeometry::saveX;
+    inline constexpr float saveButtonW = (float) nf::HeaderGeometry::saveW;
+    inline constexpr float deleteButtonX = (float) nf::HeaderGeometry::deleteX;
+    inline constexpr float deleteButtonW = (float) nf::HeaderGeometry::deleteW;
     inline constexpr float headerButtonY = programWellY;
     inline constexpr float headerButtonH = programWellH;
     inline constexpr float lcdRadius = 3.0f;
@@ -583,28 +612,41 @@ namespace Layout
     /** The two stacked legends. 10px is BRAND.md's floor for functional text and **both** legends
         are functional, so neither is set smaller than the other to fit - the pair is what sets the
         34px height (2 x 10px ink + leading + padding needs ~27px). */
-    inline constexpr float legendTextSize = 10.0f;
-    inline constexpr float legendTracking = 0.20f;
-    inline constexpr float legendLineHeight = 12.0f;
+    inline constexpr float legendTextSize = 11.0f;
+    inline constexpr float legendTracking = 0.12f;
+    inline constexpr float legendLineHeight = 13.0f;
     inline constexpr float legendGap = 1.0f;
 
     // FACT/USER badge sits 14px in from the well's left edge; the chevron 11px from its right.
     inline constexpr float badgeInsetX = 14.0f;
     inline constexpr float badgeW = 40.0f;
     inline constexpr float badgeH = 18.0f;
-    inline constexpr float chevronInsetX = 11.0f;
-    inline constexpr float chevronSize = 9.0f;
+    /*  **`chevronInsetX` (11) and `chevronSize` (9) are gone with the rotated box they positioned.**
+        The glyph is `nf::Chevron`'s shared 14 x 8 path at all three of this panel's sites, and it is
+        placed from §5's 16 px box inset rather than from an 11 px inset to a 9 px box. */
 
     // IN / OUT meters. Same caption line and same band as the LCD - meterWellH follows
     // programWellH rather than repeating 34, because they are the same decision, not two that
     // happen to agree. See programWellH for why that height is the suite's and not this panel's.
-    inline constexpr float meterLabelY = 41.0f;
-    inline constexpr float meterLabelH = 12.0f;
+    inline constexpr float meterLabelY = (float) nf::HeaderGeometry::captionY;
+    inline constexpr float meterLabelH = (float) nf::HeaderGeometry::captionH;
     inline constexpr float meterWellY = programWellY;
-    inline constexpr float meterWellW = 64.0f;
+    inline constexpr float meterWellW = (float) nf::HeaderGeometry::meterWellW;
     inline constexpr float meterWellH = programWellH;
-    inline constexpr float meterInX = 1162.0f;
-    inline constexpr float meterOutX = 1236.0f;
+
+    /** **1164 and 1238, where this panel held 1162 and 1236 — the meters move 2 px right.**
+
+        The comment above records the old pair as *measured off the 3x render, to the pixel*, with a
+        16 px DELETE-to-IN gap. It was an honest measurement of the artwork that shipped, and the
+        shared part states **18** — "wider than the meters' own 10, so they read as a pair" — which
+        makes the render the thing that was out of date rather than the measurement wrong.
+
+        Worth leaving the old figures named here: a coordinate that moves silently is unfindable
+        later, and this one is the clearest example in this panel of why the geometry now has one
+        home. The row still closes on itself, and it now closes on the part's own right edge of
+        1302 rather than on this panel's 1300. */
+    inline constexpr float meterInX = (float) nf::HeaderGeometry::inWellX;
+    inline constexpr float meterOutX = (float) nf::HeaderGeometry::outWellX;
 
     // --- Body row ------------------------------------------------------------
     // Panel padding box minus the body row's own `padding: 20px 4px 6px`.
