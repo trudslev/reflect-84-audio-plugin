@@ -37,7 +37,7 @@ namespace
     ReverbEngine makeEngine()
     {
         ReverbEngine engine;
-        engine.prepare ({ testSampleRate, (juce::uint32) testBlockSize, 2 }, 0.0f);
+        engine.prepare ({ testSampleRate, (juce::uint32) testBlockSize, 2 }, 0.0f, 0);
         return engine;
     }
 

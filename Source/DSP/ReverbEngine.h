@@ -35,7 +35,21 @@ public:
         **`switchCrossfade` two lines above it was guarded all along**, with a literal 1.0. Nobody
         misunderstood the API — the correct form was written adjacent to the incorrect one — which is
         why a rule saying "know what reset does" would not have caught this and a grep did. */
-    void prepare (const juce::dsp::ProcessSpec& spec, float initialPreDelayMs);
+    /*  **`initialAlgorithm` is an argument for the same reason `initialPreDelayMs` is, and this
+        one was CORRECT BY COINCIDENCE rather than by design.**
+
+        `currentAlgorithm` is constructed to 0 and compared per block against what the parameter
+        asks for; a difference starts a ~60 ms crossfade out of the outgoing tank. Nothing reconciled
+        it at prepare, and nothing needed to — because this casting's default Program selects
+        algorithm 0 as well. **The line that made it correct was not in this class at all: it was a
+        value in the Program bank.** That is the answer that defines correct-by-coincidence, and any
+        edit to that Program's algorithm arms it.
+
+        Measured while still armed, cold against warmed with pre-delay held at zero so the smoother
+        finding could not be mistaken for it: algorithm 0 sample-exact, and the other three at
+        **0.178 / 0.293 / 0.132**, all first at sample 351 — the wet arrival. Gatecrasher's live case
+        measured 0.041, so this was latently four to seven times larger. */
+    void prepare (const juce::dsp::ProcessSpec& spec, float initialPreDelayMs, int initialAlgorithm);
     void reset();
 
     void process (juce::AudioBuffer<float>& buffer,

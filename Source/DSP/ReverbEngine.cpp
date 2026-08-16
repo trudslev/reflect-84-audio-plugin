@@ -15,7 +15,8 @@ ReverbTank* ReverbEngine::tankFor (int index) noexcept
     return tanks[(size_t) juce::jlimit (0, (int) tanks.size() - 1, index)].get();
 }
 
-void ReverbEngine::prepare (const juce::dsp::ProcessSpec& spec, float initialPreDelayMs)
+void ReverbEngine::prepare (const juce::dsp::ProcessSpec& spec, float initialPreDelayMs,
+                            int initialAlgorithm)
 {
     sampleRate = spec.sampleRate;
 
@@ -27,6 +28,10 @@ void ReverbEngine::prepare (const juce::dsp::ProcessSpec& spec, float initialPre
     preDelayLine.prepare (spec);
 
     previousTankOutput.setSize ((int) spec.numChannels, (int) spec.maximumBlockSize, false, false, true);
+
+    // The tank the first block will actually be asked for — see the header. A stored copy of a
+    // selection guarding a TRANSITION must start at what the configuration selects.
+    currentAlgorithm = juce::jlimit (0, (int) tanks.size() - 1, initialAlgorithm);
 
     switchCrossfade.reset (spec.sampleRate, switchCrossfadeSeconds);
     switchCrossfade.setCurrentAndTargetValue (1.0f);

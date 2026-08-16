@@ -48,7 +48,8 @@ void Reflect84AudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
 
     // The pre-delay the first block should already be at, read off the live parameter: a session
     // restore writes the APVTS before the host prepares.
-    reverbEngine.prepare (spec, ParamFormat::preDelayMs (preDelayParam->load()));
+    reverbEngine.prepare (spec, ParamFormat::preDelayMs (preDelayParam->load()),
+                          juce::roundToInt (algorithmParam->load()));
 
     dryBuffer.setSize (getTotalNumOutputChannels(), samplesPerBlock, false, false, true);
 

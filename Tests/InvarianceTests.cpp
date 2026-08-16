@@ -267,6 +267,21 @@ public:
                                                             nf::testing::render (warmRef, spec));
 
                 logMessage ("  algorithm = " + juce::String (v, 2) + " -> " + r.describe());
+
+                /*  **The property, not the value.** "No first-block transition at ANY algorithm" is
+                    what has to hold; "the stored algorithm is Plate" would pass today, fail the
+                    moment somebody legitimately changes the default Program, and get retuned rather
+                    than investigated.
+
+                    This casting was DISARMED rather than clean: `currentAlgorithm` is constructed to
+                    0 and its default Program happens to select 0, so nothing fires. The line that
+                    makes it correct is not in the engine at all — it is a value in the Program bank,
+                    which is exactly the answer that means correct-by-coincidence. */
+                expect (r.sampleExact,
+                        "an instance's first playback blends a tank nobody selected into the one "
+                        "they did, at algorithm " + juce::String (v, 2) + ". ReverbEngine::prepare "
+                        "takes the algorithm it is prepared for precisely so no crossfade can fire "
+                        "on the first block: " + r.describe());
             }
         }
 
