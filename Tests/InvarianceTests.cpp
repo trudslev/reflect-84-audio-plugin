@@ -533,17 +533,17 @@ public:
                 `reset()`, render, `reset()`, render is a different question, and a host asks it on
                 every transport locate.
 
-                **This row is MEASURED AND REPORTED, not asserted, and that is deliberate.**
-                `LfoBank::random` is seeded in `prepare (sr, seedOffset)` and nowhere else, so a host
-                `reset()` leaves its stream running — which is *predicted* to make this differ. Whether
-                that is a defect or the correct contract is an open ruling: the argument that a
-                cleared tail is what a reset owes, not a rewound hiss, decides what `reset()` should
-                do and settles nothing about what it does. **The measurement comes first and the
-                ruling follows it**; when the ruling lands this becomes an `expect` in one direction
-                or a comment in the other.
+                **RULED: a reset owes a cleared tail, not a rewound generator**, so this row asserts
+                that the LFO stream DOES continue. `LfoBank::random` is seeded in
+                `prepare (sr, seedOffset)` and nowhere else, and that is correct rather than merely
+                current: a reset is a transport event rather than an instantiation, and a rewound
+                generator replays an identical rate walk on every lap of a loop. Bounce
+                reproducibility is a *prepare* property and the premise arm below is what pins it.
 
-                Chorus-60 asserts the same row today, because stage 0.5 put its seeding in `reset()`.
-                That asymmetry is the thing being ruled on.
+                The measurement came before the ruling. All six were driven through this driver —
+                this casting at 0.007206813, Fifth Member at 0.001057396, TapeRot at 0.702730507,
+                Chorus-60 exact because it briefly seeded in `reset()` too — and that asymmetry is
+                what the ruling closed. Chorus-60 now seeds in `prepare` alone like the rest.
 
                 **MODULATION at full, not at its default.** The LFO is what the generator drives, and
                 a generator whose effect is turned down reports reset-clean whatever `reset()` does —
@@ -567,11 +567,10 @@ public:
                     "this processor is not reproducible across prepare, so its reset row means "
                     "nothing: " + r.acrossPrepare.describe());
 
-            logMessage (juce::String ("  => ") + (r.acrossReset.sampleExact
-                            ? "reset() restores the LFO stream — CONTRADICTS the prediction, which "
-                              "was that prepare-only seeding leaves it running"
-                            : "reset() leaves the LFO stream running, as predicted from where it is "
-                              "seeded. Awaiting the ruling, not filed as a defect."));
+            expect (! r.acrossReset.sampleExact,
+                    "reset() rewound the LFO stream. RULED: a reset owes a cleared tail, not a "
+                    "rewound generator — LfoBank::random is seeded in prepare and must not also be "
+                    "seeded in reset: " + r.acrossReset.describe());
         }
 
         beginTest ("Offline against real-time");
