@@ -525,6 +525,55 @@ public:
                     "lines above against this test's table rather than assigning it");
         }
 
+        beginTest ("Reproducible across reset() ALONE, with the LFO driven");
+        {
+            /*  **A path nothing in this suite could reach until `nf::testing::renderBlocks` existed.**
+                `render` calls `prepareToPlay` on every invocation, so every premise check anywhere —
+                including the one above — is a *prepare* check by construction. Prepare once, then
+                `reset()`, render, `reset()`, render is a different question, and a host asks it on
+                every transport locate.
+
+                **This row is MEASURED AND REPORTED, not asserted, and that is deliberate.**
+                `LfoBank::random` is seeded in `prepare (sr, seedOffset)` and nowhere else, so a host
+                `reset()` leaves its stream running — which is *predicted* to make this differ. Whether
+                that is a defect or the correct contract is an open ruling: the argument that a
+                cleared tail is what a reset owes, not a rewound hiss, decides what `reset()` should
+                do and settles nothing about what it does. **The measurement comes first and the
+                ruling follows it**; when the ruling lands this becomes an `expect` in one direction
+                or a comment in the other.
+
+                Chorus-60 asserts the same row today, because stage 0.5 put its seeding in `reset()`.
+                That asymmetry is the thing being ruled on.
+
+                **MODULATION at full, not at its default.** The LFO is what the generator drives, and
+                a generator whose effect is turned down reports reset-clean whatever `reset()` does —
+                the coincidence that made Fifth Member's and Elmer's energy-after-reset rows read as
+                clean twice over. */
+            Reflect84AudioProcessor processor;
+            set (processor, ParamIDs::modulation, 1.0f);
+            set (processor, ParamIDs::decay, 0.7f);
+            set (processor, ParamIDs::mix, 1.0f);
+
+            nf::testing::RenderSpec spec;
+            spec.blockSize = 512;
+            spec.numBlocks = 16;
+
+            const auto r = nf::testing::reproducibleAcrossReset (processor, spec);
+            logMessage ("  " + r.describe());
+
+            // The premise IS asserted — it is an established property, and a reset row read against
+            // a failed premise is the confound this driver reports rather than hides.
+            expect (r.premiseHeld(),
+                    "this processor is not reproducible across prepare, so its reset row means "
+                    "nothing: " + r.acrossPrepare.describe());
+
+            logMessage (juce::String ("  => ") + (r.acrossReset.sampleExact
+                            ? "reset() restores the LFO stream — CONTRADICTS the prediction, which "
+                              "was that prepare-only seeding leaves it running"
+                            : "reset() leaves the LFO stream running, as predicted from where it is "
+                              "seeded. Awaiting the ruling, not filed as a defect."));
+        }
+
         beginTest ("Offline against real-time");
         {
             Reflect84AudioProcessor processor;
