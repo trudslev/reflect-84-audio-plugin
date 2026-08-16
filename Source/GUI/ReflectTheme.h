@@ -86,11 +86,30 @@ namespace Colour
     inline const juce::Colour bezelBottom      { 0xFF142036 };
     inline const juce::Colour pillTop          { 0xFF22304C };
     inline const juce::Colour pillBottom       { 0xFF16223A };
-    // Lightened from #A9B6CD, which read 6.43:1 at the top of the bezel gradient. This carries
-    // REVERB PROCESSOR and MODEL RF-84 - BRAND.md calls the model line primary identification,
-    // so it is functional text and cannot sit under the floor at any point of its own ground.
-    // contrast: 7.09-8.77:1 vs bezelTop,bezelMid,bezelBottom [functional]
-    inline const juce::Colour bezelLabel       { 0xFFB3BFD3 };
+    /*  The function descriptor and the model line — REVERB PROCESSOR and MODEL RF-84. BRAND.md
+        calls the model line primary identification, so it is functional text and cannot sit under
+        the 7:1 floor at any point of its own ground.
+
+        **#B7C2D8 as of the harmonisation round, where this build carried #B3BFD3 — and the two are
+        independent corrections of the SAME defect that landed on different values.**
+
+        Both lightened #A9B6CD, which measures 6.43 against the bezel's lightest point and failed
+        the floor. This build fixed it to #B3BFD3; the round fixed it to #B7C2D8 and GUI-SPEC §5 and
+        §10 item 8 both state that. Measured here against all three stops of the bezel gradient:
+
+            #A9B6CD   6.43 / 7.29 / 7.96   <- the defect, under the floor at the top
+            #B3BFD3   7.09 / 8.03 / 8.77   <- this build's fix, clears by 0.09
+            #B7C2D8   7.35 / 8.32 / 9.09   <- the authored value, clears by 0.35
+
+        Both are legal and the authored one is taken: it is what the spec states, and 0.35 of
+        headroom against 0.09 matters on a gradient ground where the worst case is one end of it.
+
+        **This is §10's model-line-ink row, in its recorded form rather than by analogy.** That row
+        notes the ink landing in the strip for four castings and the bodies for two, and that one
+        copy was *wrong* rather than merely stale. A second correction is exactly how that happens:
+        nobody was careless, two people fixed one defect, and the values disagree by 0.26 of
+        contrast that neither could see from where they were standing. */
+    inline const juce::Colour bezelLabel       { 0xFFB7C2D8 };
     inline const juce::Colour bezelGold        { 0xFFC8B177 };
     inline const juce::Colour bezelGoldBright  { 0xFFD8C18A };
     inline const juce::Colour wordmark         { 0xFFF0E2BA };

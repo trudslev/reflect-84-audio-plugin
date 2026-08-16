@@ -85,7 +85,22 @@ public:
     /** The list runs from that row to the panel's bottom. **A measurement, not a maximum** -
         GUI-SPEC.md section 9 is explicit that it does not shrink-wrap and a short bank leaves empty
         glass below. Section 9's earlier 260px cap is not followed, for the same reason its "4px
-        below the LCD" is not: the suite settled this shape and the root CLAUDE.md carries it. */
+        below the LCD" is not: the suite settled this shape and the root CLAUDE.md carries it.
+
+        **It comes out 553 on the pinned 648 canvas, and §4 of the harmonisation spec says 537.**
+        That figure does not follow from its own stated derivation. §4 calls it *"panel bottom minus
+        LCD bottom"* and §10 item 10 attributes the change to the pinned canvas — but the canvas
+        moved 649 -> 648, one pixel, and the list is said to move 554 -> 537, seventeen. The old
+        figure is the check: 649 - 95 is exactly 554, so the derivation and this code agree about
+        the method and disagree only about the new answer. 537 needs a 16px bottom margin that
+        nothing states.
+
+        **The suite contract wins here and it is not a close call**, because this is the case the
+        contract was written for: the root CLAUDE.md says the list runs from the display's bottom
+        edge to the panel's bottom and never outgrows it, and that *"a casting's own GUI spec may
+        state a gap under the display, or a maximum list height, or both. It loses."* A 16px gap
+        under one casting's list while five reach their panel bottom is the drift that rule exists
+        to prevent. Raised with the designers rather than implemented. */
     static int listHeight (int panelHeight) noexcept { return panelHeight - listTopY(); }
 
 private:

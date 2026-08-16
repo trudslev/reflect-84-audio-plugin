@@ -15,7 +15,7 @@
     bundle, and three of its requirements are things `PopupMenu` structurally cannot do — no amount
     of look-and-feel reaches them:
 
-    - **The height is a measurement, not a maximum.** 554px, panel bottom less LCD bottom, and
+    - **The height is a measurement, not a maximum.** 553px, panel bottom less LCD bottom, and
       *"it does not shrink-wrap the rows — a short list leaves empty glass below."* `PopupMenu`
       always shrink-wraps to its content.
     - **No platform scrollbar in any state**, with 20px opaque chevron bands at the ends and the
