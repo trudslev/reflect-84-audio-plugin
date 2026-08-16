@@ -7,6 +7,7 @@ target_sources(Reflect84Tests PRIVATE
     InvarianceTests.cpp
     AutomationLatencyTests.cpp
     ChannelLayoutTests.cpp
+    PendingProgramLockTests.cpp
     TestMain.cpp
     PrintedScaleTests.cpp
     ReadoutConformanceTests.cpp
