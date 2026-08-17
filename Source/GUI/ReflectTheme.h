@@ -832,33 +832,41 @@ namespace Layout
     /** §2 of the parts catalogue: numerals sit **6 px clear of the tick's outer end**. */
     inline constexpr float numeralClearance = 6.0f;
 
-    /*  **The tick arc is DERIVED from the stated numeral radius, not chosen — and the catalogue's
-        own clearance chain provably cannot produce this casting's radii.**
+    /** §2 of the parts catalogue: numerals sit **6 px clear of the tick's outer end**. */
 
-        Gatecrasher's §3 states the chain as `numeral ring = r + 8 + 9 + 6 + 6.5`: tick ink starts
-        8 px outside the body, the major tick is 9 long, numerals clear its outer end by 6, plus
-        half a line box. That reproduces Gatecrasher exactly — 57.5 at Ø56 and 67.5 at Ø76.
+    /*  **THE RING IS A DERIVED CHAIN NOW, AND THE NUMERAL RADII MOVED 52 -> 54 TO MAKE IT ONE.**
 
-        Reflect-84 §2 states **R 64 primary / 52 standard**. Run backwards through the same chain
-        with this casting's 12 px numeral line box, it gives 67 and 57 — short by 3.0 and 5.0. And
-        the shortfalls DIFFER, which makes this structural rather than a wrong constant: an additive
-        chain preserves differences, so with bodies 10 apart the radii cannot be 12 apart for ANY
-        choice of clearances. 52 = 28 + a + 9 + b needs a + b = 15 and 64 = 38 + a + 9 + b needs 17.
+        The catalogue states the chain as `R = r + inkGap + majorTick + clearance + halfLineBox`,
+        which reproduces Gatecrasher exactly at 57.5 and 67.5.
 
-        So the stated radii are taken as authoritative — they are figures the spec states, and the
-        chain is a derivation it does not — and the tick arc is inverted out of them through the two
-        terms the catalogue does state:
+        Reflect-84's spec stated **R 64 / 52**, and no additive chain can produce both: an additive
+        chain preserves differences, the bodies are 10 apart (r38 / r28) and those radii are 12
+        apart, so `52 = 28 + k` needs k = 24 while `64 = 38 + k` needs k = 26. The arc was therefore
+        inverted out of the stated radii and the body clearances fell out UNEVEN, at 5 px and 3 px.
 
-            tickArcRadius = numeralRadius - numeralClearance - numeralHalfLineBox
+        **Ruled 2026-08-17: the radii take 64 / 54**, which is `r + 26` at both classes — one
+        clearance, an additive chain, and derivable rather than transcribed. Two pixels of numeral
+        movement on one casting buys a figure that cannot drift, where a transcribed pair can.
 
-        which gives 52 primary and 40 standard, leaving the ticks' inner ends **5 px and 3 px** clear
-        of their bodies rather than the catalogue's 8. Nothing here is invented: every term is stated
-        by one document or the other, and the body clearance falls out. It is raised with the
-        designers in `design-asks/header-nameplate-offsets.md` as the fourth figure whose stated
-        derivation does not reproduce. */
-    inline constexpr float tickArcRadiusFor (float numeralR) noexcept
+        **What differs from Gatecrasher is ONE term, and it is named rather than absorbed.** With
+        the major tick at 9, the clearance at 6 and this casting's 12 px numeral line box giving 6,
+        the chain closes on 26 only if the tick ink starts **5 px** outside the body where
+        Gatecrasher's starts 8. The catalogue's own constant would give `r + 29` here — 67 and 57.
+        So this is a chain of the catalogue's SHAPE with one per-casting term, not the catalogue's
+        chain; saying so is what stops the next reader "correcting" 5 to 8 and moving every numeral
+        three pixels. */
+    inline constexpr float tickInkGap = 5.0f;
+
+    /** The numeral ring, computed. Both classes are `r + 26`. */
+    inline constexpr float numeralRadiusFor (float bodyRadius) noexcept
     {
-        return numeralR - numeralClearance - numeralHalfLineBox;
+        return bodyRadius + tickInkGap + majorTickLength + numeralClearance + numeralHalfLineBox;
+    }
+
+    /** Where the ticks' OUTER end sits: the ink gap plus the major tick's own length. */
+    inline constexpr float tickArcRadiusFor (float bodyRadius) noexcept
+    {
+        return bodyRadius + tickInkGap + majorTickLength;
     }
 
     /*  §2's two classes. Body Ø76 / Ø56 -> radii 38 / 28; numeral radii 64 / 52, both stated.
@@ -868,12 +876,12 @@ namespace Layout
         proportions are §2's `3 x 30 %` and `2 x 34 %`; the inner cap is §2's `inset: 12px` and is
         primary-only; label type is §8's 12 / .20 em and 11 / .16 em. */
     inline constexpr KnobVariant primaryKnob {
-        38.0f, tickArcRadiusFor (64.0f), majorTickLength, 64.0f, majorTickWidth,
-        3.0f, 0.30f, 6.0f, 12.0f, 0.20f, 64.0f - numeralHalfLineBox, 12.0f };
+        38.0f, tickArcRadiusFor (38.0f), majorTickLength, numeralRadiusFor (38.0f), majorTickWidth,
+        3.0f, 0.30f, 6.0f, 12.0f, 0.20f, numeralRadiusFor (38.0f) - numeralHalfLineBox, 12.0f };
 
     inline constexpr KnobVariant standardKnob {
-        28.0f, tickArcRadiusFor (52.0f), majorTickLength, 52.0f, majorTickWidth,
-        2.0f, 0.34f, 5.0f, 11.0f, 0.16f, 52.0f - numeralHalfLineBox, 0.0f };
+        28.0f, tickArcRadiusFor (28.0f), majorTickLength, numeralRadiusFor (28.0f), majorTickWidth,
+        2.0f, 0.34f, 5.0f, 11.0f, 0.16f, numeralRadiusFor (28.0f) - numeralHalfLineBox, 0.0f };
 
     inline constexpr const KnobVariant& variantFor (KnobSize s) noexcept
     {

@@ -219,6 +219,62 @@ public:
             checkShared (dampLFMarks,   5, "DAMPING LF");
         }
 
+        beginTest ("The numeral ring is a DERIVED chain — 64 / 54, one clearance at both classes");
+        {
+            /*  **Ruled 2026-08-17: the radii moved 52 -> 54 so the ring becomes derivable.**
+
+                The old pair 64 / 52 could only ever be transcribed. An additive chain preserves
+                differences, and the bodies are 10 apart (r38 / r28) where those radii are 12 apart,
+                so `52 = 28 + k` needs k = 24 while `64 = 38 + k` needs 26 — no chain produces both,
+                for any constants. 64 / 54 is `r + 26` at both classes, which is a chain.
+
+                Asserted as the CHAIN rather than as two numbers, because two numbers is the state
+                the ruling moved away from. The literals below are the ruling's stated answer; the
+                right-hand sides are computed from the terms. */
+            namespace L = ReflectTheme::Layout;
+
+            expectWithinAbsoluteError (L::numeralRadiusFor (38.0f), 64.0f, 0.001f, "primary");
+            expectWithinAbsoluteError (L::numeralRadiusFor (28.0f), 54.0f, 0.001f, "standard");
+
+            // The property the ruling bought: ONE clearance, not two.
+            const float primaryGap  = L::numeralRadiusFor (38.0f) - 38.0f;
+            const float standardGap = L::numeralRadiusFor (28.0f) - 28.0f;
+
+            logMessage ("  numeral ring: primary r38 -> " + juce::String (L::numeralRadiusFor (38.0f), 1)
+                        + ", standard r28 -> " + juce::String (L::numeralRadiusFor (28.0f), 1)
+                        + "   clearance " + juce::String (primaryGap, 1) + " / "
+                        + juce::String (standardGap, 1));
+
+            expectWithinAbsoluteError (primaryGap, standardGap, 0.001f,
+                                       "the two classes must share ONE clearance — uneven "
+                                       "clearances is exactly the transcribed state 64/52 was in, "
+                                       "and no additive chain can produce it");
+
+            // **The term that differs from the catalogue, named so it is not 'corrected'.** The
+            // chain reproduces Gatecrasher at r + 29.5 with an 8 px tick-ink gap; this casting
+            // closes on 26 with a 5 px gap and its own 12 px numeral line box. Pinned, because a
+            // reader meeting the catalogue's 8 would otherwise move every numeral three pixels.
+            expectWithinAbsoluteError (L::tickInkGap, 5.0f, 0.001f,
+                                       "this casting's ticks start 5 px outside the body where "
+                                       "Gatecrasher's start 8 — see the comment on tickInkGap");
+
+            expectWithinAbsoluteError (L::numeralRadiusFor (38.0f),
+                                       38.0f + L::tickInkGap + L::majorTickLength
+                                             + L::numeralClearance + L::numeralHalfLineBox,
+                                       0.001f,
+                                       "the radius must BE the chain rather than a literal that "
+                                       "happens to equal it today");
+
+            // Ticks must clear the body and numerals must clear the ticks, at both classes.
+            for (const float r : { 38.0f, 28.0f })
+            {
+                expectGreaterThan (L::tickArcRadiusFor (r) - L::majorTickLength, r,
+                                   "a tick's inner end crossed into the body");
+                expectGreaterThan (L::numeralRadiusFor (r), L::tickArcRadiusFor (r),
+                                   "a numeral sits inside the tick ring");
+            }
+        }
+
         beginTest ("The knob cache is keyed on SCALE, not on value — shown by counting rebuilds");
         {
             /*  **Call 5's cache, asserted on the property that distinguishes it from the obvious

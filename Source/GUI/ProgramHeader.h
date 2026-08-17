@@ -2,6 +2,8 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include <nf/HeaderPart.h>
+
 #include "ReflectTheme.h"
 #include "ReflectProgramList.h"
 #include "../DSP/FactoryPrograms.h"      // ProgramId / ProgramBank
@@ -87,21 +89,27 @@ public:
         glass below. Section 9's earlier 260px cap is not followed, for the same reason its "4px
         below the LCD" is not: the suite settled this shape and the root CLAUDE.md carries it.
 
-        **It comes out 553 on the pinned 648 canvas, and §4 of the harmonisation spec says 537.**
-        That figure does not follow from its own stated derivation. §4 calls it *"panel bottom minus
-        LCD bottom"* and §10 item 10 attributes the change to the pinned canvas — but the canvas
-        moved 649 -> 648, one pixel, and the list is said to move 554 -> 537, seventeen. The old
-        figure is the check: 649 - 95 is exactly 554, so the derivation and this code agree about
-        the method and disagree only about the new answer. 537 needs a 16px bottom margin that
-        nothing states.
+        **537 on the pinned 648 canvas, and the 16 px it stops short of is DERIVED rather than
+        named.** This file previously recorded 553 and raised the difference with the designers,
+        because §4's own arithmetic — panel bottom minus LCD bottom — gives 553, and the cause §10
+        gave for the change (the pinned canvas) moved one pixel where the list is said to move
+        seventeen.
 
-        **The suite contract wins here and it is not a close call**, because this is the case the
-        contract was written for: the root CLAUDE.md says the list runs from the display's bottom
-        edge to the panel's bottom and never outgrows it, and that *"a casting's own GUI spec may
-        state a gap under the display, or a maximum list height, or both. It loses."* A 16px gap
-        under one casting's list while five reach their panel bottom is the drift that rule exists
-        to prevent. Raised with the designers rather than implemented. */
-    static int listHeight (int panelHeight) noexcept { return panelHeight - listTopY(); }
+        Ruled 2026-08-17, and the derivation is what closes it: **16 is the chassis inset**, already
+        implied by §2 rather than introduced for the list. The block sits at x 16 on a 1340 canvas at
+        width 1308, and `1340 - 1308 = 2 x 16`, with its top on 16 too. So the list's foot lands on
+        the same frame the block observes on every other side, and 537 falls out as `648 - 16 - 95`.
+        A named 16 would have been the same non-reproducing figure with a label on it; a derived one
+        cannot drift.
+
+        **It is a change of contract for all six, not an exception here.** The suite rule was that
+        the list runs flush to the panel's bottom; it now runs to the bottom LESS the chassis inset.
+        `nf::HeaderGeometry::programListFootY` owns it, so a casting keeping the flush form while
+        five inset is not expressible — which is the drift the shared rule exists to prevent. */
+    static int listHeight (int panelHeight) noexcept
+    {
+        return nf::HeaderGeometry::programListFootY (panelHeight) - listTopY();
+    }
 
 private:
     ReflectProgramList* programList = nullptr;
