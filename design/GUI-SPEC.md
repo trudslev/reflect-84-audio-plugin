@@ -51,8 +51,18 @@ pair, so the two-height render is no longer possible.
 | Standard | **56** | SIZE, DECAY, PRE-DELAY, DENSITY, DAMPING HF, DAMPING LF, STEREO WIDTH, MIX, OUTPUT TRIM | 120 × 122, C 60 / 58 | **three** |
 
 Sweep 270°, angle = `−135 + 270 f`, 0° pointer up. Ticks: major **2 × 9** at every numeralled
-position, minor **1.5 × 5** at the rest, ink `#7a6b4c`. Numeral radius R 64 (primary) / 52
-(standard), numerals centred on their own box.
+position, minor **1.5 × 5** at the rest, ink `#7a6b4c`. Numeral radius **R 64 (primary) / 54
+(standard)** — **one clearance of 26 at both classes**, on body radii of 38 (Ø76) and 28 (Ø56).
+Numerals centred on their own box.
+
+**Why 54 and not the previously stated 52.** The bodies are 10 apart; 64 / 52 are 12 apart, so those
+two radii imply clearances of 26 and 24. **An additive clearance chain preserves differences**, so no
+single constant in the catalogue's chain produces both, and 64 / 52 could only ever be transcribed
+from this spec — never derived. 64 stays because it is where the primaries were drawn and checked;
+the standard class moves, and it is the cheaper ring to move because it already dropped to three
+numerals this round (§2.1). Cost: **every printed standard-class numeral shifts 2 px outward**, this
+casting only — it is the sole casting stating these radii. **A transcribed figure drifts; a derived
+one cannot.**
 
 Body fills: primary `radial-gradient(circle at 50% 22%, #fdf6e0, #ddcb98 52%, #b09a61 76%, #7d6a3b)`
 with an inner cap at `inset: 12px`; standard
@@ -162,15 +172,16 @@ stroke twice, 2.6 px at 75 % through a `stdDeviation 3.2` bloom then a crisp 1.6
 ## 4 · The Program list — a Component, and the casting's one maintenance hazard
 
 **Not a PopupMenu.** The list is the display continuing downward: it hangs flush off the LCD's
-bottom edge, at the LCD's width, and runs to the panel's bottom edge in the **display's own
-glass**, not the header's navy.
+bottom edge, at the LCD's width, and runs **to the fascia inset — 16 px above the panel's bottom
+edge, not to the edge itself** — in the **display's own glass**, not the header's navy. The inset is
+the part's, not this casting's: see `shared/HEADER-PART.md` §12.
 
 | Figure | Value |
 |---|---|
 | Surface | `linear-gradient(#0a0f18, #070c14 45%, #05080e)`, **no top border, no top radius** |
 | Sides | 1 px `rgba(0,0,0,.7)` left and right only, `inset 3px 0 7px rgba(0,0,0,.55)` each side |
 | Scanline | `repeating-linear-gradient(0deg, rgba(198,222,255,.028) 0 1px, transparent 1px 3px)` |
-| **Height** | **537 px** — a measurement, panel bottom minus LCD bottom, not a max-height |
+| **Height** | **537 px** = **648 − 95 − 16** — canvas, minus the LCD's bottom edge, minus the **fascia inset**. A derivation, not a max-height and not a transcription: 16 is the same inset that places the header block at x 16 / y 16 with w 1308 = 1340 − 2 × 16, and the body origin at x 16. **It is not a new figure invented to reach 537** |
 | Rows | item **26** · caption **22** · separator **9** · placeholder **26** · chevron band **20** |
 | Text inset | **16 px** left — the LCD's own inset, so the list reads as one column with the display |
 
@@ -429,7 +440,15 @@ changelog is a gap by construction, not an omission.
 10. **List height 554 → 537**, a consequence of the pinned canvas; scrolling now begins at the
     sixth User Program rather than the seventh.
 11. **Meters idle at `−99.0`**, matching the build's display floor.
-12. **A retired claim:** the v1.1 spec said the list's chevrons were "the LCD's caret rotated."
+12. **Standard-class numeral radius 52 → 54** (§2). One clearance of **26** now serves both
+    classes on body radii 38 and 28, where 64 / 52 implied 26 and 24 — which no additive clearance
+    chain produces, so 64 / 52 could only be transcribed. Primaries unchanged at 64; every printed
+    standard numeral moves **2 px outward**.
+13. **The 537 list height is now stated as a derivation**, `648 − 95 − 16`, the 16 being the fascia
+    inset that places the header block and the body origin (item 10 gave the figure, not its base).
+    The figure does not change; what changes is the rule — **the list no longer runs flush to the
+    panel bottom**, and `HEADER-PART.md` §12 makes the inset the contract for all six.
+14. **A retired claim:** the v1.1 spec said the list's chevrons were "the LCD's caret rotated."
     The caret is a block `▌` and always was — the sentence described a construction that existed
     on neither side. Recorded here rather than deleted silently, because a removed sentence
     leaves no trace of why.
