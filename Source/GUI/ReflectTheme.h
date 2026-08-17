@@ -477,24 +477,59 @@ namespace Layout
 
     inline constexpr float scanlinePitch = 3.0f;
 
-    // --- Header bezel (measured: fill x 15..1185, y 15..118, 1px border outside) -------------
-    // GUI-SPEC.md section 1's region table.
-    inline constexpr float headerX = 16.0f;
-    inline constexpr float headerY = 16.0f;
-    inline constexpr float headerW = 1308.0f;
-    inline constexpr float headerH = 104.0f;
-    inline constexpr float headerRadius = 6.0f;
+    /*  **THE BEZEL AND THE NAMEPLATE WERE LITERALS WHILE THE BAND BELOW THEM WAS ALIASED, AND FOUR
+        OF THE SEVEN DISAGREED WITH CORE.**
 
-    // Wordmark block: min-width 300, starting at the header's content box (x + 1px border + 22px
-    // padding). Ink measured at x 40..297, cap top y 32, baseline y ~62.5.
-    inline constexpr float wordmarkX = 37.0f;
-    inline constexpr float wordmarkTop = 29.0f;
+        Found 2026-08-17 by a suite-wide sweep run after Chorus-60's pass turned out to have aliased
+        its LCD and left SAVE, DELETE and both meter wells as literals 29 px out — invisible because
+        that casting's plate baked the faces. **A literal that happens to agree with core is
+        indistinguishable from an alias by reading**, so the sweep measured the shipping builds.
+
+        This casting's band came back exactly on core. Its bezel and nameplate did not:
+
+        | | was | core | |
+        |---|---|---|---|
+        | `headerX/Y/W/H` | 16, 16, 1308, 104 | same | agreed, and nothing made it follow |
+        | `wordmarkX` | 37 | `nameplateX` 38 | **1 px** |
+        | `taglineTop` | 76 | `descriptorY` 78 | **2 px — and this is §4's ANCHOR** |
+        | tagline line 2 | 92, derived | `modelLineY` 95 | **3 px** |
+
+        **The anchor one is the defect and the other three are the mechanism.** §4 makes
+        `descriptorY` the line all six function descriptors sit on — it is the one figure in a
+        nameplate that is explicitly not the casting's own, precisely so the six read as one product
+        line. This casting sat 2 px above it while being the casting whose editor was declared
+        conformant.
+
+        Measured rather than inferred: against Chorus-60's descriptor cap top at **82.0**, this one
+        rendered at **79.0**. The 3 px is not all box — the two descriptors are set at different
+        sizes, so their internal leading differs — but the direction and the order of magnitude
+        confirm the constants rather than resting on them.
+
+        **`wordmarkTop` and `wordmarkSize` stay this casting's**, and that is not an oversight: §4
+        says in terms that the wordmark above the anchor does *not* align across the six and must
+        not be made to. A label-maker strip and a stencil are different physical objects. What is
+        shared is where the zone starts and where the descriptor lands. */
+    inline constexpr float headerX = (float) nf::HeaderGeometry::blockX;
+    inline constexpr float headerY = (float) nf::HeaderGeometry::blockY;
+    inline constexpr float headerW = (float) nf::HeaderGeometry::blockW;
+    inline constexpr float headerH = (float) nf::HeaderGeometry::blockH;
+    inline constexpr float headerRadius = 6.0f;             // this casting's corner, not the part's
+
+    // Wordmark block. Ink measured at x 40..297, cap top y 32, baseline y ~62.5.
+    inline constexpr float wordmarkX = (float) nf::HeaderGeometry::nameplateX;
+    inline constexpr float wordmarkTop = 29.0f;             // §4: per casting, deliberately
     inline constexpr float wordmarkSize = 42.0f;
     inline constexpr float wordmarkLineHeight = 38.6f;      // 42 * .92
     inline constexpr float taglineSize = 10.0f;
-    inline constexpr float taglineTop = 76.0f;              // first of two lines, 3px apart
+    inline constexpr float taglineTop = (float) nf::HeaderGeometry::descriptorY;
     inline constexpr float taglineLineHeight = 13.0f;
-    inline constexpr float taglineGap = 3.0f;
+
+    /** **The second tagline line is the MODEL LINE, so it comes from core rather than from a gap.**
+        It used to be `taglineTop + taglineLineHeight + taglineGap` = 76 + 13 + 3 = 92, which is a
+        relationship rather than the figure — and core states the figure at 95. Same shape as
+        Chorus-60's label row, which was faithfully derived and 16 px out: preserving a relationship
+        is not knowing where the design puts the line. `taglineGap` is retired with it. */
+    inline constexpr float modelLineTop = (float) nf::HeaderGeometry::modelLineY;
 
     // PROGRAM block
     // Section 9. All three column captions - PROGRAM, IN, OUT - sit on ONE line at y 41, and the

@@ -131,9 +131,13 @@ void PanelBackground::paintHeader (juce::Graphics& g)
         const auto font = Font::mono (Layout::taglineSize);
         const float tracking = Font::trackingPx (0.30f, Layout::taglineSize);
 
+        // Both rows land on the shared part's own lines — the descriptor on §4's anchor, the model
+        // line on `modelLineY`. line2 used to be line1 translated by a leading, which is a
+        // relationship where core states a figure; see ReflectTheme's note.
         const juce::Rectangle<float> line1 { Layout::wordmarkX, Layout::taglineTop,
                                              600.0f, Layout::taglineLineHeight };
-        const auto line2 = line1.translated (0.0f, Layout::taglineLineHeight + Layout::taglineGap);
+        const juce::Rectangle<float> line2 { Layout::wordmarkX, Layout::modelLineTop,
+                                             600.0f, Layout::taglineLineHeight };
 
         Text::drawTracked (g, "REVERB PROCESSOR", font, tracking, line1,
                            juce::Justification::centredLeft, Colour::bezelLabel);
