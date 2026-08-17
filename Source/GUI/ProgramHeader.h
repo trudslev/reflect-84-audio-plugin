@@ -89,27 +89,21 @@ public:
         glass below. Section 9's earlier 260px cap is not followed, for the same reason its "4px
         below the LCD" is not: the suite settled this shape and the root CLAUDE.md carries it.
 
-        **537 on the pinned 648 canvas, and the 16 px it stops short of is DERIVED rather than
-        named.** This file previously recorded 553 and raised the difference with the designers,
-        because §4's own arithmetic — panel bottom minus LCD bottom — gives 553, and the cause §10
-        gave for the change (the pinned canvas) moved one pixel where the list is said to move
-        seventeen.
+        **553 on the pinned 648 canvas — panel bottom less the LCD's bottom edge, flush.**
 
-        Ruled 2026-08-17, and the derivation is what closes it: **16 is the chassis inset**, already
-        implied by §2 rather than introduced for the list. The block sits at x 16 on a 1340 canvas at
-        width 1308, and `1340 - 1308 = 2 x 16`, with its top on 16 too. So the list's foot lands on
-        the same frame the block observes on every other side, and 537 falls out as `648 - 16 - 95`.
-        A named 16 would have been the same non-reproducing figure with a label on it; a derived one
-        cannot drift.
+        This briefly carried 537 with a derivation: 16 as the chassis inset, so the list's foot
+        landed on the same frame the block observes. §12 of HEADER-PART Revision 4 withdraws that,
+        and the reasoning is worth keeping rather than just the figure.
 
-        **It is a change of contract for all six, not an exception here.** The suite rule was that
-        the list runs flush to the panel's bottom; it now runs to the bottom LESS the chassis inset.
-        `nf::HeaderGeometry::programListFootY` owns it, so a casting keeping the flush form while
-        five inset is not expressible — which is the drift the shared rule exists to prevent. */
-    static int listHeight (int panelHeight) noexcept
-    {
-        return nf::HeaderGeometry::programListFootY (panelHeight) - listTopY();
-    }
+        **The 16 was found by looking for something 537 could be derived from.** It appears in no
+        spec, no panel and no changelog as a list margin, so it was a reconstruction rather than a
+        base — and confirming that the block really is inset 16 established only that the inset
+        exists, which was never in question. **That a figure can be derived is not evidence it was.**
+
+        And the fit ran the wrong way: five castings hang a flush list, so changing the shared
+        contract to make this casting's transcribed 537 correct is the drift the shared part exists
+        to prevent. The honest correction was the figure. */
+    static int listHeight (int panelHeight) noexcept { return panelHeight - listTopY(); }
 
 private:
     ReflectProgramList* programList = nullptr;
