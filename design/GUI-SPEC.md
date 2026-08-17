@@ -51,18 +51,29 @@ pair, so the two-height render is no longer possible.
 | Standard | **56** | SIZE, DECAY, PRE-DELAY, DENSITY, DAMPING HF, DAMPING LF, STEREO WIDTH, MIX, OUTPUT TRIM | 120 × 122, C 60 / 58 | **three** |
 
 Sweep 270°, angle = `−135 + 270 f`, 0° pointer up. Ticks: major **2 × 9** at every numeralled
-position, minor **1.5 × 5** at the rest, ink `#7a6b4c`. Numeral radius **R 64 (primary) / 54
-(standard)** — **one clearance of 26 at both classes**, on body radii of 38 (Ø76) and 28 (Ø56).
-Numerals centred on their own box.
+position, minor **1.5 × 5** at the rest, ink `#7a6b4c`. Tick arc starts at **body radius + 8** — 46
+primary, 36 standard. Numeral radius **R 67 (primary) / 57 (standard)**, numerals centred on their own
+box.
 
-**Why 54 and not the previously stated 52.** The bodies are 10 apart; 64 / 52 are 12 apart, so those
-two radii imply clearances of 26 and 24. **An additive clearance chain preserves differences**, so no
-single constant in the catalogue's chain produces both, and 64 / 52 could only ever be transcribed
-from this spec — never derived. 64 stays because it is where the primaries were drawn and checked;
-the standard class moves, and it is the cheaper ring to move because it already dropped to three
-numerals this round (§2.1). Cost: **every printed standard-class numeral shifts 2 px outward**, this
-casting only — it is the sole casting stating these radii. **A transcribed figure drifts; a derived
-one cannot.**
+**Both radii now come off the catalogue's clearance chain, and the previously stated 64 / 52 could not.**
+The chain is `numeral ring = r + 8 + 9 + 6 + ½ line box` — tick ink 8 px outside the body, 9 px major
+tick, numerals 6 px clear of its outer end, half a numeral line box. With this casting's **12 px**
+numeral line box that is `r + 29`: **38 + 29 = 67** and **28 + 29 = 57**.
+
+**Why 64 / 52 was structurally impossible, not merely off.** An additive chain preserves differences:
+the bodies are **10** apart and those radii were **12** apart, so `52 = 28 + a + 9 + b` needs
+`a + b = 15` while `64 = 38 + a + 9 + b` needs `17`. **No constants satisfy both**, so 64 / 52 could
+only ever be transcribed from this spec — and inverting the chain out of them put the ticks' inner ends
+**5 px and 3 px** off their bodies instead of 8, differently for each class. **67 / 57 is the only pair
+where the body clearance comes out at 8 for both classes at once**, which is what identifies it as the
+intended pair rather than a preferred one: this casting's bodies (Ø76 / Ø56) and tick lengths are
+Gatecrasher's exactly, and Gatecrasher reproduces at 67.5 / 57.5 on a 13 px line box. **Identical
+bodies with identical ticks cannot have different clearances.**
+
+Cost: printed numerals move **3 px outward on the primaries and 5 px on the standard class** — this
+casting only, and an intermediate proposal of 64 / 54 is withdrawn with it, since it kept 64 and so
+kept a clearance of 26 that the catalogue does not state. **A transcribed figure drifts; a derived one
+cannot.**
 
 Body fills: primary `radial-gradient(circle at 50% 22%, #fdf6e0, #ddcb98 52%, #b09a61 76%, #7d6a3b)`
 with an inner cap at `inset: 12px`; standard
@@ -172,16 +183,15 @@ stroke twice, 2.6 px at 75 % through a `stdDeviation 3.2` bloom then a crisp 1.6
 ## 4 · The Program list — a Component, and the casting's one maintenance hazard
 
 **Not a PopupMenu.** The list is the display continuing downward: it hangs flush off the LCD's
-bottom edge, at the LCD's width, and runs **to the fascia inset — 16 px above the panel's bottom
-edge, not to the edge itself** — in the **display's own glass**, not the header's navy. The inset is
-the part's, not this casting's: see `shared/HEADER-PART.md` §12.
+bottom edge, at the LCD's width, and **runs to the panel's bottom edge** in the **display's own
+glass**, not the header's navy. No gap under it — the suite contract, `shared/HEADER-PART.md` §12.
 
 | Figure | Value |
 |---|---|
 | Surface | `linear-gradient(#0a0f18, #070c14 45%, #05080e)`, **no top border, no top radius** |
 | Sides | 1 px `rgba(0,0,0,.7)` left and right only, `inset 3px 0 7px rgba(0,0,0,.55)` each side |
 | Scanline | `repeating-linear-gradient(0deg, rgba(198,222,255,.028) 0 1px, transparent 1px 3px)` |
-| **Height** | **537 px** = **648 − 95 − 16** — canvas, minus the LCD's bottom edge, minus the **fascia inset**. A derivation, not a max-height and not a transcription: 16 is the same inset that places the header block at x 16 / y 16 with w 1308 = 1340 − 2 × 16, and the body origin at x 16. **It is not a new figure invented to reach 537** |
+| **Height** | **553 px** = **648 − 95** — canvas minus the LCD's bottom edge (61 + 34). A measurement, not a max-height. **The earlier 537 is retired**: it needed a 16 px bottom margin no document states, and the one-pixel canvas change it was attributed to cannot move a list seventeen. The old **554 = 649 − 95** reproduced the same method exactly, which is what proved the method was never in dispute |
 | Rows | item **26** · caption **22** · separator **9** · placeholder **26** · chevron band **20** |
 | Text inset | **16 px** left — the LCD's own inset, so the list reads as one column with the display |
 
@@ -199,9 +209,11 @@ top and bottom so no row passes under them. One click scrolls **104 px — four 
 the wheel scrolls by platform delta; both clamp. At the end of travel a chevron **steps back to
 `#8ea0bc` rather than disappearing** — 7.55:1, above the state floor.
 
-**The list height changed this round: 554 → 537**, because the canvas is now a pinned 648. With
-twelve factory Programs the fixed rows come to 391 px, so **scrolling now begins at the sixth
-User Program** where it began at the seventh.
+**The list height this round: 554 → 553**, one pixel, because the canvas is now a pinned 648. With
+twelve factory Programs the fixed rows come to 391 px, so **scrolling begins at the seventh User
+Program**, where it began before — the row count does not move on one pixel. **An earlier draft said
+554 → 537 and put it down to the pinned canvas**; a one-pixel canvas cannot move a list seventeen, and
+537 required a bottom margin no document states. Retired.
 
 ### 4.1 The maintenance note — read this before changing anything shared
 
@@ -437,17 +449,18 @@ changelog is a gap by construction, not an omission.
 9. **Chevron re-drawn as the shared 14 × 8 path at all three sites** — the LCD mark and both
    scroll chevrons. The up chevron is the path **mirrored, not rotated**: a rotated V puts its
    round caps on the wrong axis.
-10. **List height 554 → 537**, a consequence of the pinned canvas; scrolling now begins at the
-    sixth User Program rather than the seventh.
+10. **List height 554 → 553**, one pixel, tracking the pinned canvas; the User-Program scroll
+    threshold is unchanged.
 11. **Meters idle at `−99.0`**, matching the build's display floor.
-12. **Standard-class numeral radius 52 → 54** (§2). One clearance of **26** now serves both
-    classes on body radii 38 and 28, where 64 / 52 implied 26 and 24 — which no additive clearance
-    chain produces, so 64 / 52 could only be transcribed. Primaries unchanged at 64; every printed
-    standard numeral moves **2 px outward**.
-13. **The 537 list height is now stated as a derivation**, `648 − 95 − 16`, the 16 being the fascia
-    inset that places the header block and the body origin (item 10 gave the figure, not its base).
-    The figure does not change; what changes is the rule — **the list no longer runs flush to the
-    panel bottom**, and `HEADER-PART.md` §12 makes the inset the contract for all six.
+12. **Numeral radii 64 / 52 → 67 / 57** (§2), off the catalogue's clearance chain `r + 8 + 9 + 6 + ½
+    line box` at this casting's 12 px line box. 64 / 52 were 12 apart on bodies 10 apart, which no
+    additive chain can produce; 67 / 57 is the only pair clearing both bodies by the catalogue's 8.
+    Primaries move 3 px outward, standard 5 px. Tick arcs start at 46 / 36.
+13. **List height 537 → 553** = `648 − 95`, restoring the stated method (§4). 537 needed a 16 px bottom
+    margin no document states, and a one-pixel canvas change cannot move a list seventeen. A proposed
+    contract change making that margin the fascia inset in all six is **withdrawn** —
+    `HEADER-PART.md` §12 records why: nobody ever wrote 16, and a derivation found after the fact to
+    explain a figure is a reconstruction rather than its base.
 14. **A retired claim:** the v1.1 spec said the list's chevrons were "the LCD's caret rotated."
     The caret is a block `▌` and always was — the sentence described a construction that existed
     on neither side. Recorded here rather than deleted silently, because a removed sentence
