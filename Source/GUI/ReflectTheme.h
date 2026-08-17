@@ -271,6 +271,23 @@ namespace Font
         return t;
     }
 
+    /** **Share Tech Mono — the suite's LCD face, shared by all six (HEADER-PART call 2).**
+
+        Separate from `monoTypeface()` and deliberately so: call 7 splits the two, and this
+        casting's printed numerals, units and scope legends stay IBM Plex Mono, which is where its
+        character reads. Only what sits on glass takes this face — the Program name, the bank tag,
+        the live readout, the meter values and the dropdown's rows.
+
+        Landed with design bundle 2 on 2026-08-17. Before that the LCD drew IBM Plex at a 12.78 px
+        advance for a measured 41-character budget; §5's 49 and cap 47 are measured on THIS face and
+        could not be adopted against one that was not in the folder — see §11's type-adoption gate. */
+    inline juce::Typeface::Ptr lcdTypeface()
+    {
+        static const juce::Typeface::Ptr t = juce::Typeface::createSystemTypefaceFor (
+            BinaryData::ShareTechMonoRegular_ttf, (size_t) BinaryData::ShareTechMonoRegular_ttfSize);
+        return t;
+    }
+
     inline juce::Typeface::Ptr monoMediumTypeface()
     {
         static const juce::Typeface::Ptr t = juce::Typeface::createSystemTypefaceFor (
@@ -288,6 +305,12 @@ namespace Font
     inline juce::Font mono (float cssPx)
     {
         return juce::Font (juce::FontOptions (monoTypeface()).withPointHeight (cssPx));
+    }
+
+    /** The LCD face at a CSS px em size. Everything on glass goes through this. */
+    inline juce::Font lcd (float cssPx)
+    {
+        return juce::Font (juce::FontOptions (lcdTypeface()).withPointHeight (cssPx));
     }
 
     inline juce::Font monoMedium (float cssPx)
@@ -528,8 +551,8 @@ namespace Layout
         call - so raising the declaration to match what the NAME drew would have taken the bank tag
         and every menu row up with it, which is a visual change to two things nobody asked to
         change. They are separate constants now because they are separate decisions. */
-    inline constexpr float lcdTextSize = 16.0f;
-    inline constexpr float lcdTextTracking = 0.13f;
+    inline constexpr float lcdTextSize = 13.0f;
+    inline constexpr float lcdTextTracking = 0.10f;
 
     /** **The Program dropdown's rows follow the bank tag, deliberately - raise one and you raise
         the other.** The alias is here rather than a bare reuse of lcdTextSize so that the
@@ -554,8 +577,11 @@ namespace Layout
         declared 16 / .13, and the character budget was computed from the declaration rather than
         from what rendered. Declaring them here changes nothing on screen - it makes the theme
         describe the panel. */
+    /** §8: LCD 17 / 20 at .10 em, and the tracking is the part's `nf::LcdCell::tracking` in em
+        rather than this panel's old .16 — 1.700 px at 17 px, which is the term the 538.00 name area
+        and the 49-character budget are measured against. */
     inline constexpr float lcdNameTextSize = 17.0f;
-    inline constexpr float lcdNameTextTracking = 0.16f;
+    inline constexpr float lcdNameTextTracking = 0.10f;
     /*  **`lcdChevronInsetRight` is gone: it was 12, and every use added 18 to it.**
 
         12 + 18 = 30, which is `nf::LcdCell::chevronTrim` — the part's own figure, and a term in the
@@ -564,15 +590,23 @@ namespace Layout
         538.00 exactly while the trim is 30, and the budget of 49 has 6.58 px of slack with no room
         for a second mistake. The trim is read from core at the two sites that used it. */
 
-    /** Section 9's capacity note: the cell holds 36 characters at 16px against a longest readout of
-        19 ("DIGITAL GRAIN: 100"), so the live readout never needs the name cell to widen. */
-    /** **37, MEASURED against the font the paint path draws**, not quoted from the spec.
-        Tests/DisplayBudgetTests.cpp recomputes it from these very constants each run: the name area
-        is 474.0px once the runtime bank cell and the chevron inset are taken off the well, and
-        IBM Plex Mono at 17px / .16em advances 12.78px.
+    /*  **49 NOW, AND IT COMES FROM CORE RATHER THAN FROM A MEASUREMENT HERE.**
 
-        It read 36, derived at the theme's declared 16px / .13em - which is not what was drawn. */
-    inline constexpr int lcdCharacterBudget = 41;
+        It read 41, measured against IBM Plex Mono at 17 px / .16 em — a 12.78 px advance — because
+        that was the face this panel actually drew. §5's 49 and its 47-character cap are measured on
+        **Share Tech Mono** at a 9.180 px advance and 1.700 px tracking across the 538.00 name area,
+        and §11 makes it a gate rather than a preference: **a casting does not adopt the shared
+        budget until its own `fonts/` holds the face**, because a cap may never shrink and a cap
+        raised against an absent face is a data migration rather than a re-export.
+
+        The face landed with bundle 2, so the gate is satisfied rather than waived and the figure is
+        taken from `nf::LcdCell` — computed from the cell's terms — instead of being transcribed.
+        `DisplayBudgetTests` measures it independently off the font the paint path draws, which is
+        what makes the adoption checkable rather than asserted. */
+    inline constexpr int lcdCharacterBudget = nf::LcdCell::characterBudget();
+
+    /** §5's cap: the budget less the larger of the dirty marker and the caret. Was 39. */
+    inline constexpr int maxUserNameLength = nf::LcdCell::userNameCap();
 
     /** **How this panel spells the LCD parameter readout.**
 

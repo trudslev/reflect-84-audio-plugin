@@ -27,22 +27,23 @@ public:
         // **Two faces, because the cell uses two.** The bank tag is the LCD's general 16px type;
         // the program name is a point larger. Measuring the name at the bank's size - or sizing the
         // bank cell with the name's - is exactly the conflation that made the old budget wrong.
-        const auto bankFont = Font::mono (Layout::lcdTextSize);
+        const auto bankFont = Font::lcd (Layout::lcdNameTextSize);
         const float bankTracking = Font::trackingPx (Layout::lcdTextTracking, Layout::lcdTextSize);
 
-        const auto font = Font::mono (Layout::lcdNameTextSize);
+        const auto font = Font::lcd (Layout::lcdNameTextSize);
         const float tracking = Font::trackingPx (Layout::lcdNameTextTracking, Layout::lcdNameTextSize);
 
         // The name area exactly as ProgramHeader::paint builds it: the well, less the bank cell
         // (whose width is the tracked width of "FACT" AT THE BANK'S FONT plus its padding, computed
         // at runtime), less the chevron inset.
-        const float bankCellW = Layout::lcdBankPadX * 2.0f
-                                 + Text::trackedWidth ("FACT", bankFont, bankTracking);
-        // **The trim is `nf::LcdCell::chevronTrim` now**, where this read `lcdChevronInsetRight + 18`.
-        // 12 + 18 = 30 and 30 is the part's own figure — holding it as two numbers that are only
-        // correct summed is how a term of the budget drifts while both halves still look chosen.
-        const float nameAreaW = Layout::programWellW - (bankCellW + 1.0f)
-                                 - nf::LcdCell::chevronTrim;
+        // **Every term of the cell is the part's now** — bank cell, divider and trim. They were
+        // computed here from the drawn string, which made the budget depend on what "FACT" happened
+        // to measure: at Share Tech Mono that came out 8 px wider and the budget read 50 against
+        // §5's measured 49. What stays measured is the ADVANCE, below — the one term that genuinely
+        // belongs to the font rather than to the cell, so the two sides still come from different
+        // places.
+        const float nameAreaW = nf::LcdCell::nameAreaW;
+        juce::ignoreUnused (bankFont, bankTracking);
 
         // Per character, from the font itself rather than a quoted figure. A 20-character sample
         // divided by 20 averages out any single glyph's width.

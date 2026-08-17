@@ -148,7 +148,16 @@ public:
         It was 22 before that, with no stated derivation, computed against a font size the panel
         does not use and against a display that still carried a two-digit index prefix on user
         names. Both are gone: only Factory Programs are numbered now. */
-    static constexpr int maxProgramNameLength = 39;
+    /*  **47 as of 2026-08-17, up from 39** — §5's cap on the shared Share Tech Mono face, which
+        landed for this casting with design bundle 2. §11 gates it: no casting adopts the shared cap
+        until its own `fonts/` holds the measured face, because **a cap may never shrink** and one
+        raised against an absent face is a data migration rather than a re-export.
+
+        It cannot read `ReflectTheme` — this header is compiled into targets with no GUI — so the
+        binding is a test: `DisplayBudgetTests` asserts this equals `Layout::maxUserNameLength` and
+        that both fit the budget measured off the drawn font. The duplication is structural; the
+        test is what stops the two drifting. */
+    static constexpr int maxProgramNameLength = 47;
 
 private:
     void handleAsyncUpdate() override;

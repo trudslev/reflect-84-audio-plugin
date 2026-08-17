@@ -58,7 +58,13 @@ juce_add_binary_data(Reflect84BinaryData
     SOURCES
         design/fonts/jost/Jost-500-Medium.ttf
         design/fonts/ibm-plex-mono/IBMPlexMono-Regular.ttf
-        design/fonts/ibm-plex-mono/IBMPlexMono-Medium.ttf)
+        design/fonts/ibm-plex-mono/IBMPlexMono-Medium.ttf
+        # The two shared faces, landed with design bundle 2 (2026-08-17). Share Tech Mono is the
+        # suite's LCD face (HEADER-PART call 2) and Barlow Condensed SemiBold is panel lettering
+        # (call 7). IBM Plex Mono STAYS: call 7 splits them, and this casting's printed numerals,
+        # units and scope legends are its own mono. Adding these does not retire it.
+        design/fonts/ShareTechMono-Regular.ttf
+        design/fonts/BarlowCondensed-SemiBold.ttf)
 
 # AU is Apple-only; Windows/Linux only ever build VST3 + Standalone. VST3_COPY_DIR/AU_COPY_DIR are
 # only set on Apple - leaving them unset elsewhere lets JUCE apply its own correct per-OS default

@@ -106,7 +106,7 @@ void PanelReadouts::paint (juce::Graphics& g)
 
         Paint::drawLcdWell (g, well);
 
-        g.setFont (Font::mono (16.0f));
+        g.setFont (Font::lcd (Layout::lcdTextSize));
         g.setColour (Colour::meterText);
         g.drawText (text, well, juce::Justification::centred, false);
     };

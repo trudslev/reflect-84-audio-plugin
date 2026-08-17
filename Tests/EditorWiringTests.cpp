@@ -85,31 +85,40 @@ public:
             expectEquals ((int) L::canvasHeight, 648);
         }
 
-        beginTest ("The LCD budget is this panel's OWN measurement until the shared face lands");
+        beginTest ("The LCD budget has ADOPTED the shared figure, now that the face has landed");
         {
-            /*  **Deliberately NOT `nf::LcdCell::characterBudget()`, and this is the one place the
-                panel is allowed to disagree with the part.**
+            /*  **This arm is inverted, not deleted, and the distinction is the point.**
 
-                §5's budget of 49 and cap of 47 are measured on Share Tech Mono at 17 px with
-                1.700 px tracking. That binary was not delivered for this casting — see
-                `design-asks/shared-font-binaries-missing.md` — so this panel still draws IBM Plex
-                Mono, whose advance is 12.78 px at 17 px / .16 em, giving a measured 41.
+                It used to assert the two figures DIFFER — a guard holding this panel at its own
+                measured 41 while §11's type-adoption gate stood: 49 and 47 are measured on Share
+                Tech Mono, and adopting them against a face not in `fonts/` would have overflowed the
+                cell irreversibly, because a cap may never shrink.
 
-                Adopting 47 now would overflow the cell. Worse, it would be **unrecoverable**: a cap
-                may never shrink, because lowering one orphans names already saved — they load, and
-                then fail to save back under their own name. So the cap follows the face, and the
-                assertion is that the two are consistent rather than that either is a particular
-                number.
+                The face landed with design bundle 2, so the gate is **satisfied rather than
+                waived** and the guard states the property it was always protecting. Deleting it
+                would have lost the guard entirely; relaxing it is forbidden; inverting it keeps the
+                thing asserted and moves which side of the gate it asserts. That is this suite's
+                recorded answer for an assertion that encodes the defect as the property.
 
-                When the font arrives this becomes `nf::LcdCell::characterBudget()` and the arm
-                below flips to asserting equality. */
-            expectEquals (ReflectTheme::Layout::lcdCharacterBudget, 41,
-                          "this panel's budget is measured against the face it actually draws");
+                What replaces the old vacuity check is `DisplayBudgetTests`, which measures the
+                budget off the font the paint path actually draws rather than from a constant — so
+                the two sides still come from different places. */
+            expectEquals (ReflectTheme::Layout::lcdCharacterBudget, nf::LcdCell::characterBudget(),
+                          "the panel must now carry the shared budget; if these differ, either the "
+                          "face was removed from fonts/ or the cell's terms moved");
 
-            expectNotEquals (ReflectTheme::Layout::lcdCharacterBudget,
-                             nf::LcdCell::characterBudget(),
-                             "if these now agree, the shared face has landed and this arm plus the "
-                             "theme's budget should move to core's figure — see the font ask");
+            expectEquals (ReflectTheme::Layout::lcdCharacterBudget, 49);
+            expectEquals (ReflectTheme::Layout::maxUserNameLength, 47);
+
+            // **The cap may never shrink, so the floor is asserted rather than assumed.** 39 was
+            // this casting's previous cap; anything below it orphans names already saved — they
+            // load, then fail to save back under their own name.
+            expectGreaterOrEqual (ReflectTheme::Layout::maxUserNameLength, 39,
+                                  "the cap fell below what this casting has already shipped, which "
+                                  "is not a re-export but a data migration");
+
+            // The two copies of the cap live in different targets and cannot see each other;
+            // DisplayBudgetTests owns that binding and asserts it against the drawn font.
         }
 
         beginTest ("The real editor constructs, lays out and tears down");

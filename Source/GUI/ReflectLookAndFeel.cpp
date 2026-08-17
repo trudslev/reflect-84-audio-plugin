@@ -58,7 +58,7 @@ juce::Font ReflectLookAndFeel::getPopupMenuFont()
     // Deliberately the bank tag's size, not GUI-SPEC.md section 9's 13px. **The reasoning lives
     // beside Layout::menuRowTextSize**, in the theme header - it belongs where the change would be
     // made, not here where nobody editing the constant would meet it.
-    return Font::mono (Layout::menuRowTextSize);
+    return Font::lcd (Layout::menuRowTextSize);
 }
 
 void ReflectLookAndFeel::paintKnobStatic (juce::Graphics& g,

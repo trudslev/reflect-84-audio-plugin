@@ -1,5 +1,7 @@
 #include "ProgramHeader.h"
 
+#include <nf/HeaderPart.h>
+
 #include "../PluginProcessor.h"
 
 using namespace ReflectTheme;
@@ -479,7 +481,7 @@ void ProgramHeader::paint (juce::Graphics& g)
         const bool onInit = ! namingMode && (displayedId.bank == ProgramBank::init
                                               || displayedId.bank == ProgramBank::unresolved);
 
-        const auto font = Font::mono (Layout::lcdTextSize);
+        const auto font = Font::lcd (Layout::lcdTextSize);
         const float tracking = Font::trackingPx (Layout::lcdTextTracking, Layout::lcdTextSize);
 
         /*  **NAME while typing, not USER.** The Program is not in the user bank until the name is
@@ -493,12 +495,21 @@ void ProgramHeader::paint (juce::Graphics& g)
                                 : onInit     ? Text::emDash()
                                 : juce::String (displayedId.bank == ProgramBank::user ? "USER" : "FACT");
 
+        /*  **The cell is `nf::LcdCell::bankCellW`, not the string's width plus padding.**
+
+            This used to size the cell from whatever `FACT` happened to measure, which made a TERM
+            of the character budget depend on a glyph run — and the two disagreed by 8 px once the
+            face became Share Tech Mono, taking the budget to 50 against §5's measured 49. The cell
+            is 72.00 in the part, and §5 records the 5 px it gave up (77 → 72) as funding the
+            chevron trim, so it is a decided figure rather than a consequence of a string.
+
+            The text still centres in it, so nothing about the tag's appearance is transcribed. */
         const float textW = Text::trackedWidth (bank, font, tracking);
-        const float cellW = Layout::lcdBankPadX * 2.0f + textW;
+        const float cellW = nf::LcdCell::bankCellW;
 
         Text::drawTracked (g, bank, font, tracking,
-                           { Layout::lcdBankPadX, 0.0f, textW, display.getHeight() },
-                           juce::Justification::centredLeft, Colour::phosphor);
+                           { 0.0f, 0.0f, cellW, display.getHeight() },
+                           juce::Justification::centred, Colour::phosphor);
 
         // The 1px rule, inset 7px top and bottom - furniture on the glass, not a border round a box.
         g.setColour (Colour::phosphor.withAlpha (0.35f));
@@ -512,7 +523,7 @@ void ProgramHeader::paint (juce::Graphics& g)
     {
         // From the theme, not repeated literals - the two disagreed for a while, and the budget
         // was derived from the declaration rather than from what was drawn.
-        const auto font = Font::mono (Layout::lcdNameTextSize);
+        const auto font = Font::lcd (Layout::lcdNameTextSize);
         const float tracking = Font::trackingPx (Layout::lcdNameTextTracking, Layout::lcdNameTextSize);
 
         // The phosphor glow: the same text drawn soft and wide underneath the crisp pass.
