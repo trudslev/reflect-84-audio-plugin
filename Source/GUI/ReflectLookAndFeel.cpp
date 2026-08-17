@@ -9,33 +9,15 @@ namespace
         farthest-corner sizing rule. */
     juce::ColourGradient faceGradientFor (juce::Rectangle<float> box, Layout::KnobSize size)
     {
-        switch (size)
-        {
-            case Layout::KnobSize::large:
-                return Paint::radialFace (box, 0.5f, 0.22f,
-                                          juce::Colour (0xFFFDF6E0),
-                                          juce::Colour (0xFFDDCB98), 0.52f,
-                                          juce::Colour (0xFFB09A61), 0.76f,
-                                          juce::Colour (0xFF7D6A3B));
+        // §2's two body fills, verbatim. The middle gradient retired with the middle class: three
+        // diameters became two, so the panel carries two faces rather than three.
+        if (size == Layout::KnobSize::primary)
+            return Paint::radialFace (box, 0.5f, 0.22f,
+                                      juce::Colour (0xFFFDF6E0),
+                                      juce::Colour (0xFFDDCB98), 0.52f,
+                                      juce::Colour (0xFFB09A61), 0.76f,
+                                      juce::Colour (0xFF7D6A3B));
 
-            case Layout::KnobSize::medium:
-                return Paint::radialFace (box, 0.5f, 0.24f,
-                                          juce::Colour (0xFFFBF3DA),
-                                          juce::Colour (0xFFD6C391), 0.55f,
-                                          juce::Colour (0xFFA58F58), 0.80f,
-                                          juce::Colour (0xFF7A6738));
-
-            case Layout::KnobSize::small:
-                return Paint::radialFace (box, 0.5f, 0.24f,
-                                          juce::Colour (0xFFF9F1D8),
-                                          juce::Colour (0xFFD4C18E), 0.58f,
-                                          juce::Colour (0xFF9F8A55), 0.82f,
-                                          juce::Colour (0xFF77653C));
-
-        }
-
-        // Unreachable: the enum has exactly three members since GUI-SPEC.md section 2 retired the
-        // tiny variant. Kept so the function has a return on every path.
         return Paint::radialFace (box, 0.5f, 0.24f,
                                   juce::Colour (0xFFF9F1D8),
                                   juce::Colour (0xFFD4C18E), 0.58f,
@@ -45,16 +27,9 @@ namespace
 
     float tickAlphaFor (Layout::KnobSize size)
     {
-        // Tick rings are quoted at .7 / .6 / .55 alpha, largest to smallest - bigger knobs carry
-        // slightly firmer ticks. The retired tiny variant shared small's .55.
-        switch (size)
-        {
-            case Layout::KnobSize::large:  return 0.70f;
-            case Layout::KnobSize::medium: return 0.60f;
-            case Layout::KnobSize::small:  break;
-        }
-
-        return 0.55f;
+        // Tick rings were quoted at .7 / .6 / .55 across the three retired diameters — bigger knobs
+        // carry slightly firmer ticks. With two classes the ends of that range are what remain.
+        return size == Layout::KnobSize::primary ? 0.70f : 0.55f;
     }
 }
 
@@ -86,11 +61,10 @@ juce::Font ReflectLookAndFeel::getPopupMenuFont()
     return Font::mono (Layout::menuRowTextSize);
 }
 
-void ReflectLookAndFeel::paintKnob (juce::Graphics& g,
-                                    juce::Point<float> centre,
-                                    Layout::KnobSize size,
-                                    const Layout::KnobScale& scale,
-                                    float value01)
+void ReflectLookAndFeel::paintKnobStatic (juce::Graphics& g,
+                                          juce::Point<float> centre,
+                                          Layout::KnobSize size,
+                                          const Layout::KnobScale& scale)
 {
     const auto& v = Layout::variantFor (size);
     const float r = v.radius;
@@ -133,6 +107,16 @@ void ReflectLookAndFeel::paintKnob (juce::Graphics& g,
         g.fillEllipse (body);
     }
 
+}
+
+void ReflectLookAndFeel::paintKnobPointer (juce::Graphics& g,
+                                           juce::Point<float> centre,
+                                           Layout::KnobSize size,
+                                           float value01)
+{
+    const auto& v = Layout::variantFor (size);
+    const float r = v.radius;
+
     // 6. Pointer: a dark line from near the top edge inward, rotating with the value.
     {
         const float angle = Geometry::knobAngleForValue (value01);
@@ -147,6 +131,18 @@ void ReflectLookAndFeel::paintKnob (juce::Graphics& g,
     }
 }
 
+void ReflectLookAndFeel::paintKnob (juce::Graphics& g,
+                                    juce::Point<float> centre,
+                                    Layout::KnobSize size,
+                                    const Layout::KnobScale& scale,
+                                    float value01)
+{
+    // The uncached composition, kept because drawRotarySlider and the geometry tests both want one
+    // call. ReflectKnob does not use it: it blits the static half and calls the pointer half.
+    paintKnobStatic (g, centre, size, scale);
+    paintKnobPointer (g, centre, size, value01);
+}
+
 void ReflectLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height,
                                            float sliderPosProportional, float, float,
                                            juce::Slider& slider)
@@ -155,7 +151,7 @@ void ReflectLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int 
     // at -135..+135 degrees clockwise from 12 o'clock, which is not JUCE's convention, and
     // Geometry::knobAngleForValue is the single place that mapping lives.
     const auto* knob = dynamic_cast<const ReflectKnob*> (&slider);
-    const auto size = knob != nullptr ? knob->size() : Layout::KnobSize::medium;
+    const auto size = knob != nullptr ? knob->size() : Layout::KnobSize::standard;
     const auto scale = knob != nullptr ? knob->scale() : Layout::KnobScale { nullptr, 0, nullptr };
 
     const juce::Rectangle<float> bounds { (float) x, (float) y, (float) width, (float) height };
@@ -201,4 +197,36 @@ void ReflectKnob::mouseDown (const juce::MouseEvent& e)
 void ReflectKnob::mouseDrag (const juce::MouseEvent& e)
 {
     juce::Slider::mouseDrag (e);
+}
+
+void ReflectKnob::paint (juce::Graphics& g)
+{
+    const auto centre = getLocalBounds().toFloat().getCentre();
+
+    // The scale the graphics context will actually rasterise at. Caching at component pixels and
+    // letting the host upscale is how a cached vector knob ends up softer than an uncached one.
+    const float deviceScale = g.getInternalContext().getPhysicalPixelScaleFactor();
+
+    const int wanted = juce::roundToInt ((float) getWidth() * deviceScale);
+    const int wantedH = juce::roundToInt ((float) getHeight() * deviceScale);
+
+    if (staticLayer.isNull() || staticLayer.getWidth() != wanted || staticLayer.getHeight() != wantedH)
+    {
+        // **One uncached paint per knob per scale change, and none per frame.** Measured on a
+        // prototype at 290-342 us/Mpx for a cached vector knob against 362-374 for a cached
+        // filmstrip, so the cache is what puts code-drawn at or below bitmap cost - uncached it is
+        // neither.
+        staticLayer = juce::Image (juce::Image::ARGB, juce::jmax (1, wanted), juce::jmax (1, wantedH), true);
+
+        ++staticLayerBuilds;
+
+        juce::Graphics ig { staticLayer };
+        ig.addTransform (juce::AffineTransform::scale (deviceScale));
+        ReflectLookAndFeel::paintKnobStatic (ig, centre, knobSize, knobScale);
+    }
+
+    g.drawImageTransformed (staticLayer, juce::AffineTransform::scale (1.0f / deviceScale));
+
+    ReflectLookAndFeel::paintKnobPointer (g, centre, knobSize,
+                                          (float) valueToProportionOfLength (getValue()));
 }

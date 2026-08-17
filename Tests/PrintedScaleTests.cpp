@@ -1,10 +1,12 @@
 #include "../Source/Parameters.h"
+#include "../Source/GUI/ReflectLookAndFeel.h"
 #include "../Source/GUI/ReflectTheme.h"
 
 #include <nf/PrintedScale.h>
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include <cmath>
 #include <vector>
 
 /**
@@ -58,9 +60,16 @@ public:
                             { return juce::String (juce::roundToInt (ParamFormat::preDelayMs (f))); },
                             "PRE-DELAY");
 
-            checkNumerals (percentMarks, 5, [] (float f)
+            checkNumerals (percentStdMarks, 5, [] (float f)
                             { return juce::String (juce::roundToInt (ParamFormat::densityPercent (f))); },
-                            "percent");
+                            "percent (standard)");
+
+            // **Both percent rings, because they are two arrays now.** The standard class prints
+            // three numerals and the primary five, so one shared table stopped being expressible -
+            // and a test that checked only one would pass while the other drifted.
+            checkNumerals (percentPrimMarks, 9, [] (float f)
+                            { return juce::String (juce::roundToInt (ParamFormat::densityPercent (f))); },
+                            "percent (primary)");
 
             checkNumerals (widthMarks, 5, [] (float f)
                             { return juce::String (juce::roundToInt (ParamFormat::widthPercent (f))); },
@@ -71,7 +80,7 @@ public:
             // "tidies" that curve to linear, or evens out the fractions, these four numerals stop
             // being octaves and this fails. Linear in Hz would put the midpoint at 9 kHz, which is
             // what the mapping's own comment records rejecting.
-            checkNumerals (dampHFMarks, 4, [] (float f)
+            checkNumerals (dampHFMarks, 5, [] (float f)
                             { return juce::String (juce::roundToInt (ParamFormat::dampHFHz (f) * 0.001f)); },
                             "DAMPING HF");
 
@@ -97,6 +106,103 @@ public:
                     "DAMPING LF's final interval should be shorter - 500 Hz is not an octave above 320");
         }
 
+        beginTest ("§2.1's numeral cut removed NUMERALS, not marks — the demoted values kept their ticks");
+        {
+            /*  **This is the property §2.1 actually claims**, and it is not the one the change is
+                easy to make wrong in. Cutting the standard class from five numerals to three could
+                be done two ways: drop the numeral and keep the tick, or drop the mark. Both leave a
+                ring that draws and a panel that looks deliberate; only the first keeps the
+                resolution, which §2.1 states in as many words — *"the retired values keep their
+                ticks as minors, so the resolution is carried without the numerals."*
+
+                So the assertion is against the PRE-CUT fractions, spelled as literals here. That is
+                a second source: the arrays hold what the ring draws now, and these hold what it drew
+                before, and a change that quietly dropped a mark moves one and not the other. */
+            using ScaleMark = ReflectTheme::Layout::ScaleMark;
+
+            const auto carriesMark = [] (const ScaleMark* marks, int count, float f)
+            {
+                for (int i = 0; i < count; ++i)
+                    if (std::abs (marks[i].f - f) < 0.0005f)
+                        return true;
+
+                return false;
+            };
+
+            const auto keptEvery = [&] (const ScaleMark* marks, int count,
+                                        const std::vector<float>& before, const juce::String& ring)
+            {
+                int majors = 0;
+
+                for (int i = 0; i < count; ++i)
+                    if (marks[i].isMajor())
+                        ++majors;
+
+                for (const float f : before)
+                    expect (carriesMark (marks, count, f),
+                            ring + ": the mark at fraction " + juce::String (f, 4)
+                                 + " is gone. §2.1 cut the NUMERAL at that position, not the tick - "
+                                   "dropping the mark loses the resolution the cut was meant to keep");
+
+                logMessage ("  " + ring + ": " + juce::String (count) + " marks, "
+                            + juce::String (majors) + " numeralled");
+
+                expectEquals (majors, 3, ring + ": the standard class prints exactly three numerals");
+            };
+
+            const std::vector<float> quarters { 0.0f, 0.25f, 0.5f, 0.75f, 1.0f };
+
+            keptEvery (sizeMarks,       5, quarters, "SIZE");
+            keptEvery (preDelayMarks,   5, quarters, "PRE-DELAY");
+            keptEvery (percentStdMarks, 5, quarters, "percent (standard)");
+            keptEvery (widthMarks,      5, quarters, "STEREO WIDTH");
+            keptEvery (trimMarks,       5, quarters, "OUTPUT TRIM");
+
+            keptEvery (decayMarks, 5, { 0.0f, 0.2105f, 0.4737f, 0.7368f, 1.0f }, "DECAY");
+            keptEvery (dampLFMarks, 5, { 0.0f, 0.2744f, 0.5489f, 0.8233f, 1.0f }, "DAMPING LF");
+
+            /*  **DAMPING HF is the one ring that is not the old one with numerals removed**, and it
+                is worth asserting separately rather than folding into the loop. Its pre-cut ring had
+                four marks at 0 / .3333 / .6667 / 1; §2.1 gives it five, adding a minor at .8333 that
+                never existed. So its old set is a strict SUBSET rather than a re-labelling.
+
+                That is the reason to read §2.1's minor column rather than infer minors from which
+                numerals were dropped: inference would have produced four marks here and been wrong
+                in a way nothing else on the panel would show. */
+            keptEvery (dampHFMarks, 5, { 0.0f, 0.3333f, 0.6667f, 1.0f }, "DAMPING HF");
+
+            expect (carriesMark (dampHFMarks, 5, 0.8333f),
+                    "DAMPING HF lost the minor at .8333, which §2.1 ADDS - this ring is not the old "
+                    "four-mark ring with a numeral removed");
+        }
+
+        beginTest ("The primary class keeps all five numerals, which is what makes it a class");
+        {
+            int majors = 0, minors = 0;
+
+            for (const auto& m : percentPrimMarks)
+                (m.isMajor() ? majors : minors) += 1;
+
+            logMessage ("  percent (primary): " + juce::String (majors) + " numeralled, "
+                        + juce::String (minors) + " minor");
+
+            expectEquals (majors, 5, "the primary class prints five numerals - §2's 'up to five'");
+            expectEquals (minors, 4, "with minors at the eighths between them");
+
+            // The distinguishing property: if the two percent rings ever became one array again,
+            // one of these two counts would have to be wrong. Asserting both is what keeps the
+            // split honest rather than merely present.
+            int stdMajors = 0;
+
+            for (const auto& m : percentStdMarks)
+                if (m.isMajor())
+                    ++stdMajors;
+
+            expectNotEquals (majors, stdMajors,
+                             "the two percent rings print the same number of numerals, so the split "
+                             "into two arrays is no longer doing anything");
+        }
+
         beginTest ("Every ring passes the suite's shared structural check");
         {
             // The taper check above is this casting's own, because its ranges are all 0-1. These
@@ -105,11 +211,68 @@ public:
             checkShared (sizeMarks,     5, "SIZE");
             checkShared (decayMarks,    5, "DECAY");
             checkShared (preDelayMarks, 5, "PRE-DELAY");
-            checkShared (percentMarks,  5, "percent");
+            checkShared (percentStdMarks,  5, "percent (standard)");
+            checkShared (percentPrimMarks, 9, "percent (primary)");
             checkShared (widthMarks,    5, "STEREO WIDTH");
             checkShared (trimMarks,     5, "OUTPUT TRIM");
-            checkShared (dampHFMarks,   4, "DAMPING HF");
+            checkShared (dampHFMarks,   5, "DAMPING HF");
             checkShared (dampLFMarks,   5, "DAMPING LF");
+        }
+
+        beginTest ("The knob cache is keyed on SCALE, not on value — shown by counting rebuilds");
+        {
+            /*  **Call 5's cache, asserted on the property that distinguishes it from the obvious
+                wrong implementation.** `setBufferedToImage` would also compile, also look identical,
+                and also report "cached" — while re-rendering the whole knob on every value change,
+                because JUCE refreshes that buffer on every repaint and a Slider repaints whenever
+                its value moves. The panel would be pixel-identical and the cache worth nothing.
+
+                So the test drives values through one knob at a fixed scale and counts renders of
+                the static layer. One rebuild for any number of values; a further rebuild only when
+                the device scale changes. */
+            ReflectKnob knob { ReflectTheme::Layout::KnobSize::standard,
+                               { ReflectTheme::Layout::sizeMarks, 5, nullptr } };
+            knob.setBounds (0, 0, 120, 120);
+
+            const auto paintAt = [&] (float deviceScale, float value)
+            {
+                knob.setValue (value, juce::dontSendNotification);
+
+                juce::Image target { juce::Image::ARGB,
+                                     juce::roundToInt (120.0f * deviceScale),
+                                     juce::roundToInt (120.0f * deviceScale), true };
+                juce::Graphics g { target };
+                g.addTransform (juce::AffineTransform::scale (deviceScale));
+                knob.paint (g);
+            };
+
+            paintAt (1.0f, 0.10f);
+            const int afterFirst = knob.staticLayerBuildCount();
+            expectEquals (afterFirst, 1, "the first paint must render the static layer once");
+
+            for (float v : { 0.25f, 0.40f, 0.55f, 0.70f, 0.85f, 1.00f })
+                paintAt (1.0f, v);
+
+            logMessage ("  6 further values at scale 1.0 -> "
+                        + juce::String (knob.staticLayerBuildCount()) + " build(s) total");
+
+            expectEquals (knob.staticLayerBuildCount(), 1,
+                          "the static layer was re-rendered while only the VALUE changed, so this "
+                          "is a per-frame buffer rather than a cache - which is exactly what "
+                          "setBufferedToImage would have given, at no benefit");
+
+            // The other direction, without which the arm above would pass on a cache that never
+            // rebuilds at all — including one wrongly keyed on nothing, which would go soft on a
+            // resize instead of costing a frame.
+            paintAt (2.0f, 0.50f);
+
+            logMessage ("  scale 1.0 -> 2.0 -> "
+                        + juce::String (knob.staticLayerBuildCount()) + " build(s) total");
+
+            expectEquals (knob.staticLayerBuildCount(), 2,
+                          "a device-scale change did NOT rebuild the static layer, so the cache "
+                          "would be blitted up from the wrong resolution and the knob would go soft "
+                          "at any scale but the one it was first painted at");
         }
 
         beginTest ("Every knob in the layout carries a scale with at least two marks");
@@ -148,8 +311,18 @@ private:
     void checkNumerals (const ReflectTheme::Layout::ScaleMark* marks, int count,
                         NumeralAt numeralAt, const juce::String& ring)
     {
+        int majors = 0;
+
         for (int i = 0; i < count; ++i)
         {
+            // **A minor mark has no numeral to check.** §2.1's numeral cut kept the demoted values
+            // as ticks, so a ring's array now mixes both kinds; comparing a null against the
+            // control's reading would fail every minor for having no opinion.
+            if (! marks[i].isMajor())
+                continue;
+
+            ++majors;
+
             const auto printed = juce::String (marks[i].printed);
             const auto actual  = numeralAt (marks[i].f);
 
@@ -158,6 +331,12 @@ private:
                               + juce::String (marks[i].f, 4)
                               + " but the control reads \"" + actual + "\" there");
         }
+
+        // **A ring of nothing but minors would pass the loop above silently**, which is the vacuity
+        // this guards: the loop's only failure mode is a mismatch, so zero comparisons is zero
+        // failures. Named per ring so the message says which one went empty.
+        expectGreaterThan (majors, 0, ring + ": no numeral was checked at all - every mark in this "
+                                             "ring is a minor, so the comparison ran on nothing");
     }
 
     void checkShared (const ReflectTheme::Layout::ScaleMark* marks, int count,

@@ -222,6 +222,13 @@ void PanelBackground::paintKnobLabels (juce::Graphics& g)
             for (int i = 0; i < spec.scale.count; ++i)
             {
                 const auto& mark = spec.scale.marks[i];
+
+                // **A minor mark carries a tick and no numeral** — §2.1's mechanism for keeping a
+                // demoted value's resolution after the standard class dropped to three numerals.
+                // The tick itself is drawn by Paint::drawTickRing; this loop prints only majors.
+                if (! mark.isMajor())
+                    continue;
+
                 const float angle = Layout::knobArcStartDegrees
                                   + mark.f * (Layout::knobArcEndDegrees - Layout::knobArcStartDegrees);
 
@@ -264,7 +271,7 @@ void PanelBackground::paintKnobLabels (juce::Graphics& g)
                            juce::Justification::centred,
                            // The two CHARACTER knobs are the panel's primary controls and carry
                            // the darker text weight; everything else is secondary.
-                           spec.size == Layout::KnobSize::large ? Colour::textPrimary
+                           spec.size == Layout::KnobSize::primary ? Colour::textPrimary
                                                                 : Colour::textSecondary);
     }
 }

@@ -791,15 +791,24 @@ namespace Layout
     // five 10px numerals will not clear a 29px tick radius, and shrinking type below the 10px floor
     // is not available (BRAND.md's Legibility floor). The damping pair is promoted to small, which
     // also lets both keep their full mark set rather than dropping to three marks.
-    enum class KnobSize { large, medium, small };
+    /** BRAND.md's three size classes, of which this casting uses all three — but ALGORITHM is the
+        signature control and is drawn by `AlgorithmSwitch`, not here, so the knob grammar carries
+        two. §2: primary Ø76 (MODULATION, DIGITAL GRAIN), standard Ø56 (the other nine).
+
+        **Three classes collapsed to two this round.** The panel carried Ø98 / Ø60 / Ø52, and §2.1
+        records that the v1.1 spec had *promoted* the damping pair 44 -> 52 precisely so they could
+        keep their full mark sets. Call 3 outranks that: at Ø56 the numeral ceiling is three, and
+        the retired values keep their ticks as minors, so the resolution survives without the
+        numerals. The promotion still happened; its stated purpose no longer applies. */
+    enum class KnobSize { primary, standard };
 
     struct KnobVariant
     {
         float radius;               // body radius; spec states diameter
-        float tickArcRadius;        // r - where the printed ticks sit, measured from the dial centre
-        float tickLength;           // drawn from tickArcRadius INWARD
+        float tickArcRadius;        // where the ticks' OUTER end sits, from the dial centre
+        float tickLength;           // major tick, drawn from tickArcRadius INWARD
         float numeralRadius;        // R - centre of each scale numeral
-        float tickWidth;
+        float tickWidth;            // major tick
         float pointerWidth;
         float pointerLengthFraction;// of the body diameter, from near the top edge inward
         float pointerTopInset;
@@ -809,18 +818,66 @@ namespace Layout
         float innerCapInset;        // 0 = no inner cap
     };
 
-    // GUI-SPEC.md section 5's variant table. Body diameters 98 / 60 / 52 -> radii 49 / 30 / 26.
-    // readoutSize is gone with the standing readouts (section 2 of the brief); unitDrop replaces it,
-    // because a unit now prints once in the scale area rather than being appended to every value.
-    inline constexpr KnobVariant largeKnob  { 49.0f, 62.0f, 8.0f, 80.0f, 2.0f, 3.0f, 0.30f, 8.0f, 11.0f, 0.22f, 74.0f, 15.0f };
-    inline constexpr KnobVariant mediumKnob { 30.0f, 39.0f, 6.0f, 55.0f, 2.0f, 2.0f, 0.38f, 6.0f,  9.0f, 0.18f, 52.0f,  0.0f };
-    inline constexpr KnobVariant smallKnob  { 26.0f, 35.0f, 6.0f, 50.0f, 2.0f, 2.0f, 0.37f, 5.0f,  9.0f, 0.16f, 44.0f,  0.0f };
+    /** §2's tick sizes, shared by both classes: **major 2 x 9, minor 1.5 x 5.** */
+    inline constexpr float majorTickLength = 9.0f;
+    inline constexpr float majorTickWidth  = 2.0f;
+    inline constexpr float minorTickLength = 5.0f;
+    inline constexpr float minorTickWidth  = 1.5f;
+
+    /** Half the printed numeral's line box — §8 gives IBM Plex Mono **10 / 12**, so 6. The numerals
+        are centred on their own box, so this is what separates a numeral's centre from the edge of
+        its box facing the dial. */
+    inline constexpr float numeralHalfLineBox = 6.0f;
+
+    /** §2 of the parts catalogue: numerals sit **6 px clear of the tick's outer end**. */
+    inline constexpr float numeralClearance = 6.0f;
+
+    /*  **The tick arc is DERIVED from the stated numeral radius, not chosen — and the catalogue's
+        own clearance chain provably cannot produce this casting's radii.**
+
+        Gatecrasher's §3 states the chain as `numeral ring = r + 8 + 9 + 6 + 6.5`: tick ink starts
+        8 px outside the body, the major tick is 9 long, numerals clear its outer end by 6, plus
+        half a line box. That reproduces Gatecrasher exactly — 57.5 at Ø56 and 67.5 at Ø76.
+
+        Reflect-84 §2 states **R 64 primary / 52 standard**. Run backwards through the same chain
+        with this casting's 12 px numeral line box, it gives 67 and 57 — short by 3.0 and 5.0. And
+        the shortfalls DIFFER, which makes this structural rather than a wrong constant: an additive
+        chain preserves differences, so with bodies 10 apart the radii cannot be 12 apart for ANY
+        choice of clearances. 52 = 28 + a + 9 + b needs a + b = 15 and 64 = 38 + a + 9 + b needs 17.
+
+        So the stated radii are taken as authoritative — they are figures the spec states, and the
+        chain is a derivation it does not — and the tick arc is inverted out of them through the two
+        terms the catalogue does state:
+
+            tickArcRadius = numeralRadius - numeralClearance - numeralHalfLineBox
+
+        which gives 52 primary and 40 standard, leaving the ticks' inner ends **5 px and 3 px** clear
+        of their bodies rather than the catalogue's 8. Nothing here is invented: every term is stated
+        by one document or the other, and the body clearance falls out. It is raised with the
+        designers in `design-asks/header-nameplate-offsets.md` as the fourth figure whose stated
+        derivation does not reproduce. */
+    inline constexpr float tickArcRadiusFor (float numeralR) noexcept
+    {
+        return numeralR - numeralClearance - numeralHalfLineBox;
+    }
+
+    /*  §2's two classes. Body Ø76 / Ø56 -> radii 38 / 28; numeral radii 64 / 52, both stated.
+
+        `unitDrop` places the unit string inside the sweep's bottom gap, one numeral half-box inside
+        the numeral ring so its box's top edge meets that ring rather than crossing it. Pointer
+        proportions are §2's `3 x 30 %` and `2 x 34 %`; the inner cap is §2's `inset: 12px` and is
+        primary-only; label type is §8's 12 / .20 em and 11 / .16 em. */
+    inline constexpr KnobVariant primaryKnob {
+        38.0f, tickArcRadiusFor (64.0f), majorTickLength, 64.0f, majorTickWidth,
+        3.0f, 0.30f, 6.0f, 12.0f, 0.20f, 64.0f - numeralHalfLineBox, 12.0f };
+
+    inline constexpr KnobVariant standardKnob {
+        28.0f, tickArcRadiusFor (52.0f), majorTickLength, 52.0f, majorTickWidth,
+        2.0f, 0.34f, 5.0f, 11.0f, 0.16f, 52.0f - numeralHalfLineBox, 0.0f };
 
     inline constexpr const KnobVariant& variantFor (KnobSize s) noexcept
     {
-        return s == KnobSize::large  ? largeKnob
-             : s == KnobSize::medium ? mediumKnob
-                                     : smallKnob;
+        return s == KnobSize::primary ? primaryKnob : standardKnob;
     }
 
     /** One printed numeral on a knob's scale.
@@ -832,11 +889,20 @@ namespace Layout
         scale and the actual mapping to agree exactly, and this is the form that cannot drift.
 
         `printed` is the literal string, so OUTPUT TRIM keeps its explicit "+6" and DECAY prints
-        "0.4" rather than a rounded "0". */
+        "0.4" rather than a rounded "0".
+
+        **`printed == nullptr` is a MINOR mark: a tick with no numeral.** §2 draws major 2 x 9 at
+        every numeralled position and minor 1.5 x 5 at the rest, and §2.1 is explicit that the
+        values the standard class dropped *"keep their ticks as minors, so the resolution is carried
+        without the numerals"*. One ordered array carries both, because they are one printed scale
+        and a second array would let the two drift out of order — which is the same argument that
+        keeps a mark's angle a rotation fraction rather than a stored degree. */
     struct ScaleMark
     {
         float f;
-        const char* printed;
+        const char* printed;        // nullptr = minor tick, no numeral
+
+        constexpr bool isMajor() const noexcept { return printed != nullptr; }
     };
 
     struct KnobScale
@@ -859,14 +925,32 @@ namespace Layout
     //   DECAY is linear in SECONDS over 0.4-8.0, so round numbers give uneven spacing.
     //   DAMPING LF is log, and 500 is not an octave above 320, so its last interval is short.
     // Neither may be evened out.
-    inline constexpr ScaleMark sizeMarks[]    { {0.0f,"0.2"},{0.25f,"0.4"},{0.5f,"0.6"},{0.75f,"0.8"},{1.0f,"1.0"} };
-    inline constexpr ScaleMark decayMarks[]   { {0.0f,"0.4"},{0.2105f,"2"},{0.4737f,"4"},{0.7368f,"6"},{1.0f,"8"} };
-    inline constexpr ScaleMark preDelayMarks[]{ {0.0f,"0"},{0.25f,"45"},{0.5f,"90"},{0.75f,"135"},{1.0f,"180"} };
-    inline constexpr ScaleMark percentMarks[] { {0.0f,"0"},{0.25f,"25"},{0.5f,"50"},{0.75f,"75"},{1.0f,"100"} };
-    inline constexpr ScaleMark widthMarks[]   { {0.0f,"0"},{0.25f,"50"},{0.5f,"100"},{0.75f,"150"},{1.0f,"200"} };
-    inline constexpr ScaleMark trimMarks[]    { {0.0f,"-12"},{0.25f,"-6"},{0.5f,"0"},{0.75f,"+6"},{1.0f,"+12"} };
-    inline constexpr ScaleMark dampHFMarks[]  { {0.0f,"2"},{0.3333f,"4"},{0.6667f,"8"},{1.0f,"16"} };
-    inline constexpr ScaleMark dampLFMarks[]  { {0.0f,"40"},{0.2744f,"80"},{0.5489f,"160"},{0.8233f,"320"},{1.0f,"500"} };
+    /*  **§2.1's table, majors and minors in one ordered array.** A `nullptr` printed string is a
+        minor: the tick is drawn, the numeral is not.
+
+        The standard class carries **three** numerals and the primary **five**, which is why the two
+        percent scales below are separate arrays rather than one shared table. They were one, and
+        sharing it is no longer expressible: DENSITY and MIX are standard and print 0 / 50 / 100,
+        while MODULATION and DIGITAL GRAIN are primary and print all five fifths.
+
+        Two scales are deliberately unevenly spaced and neither may be tidied:
+          DECAY is linear in SECONDS over 0.4-8.0, so round numbers land unevenly.
+          DAMPING is logarithmic - HF is 2 * 8^f, LF is 40 * 12.5^f - and 500 is not an octave above
+          320, so LF's last interval is short.
+
+        **DAMPING HF gains a minor at .8333 that the old four-mark ring did not have**, so its ring
+        is not merely the old one with numerals removed. Coming from the spec rather than from the
+        demotion is the whole reason to read §2.1's minor column rather than infer it. */
+    inline constexpr ScaleMark sizeMarks[]    { {0.0f,"0.2"},{0.25f,nullptr},{0.5f,"0.6"},{0.75f,nullptr},{1.0f,"1.0"} };
+    inline constexpr ScaleMark decayMarks[]   { {0.0f,"0.4"},{0.2105f,nullptr},{0.4737f,"4"},{0.7368f,nullptr},{1.0f,"8"} };
+    inline constexpr ScaleMark preDelayMarks[]{ {0.0f,"0"},{0.25f,nullptr},{0.5f,"90"},{0.75f,nullptr},{1.0f,"180"} };
+    inline constexpr ScaleMark percentStdMarks[]  { {0.0f,"0"},{0.25f,nullptr},{0.5f,"50"},{0.75f,nullptr},{1.0f,"100"} };
+    inline constexpr ScaleMark percentPrimMarks[] { {0.0f,"0"},{0.125f,nullptr},{0.25f,"25"},{0.375f,nullptr},{0.5f,"50"},
+                                                    {0.625f,nullptr},{0.75f,"75"},{0.875f,nullptr},{1.0f,"100"} };
+    inline constexpr ScaleMark widthMarks[]   { {0.0f,"0"},{0.25f,nullptr},{0.5f,"100"},{0.75f,nullptr},{1.0f,"200"} };
+    inline constexpr ScaleMark trimMarks[]    { {0.0f,"-12"},{0.25f,nullptr},{0.5f,"0"},{0.75f,nullptr},{1.0f,"+12"} };
+    inline constexpr ScaleMark dampHFMarks[]  { {0.0f,"2"},{0.3333f,nullptr},{0.6667f,"8"},{0.8333f,nullptr},{1.0f,"16"} };
+    inline constexpr ScaleMark dampLFMarks[]  { {0.0f,"40"},{0.2744f,nullptr},{0.5489f,"160"},{0.8233f,nullptr},{1.0f,"500"} };
 
     struct KnobSpec
     {
@@ -890,17 +974,17 @@ namespace Layout
     // Display names come from the spec too: PRE-DELAY and STEREO WIDTH are no longer abbreviated,
     // and the damping pair carries its own column rather than sitting under a shared caption.
     inline constexpr std::array<KnobSpec, 11> knobs { {
-        { "dampHF",     "HF",              94.0f,  475.6f,   KnobSize::small,  { dampHFMarks,   4, "kHz" } },
-        { "dampLF",     "LF",             222.0f,  475.6f,   KnobSize::small,  { dampLFMarks,   5, "Hz"  } },
-        { "size",       "SIZE",           398.0f,  310.6f,   KnobSize::medium, { sizeMarks,     5, nullptr } },
-        { "decay",      "DECAY",          530.0f,  310.6f,   KnobSize::medium, { decayMarks,    5, "s"   } },
-        { "preDelay",   "PRE-DELAY",      398.0f,  461.1f,   KnobSize::medium, { preDelayMarks, 5, "ms"  } },
-        { "density",    "DENSITY",        530.0f,  461.1f,   KnobSize::medium, { percentMarks,  5, "%"   } },
-        { "modulation", "MODULATION",     773.5f,  480.1f,   KnobSize::large,  { percentMarks,  5, "%"   } },
-        { "grain",      "DIGITAL GRAIN",  981.5f,  480.1f,   KnobSize::large,  { percentMarks,  5, nullptr } },
-        { "width",      "STEREO WIDTH",  1244.0f,  225.1f,   KnobSize::small,  { widthMarks,    5, "%"   } },
-        { "mix",        "MIX",           1244.0f,  373.6f,   KnobSize::small,  { percentMarks,  5, "%"   } },
-        { "trim",       "OUTPUT TRIM",   1244.0f,  522.1f,   KnobSize::small,  { trimMarks,     5, "dB"  } },
+        { "dampHF",     "HF",              94.0f,  475.6f,   KnobSize::standard, { dampHFMarks,       5, "kHz" } },
+        { "dampLF",     "LF",             222.0f,  475.6f,   KnobSize::standard, { dampLFMarks,       5, "Hz"  } },
+        { "size",       "SIZE",           398.0f,  310.6f,   KnobSize::standard, { sizeMarks,         5, nullptr } },
+        { "decay",      "DECAY",          530.0f,  310.6f,   KnobSize::standard, { decayMarks,        5, "s"   } },
+        { "preDelay",   "PRE-DELAY",      398.0f,  461.1f,   KnobSize::standard, { preDelayMarks,     5, "ms"  } },
+        { "density",    "DENSITY",        530.0f,  461.1f,   KnobSize::standard, { percentStdMarks,   5, "%"   } },
+        { "modulation", "MODULATION",     773.5f,  480.1f,   KnobSize::primary,  { percentPrimMarks,  9, "%"   } },
+        { "grain",      "DIGITAL GRAIN",  981.5f,  480.1f,   KnobSize::primary,  { percentPrimMarks,  9, nullptr } },
+        { "width",      "STEREO WIDTH",  1244.0f,  225.1f,   KnobSize::standard, { widthMarks,        5, "%"   } },
+        { "mix",        "MIX",           1244.0f,  373.6f,   KnobSize::standard, { percentStdMarks,   5, "%"   } },
+        { "trim",       "OUTPUT TRIM",   1244.0f,  522.1f,   KnobSize::standard, { trimMarks,         5, "dB"  } },
     } };
 
     /** Gap from the knob's bottom edge down to its label, and from the label to its readout.
@@ -1199,27 +1283,35 @@ namespace Paint
                               const Layout::KnobScale& scale,
                               juce::Colour colour)
     {
-        // GUI-SPEC.md section 5: ticks run from the tick-arc radius INWARD by the tick length, and
-        // are centred on the tick's angle. Section 7 puts one at every printed numeral and nowhere
-        // else - no minor ticks, no even-angle ring.
-        //
-        // This replaced a fixed `one tick every N degrees` loop. Even spacing is only ever right by
-        // coincidence: it holds for the linear controls because their marks are quarters, and it is
-        // wrong for DECAY (linear in seconds, round numbers) and for both damping knobs (log). A
-        // numeral sitting visibly off its nearest tick reads as an error even when the numeral is
-        // correct - BRAND.md's "Ticks sit at the labelled values".
-        const float outer = v.tickArcRadius;
-        const float inner = outer - v.tickLength;
+        /*  §2: ticks run from the tick-arc radius INWARD and are centred on the tick's angle.
+            **Major 2 x 9 at every numeralled position, minor 1.5 x 5 at the rest** — a mark whose
+            `printed` is null draws its tick and no numeral.
 
+            Minors are not decoration. §2.1 dropped the standard class from five numerals to three
+            and kept the retired values as ticks precisely so the resolution survives the numeral
+            cut: the pointer still has something to land on at a quarter turn.
+
+            This replaced a fixed `one tick every N degrees` loop. Even spacing is only ever right
+            by coincidence — it holds for the linear controls because their marks are quarters, and
+            it is wrong for DECAY (linear in seconds) and both damping knobs (log). A numeral
+            visibly off its nearest tick reads as an error even when the numeral is correct. */
         g.setColour (colour);
 
         for (int i = 0; i < scale.count; ++i)
         {
+            const auto& mark = scale.marks[i];
+
+            const float length = mark.isMajor() ? v.tickLength : Layout::minorTickLength;
+            const float width  = mark.isMajor() ? v.tickWidth  : Layout::minorTickWidth;
+
+            const float outer = v.tickArcRadius;
+            const float inner = outer - length;
+
             const float angle = Layout::knobArcStartDegrees
-                              + scale.marks[i].f * (Layout::knobArcEndDegrees - Layout::knobArcStartDegrees);
+                              + mark.f * (Layout::knobArcEndDegrees - Layout::knobArcStartDegrees);
 
             g.drawLine ({ Geometry::pointOnCircle (centre, inner, angle),
-                          Geometry::pointOnCircle (centre, outer, angle) }, v.tickWidth);
+                          Geometry::pointOnCircle (centre, outer, angle) }, width);
         }
 
         juce::ignoreUnused (bodyRadius);

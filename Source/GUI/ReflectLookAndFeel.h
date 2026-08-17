@@ -35,6 +35,19 @@ public:
                            ReflectTheme::Layout::KnobSize size,
                            const ReflectTheme::Layout::KnobScale& scale,
                            float value01);
+
+    /** The knob's STATIC layers — tick ring, contact shadow, body, inner cap, inner shading.
+        Everything that does not move with the value, so it can be rendered once and blitted. */
+    static void paintKnobStatic (juce::Graphics& g,
+                                 juce::Point<float> centre,
+                                 ReflectTheme::Layout::KnobSize size,
+                                 const ReflectTheme::Layout::KnobScale& scale);
+
+    /** The one layer that does move. */
+    static void paintKnobPointer (juce::Graphics& g,
+                                  juce::Point<float> centre,
+                                  ReflectTheme::Layout::KnobSize size,
+                                  float value01);
 };
 
 /**
@@ -51,9 +64,41 @@ public:
     ReflectKnob (ReflectTheme::Layout::KnobSize sizeVariant,
                  ReflectTheme::Layout::KnobScale scaleForKnob);
 
+    /** **Draws the cached static layer and the live pointer, rather than going through
+        `drawRotarySlider`.**
+
+        Call 5 asks for the code-drawn knobs to be cached. `setBufferedToImage` is the obvious
+        reading and it is the wrong one: JUCE refreshes that buffer on every `repaint()`, and a
+        Slider repaints on every value change, so the whole knob would re-render on every drag frame
+        and the cache would save nothing at all. It would also be invisible — the panel would look
+        identical and profile identically, which is the failure mode worth naming.
+
+        So the split is by what actually changes. The tick ring, shadow, body, inner cap and inner
+        shading depend only on the size class and the scale, so they are rendered once into an image
+        at the current device scale and blitted. The pointer is three lines of arithmetic and is
+        drawn live.
+
+        **The cache is keyed on the device scale, not on the value**, which is what makes it a cache
+        rather than a buffer: it is rebuilt when the editor is resized and at no other time. A resize
+        therefore costs one uncached paint per knob and every frame after it is a blit. */
+    void paint (juce::Graphics& g) override;
+
+    /** Test seam for the cache; see `staticLayerBuilds`. */
+    int staticLayerBuildCount() const noexcept { return staticLayerBuilds; }
+
     const ReflectTheme::Layout::KnobScale& scale() const noexcept { return knobScale; }
 
     ReflectTheme::Layout::KnobSize size() const noexcept { return knobSize; }
+
+    juce::Image staticLayer;
+
+    /** **How many times the static layer has been rendered**, so the cache can be shown to be one.
+
+        Without it, a cache that rebuilds on every frame is indistinguishable from one that never
+        does: the panel looks identical either way and the only difference is a cost nothing
+        headless measures. This makes the distinguishing property assertable — many values at one
+        scale rebuild once, a scale change rebuilds again. */
+    int staticLayerBuilds = 0;
 
     const ReflectTheme::Layout::KnobVariant& variant() const noexcept
     {
