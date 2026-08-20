@@ -559,7 +559,15 @@ public:
                             "reported, nothing assigned, per the rule.");
 
             expect (lo441 && lo192 && hi441 && hi192 && lfHolds,
-                    "a dampHF corner is not where its cutoff says it is — read the four corner "
+                    "OPEN FINDING, DELIBERATELY RED — THE dampHF 2x2, and it is this casting's "
+                    "ONLY failing arm. Held open UNCLASSIFIED on purpose: the four pre-stated "
+                    "readings all turn on WHERE the curve moved, and the corner does not match any "
+                    "of them, so the figures are reported and nothing is assigned. Not a "
+                    "regression, and a green run here would mean the arm was relaxed.\n"
+                    "  **If you are meeting this for the first time, you are re-investigating a "
+                    "finding that is already characterised** — that happened on 2026-08-20, from "
+                    "an assertion message that described the failure without naming the finding.\n"
+                    "  a dampHF corner is not where its cutoff says it is — read the four corner "
                     "lines above against this test's table rather than assigning it");
         }
 
