@@ -5,19 +5,19 @@
     "os": "Mac OSX 26.5.2",
     "config": "Release",
     "coreCommit": "17e3013",
-    "takenOn": "2026-08-20"
+    "takenOn": "2026-08-21"
   },
   "session": { "closedInstances": 24, "openInstances": 4, "coreFraction": 0.500000 },
   "cells": [
-    { "blockSize": 64, "sampleRate": 48000, "editorOpen": false, "coreFraction": 0.004750 },
-    { "blockSize": 64, "sampleRate": 48000, "editorOpen": true, "coreFraction": 0.260549 },
-    { "blockSize": 128, "sampleRate": 48000, "editorOpen": false, "coreFraction": 0.002957 },
-    { "blockSize": 128, "sampleRate": 48000, "editorOpen": true, "coreFraction": 0.254798 },
+    { "blockSize": 64, "sampleRate": 48000, "editorOpen": false, "coreFraction": 0.003070 },
+    { "blockSize": 64, "sampleRate": 48000, "editorOpen": true, "coreFraction": 0.262509 },
+    { "blockSize": 128, "sampleRate": 48000, "editorOpen": false, "coreFraction": 0.003258 },
+    { "blockSize": 128, "sampleRate": 48000, "editorOpen": true, "coreFraction": 0.257974 },
     { "blockSize": 512, "sampleRate": 48000, "editorOpen": false, "coreFraction": 0.002945 },
-    { "blockSize": 512, "sampleRate": 48000, "editorOpen": true, "coreFraction": 0.260791 },
-    { "blockSize": 128, "sampleRate": 44100, "editorOpen": false, "coreFraction": 0.002776 },
-    { "blockSize": 128, "sampleRate": 44100, "editorOpen": true, "coreFraction": 0.260230 },
-    { "blockSize": 128, "sampleRate": 96000, "editorOpen": false, "coreFraction": 0.005687 },
-    { "blockSize": 128, "sampleRate": 96000, "editorOpen": true, "coreFraction": 0.257972 }
+    { "blockSize": 512, "sampleRate": 48000, "editorOpen": true, "coreFraction": 0.262631 },
+    { "blockSize": 128, "sampleRate": 44100, "editorOpen": false, "coreFraction": 0.002761 },
+    { "blockSize": 128, "sampleRate": 44100, "editorOpen": true, "coreFraction": 0.264066 },
+    { "blockSize": 128, "sampleRate": 96000, "editorOpen": false, "coreFraction": 0.006125 },
+    { "blockSize": 128, "sampleRate": 96000, "editorOpen": true, "coreFraction": 0.264034 }
   ]
 }
