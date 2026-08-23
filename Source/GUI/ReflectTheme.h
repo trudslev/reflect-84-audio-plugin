@@ -1439,13 +1439,21 @@ namespace Paint
         g.setGradientFill (verticalGradient (r, Colour::pillTop, Colour::pillBottom));
         g.fillRoundedRectangle (r, Layout::pillRadius);
 
-        // Nudged down by half the descent so the CAP INK is centred, not the font box.
-        //
-        // Every pill label is all-caps and has no descenders, but vertical centring works on the
-        // font's full height - ascent plus descent - so the empty descender space pushes the visible
-        // glyphs up by half of it. It reads as the label sitting high in its pill, which is exactly
-        // what it was doing.
-        Text::drawTracked (g, text, font, tracking, r.translated (0.0f, font.getDescent() * 0.5f),
+        /*  **NO DESCENT NUDGE. It was a calibration for the face this no longer uses.**
+
+            The line it replaces read `r.translated (0, font.getDescent() * 0.5f)`, with a comment
+            arguing that centring ascent+descent leaves an all-caps label high by half the empty
+            descender. That argument is sound and it was measured on **IBM Plex Mono**, whose
+            ascent/descent split is not Barlow Condensed's — so once the face changed the same
+            correction pushed the ink the other way. Measured against the prototype: 8 px above the
+            ink and 5 below in a 21 px pill, worst on REVERB TANK at 8 and 4, where the prototype
+            sits 7 and 6.
+
+            Barlow's own metrics already land the caps near the middle of its box, so centring the
+            box IS centring the ink here. That is a property of this face rather than a general
+            truth — the nudge would be right again on a face with a deep descender, which is why
+            the reasoning stays rather than only the outcome. */
+        Text::drawTracked (g, text, font, tracking, r,
                            juce::Justification::centred, Colour::bezelGoldBright);
     }
 
