@@ -178,15 +178,20 @@ void PanelBackground::paintDividers (juce::Graphics& g)
 
 void PanelBackground::paintSectionLabels (juce::Graphics& g)
 {
-    Paint::drawSectionPill (g, "REVERB TANK", Layout::col2Centre, Layout::tankPillY);
-    Paint::drawSectionPill (g, "DAMPING",     Layout::col1Centre, Layout::dampingPillY);
-    Paint::drawSectionPill (g, "CHARACTER",   Layout::col3Centre, Layout::characterPillY);
-    Paint::drawSectionPill (g, "OUTPUT",      Layout::col4Centre, Layout::outputPillY);
+    // Each pill's own measured centre, not its column's box centre — see the note beside these
+    // constants. `col4Centre` is 1234 where OUTPUT's content axis is 1246.
+    Paint::drawSectionPill (g, "REVERB TANK", Layout::tankPillCentre,      Layout::tankPillY);
+    Paint::drawSectionPill (g, "DAMPING",     Layout::dampingPillCentre,   Layout::dampingPillY);
+    Paint::drawSectionPill (g, "CHARACTER",   Layout::characterPillCentre, Layout::characterPillY);
+    Paint::drawSectionPill (g, "OUTPUT",      Layout::outputPillCentre,    Layout::outputPillY);
 
-    // ALGORITHM caption, 16px below the rotary.
-    Text::drawTracked (g, "ALGORITHM", Font::mono (Layout::algoCaptionSize),
+    // ALGORITHM caption — on the ROTARY's axis, not the column box's. The box centre is 168 and
+    // the knob's is 156, so drawing it in `col1X + col1W` put it 12 px right of the control it
+    // names, in a file that already carries `col1GeometricCentre` to say those are different.
+    Text::drawTracked (g, "ALGORITHM", Font::label (Layout::algoCaptionSize),
                        Font::trackingPx (0.26f, Layout::algoCaptionSize),
-                       { Layout::col1X, Layout::algoCaptionY, Layout::col1W, 12.0f },
+                       { Layout::algoCaptionCentre - Layout::col1W * 0.5f, Layout::algoCaptionY,
+                         Layout::col1W, Layout::algoCaptionLineBox },
                        juce::Justification::centred, Colour::textMuted);
 
     // DAMPING is drawn as a section pill above, alongside the other three. In v1.0 it was a 9px
@@ -260,7 +265,10 @@ void PanelBackground::paintKnobLabels (juce::Graphics& g)
             }
         }
 
-        const auto labelFont = Font::mono (v.labelSize);
+        // §8's two control-label classes are both Barlow Condensed 600. The SIZES were already
+        // right — 12 / .20 em primary, 11 / .16 em standard — and only the face was wrong, which
+        // is why they measured conformant and still read thin.
+        const auto labelFont = Font::label (v.labelSize);
         const float labelTracking = Font::trackingPx (v.labelTracking, v.labelSize);
 
         // Below the NUMERALS, not below the body. The printed scale now sits outside the body at

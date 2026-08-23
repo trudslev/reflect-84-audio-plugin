@@ -64,7 +64,14 @@ juce_add_binary_data(Reflect84BinaryData
         # (call 7). IBM Plex Mono STAYS: call 7 splits them, and this casting's printed numerals,
         # units and scope legends are its own mono. Adding these does not retire it.
         design/fonts/ShareTechMono-Regular.ttf
-        design/fonts/BarlowCondensed-SemiBold.ttf)
+        # **THREE Barlow weights, because §2.2 encodes ALGORITHM's selection in weight AND value:**
+        # 700 / #332b1e selected against 500 / #5e5440 unselected. Only SemiBold was delivered, so
+        # Medium and Bold were fetched from the OFL source `design/fonts/README.md` names — the
+        # same route it prescribes, and the Bold comes back byte-identical to the one the designers
+        # delivered to Fifth Member, which is what confirms the source. See design-asks/OPEN.md.
+        design/fonts/BarlowCondensed-Medium.ttf
+        design/fonts/BarlowCondensed-SemiBold.ttf
+        design/fonts/BarlowCondensed-Bold.ttf)
 
 # AU is Apple-only; Windows/Linux only ever build VST3 + Standalone. VST3_COPY_DIR/AU_COPY_DIR are
 # only set on Apple - leaving them unset elsewhere lets JUCE apply its own correct per-OS default

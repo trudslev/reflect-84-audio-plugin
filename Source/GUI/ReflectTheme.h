@@ -288,6 +288,43 @@ namespace Font
         return t;
     }
 
+    /*  **BARLOW CONDENSED — §8's panel lettering, and it was embedded and never used.**
+
+        `BarlowCondensed-SemiBold.ttf` has been in `design/fonts/` and in this target's
+        `juce_add_binary_data` since bundle 2 landed on 2026-08-17, and no file under `Source/`
+        referenced it. Every role §8 gives to Barlow Condensed — the four section pills, both
+        control-label classes, the ALGORITHM caption and its corner labels, TANK LIVE, the scope
+        header, the PROGRAM caption, the Program legend and the version stamp — drew in IBM Plex
+        Mono instead, which is a monospace at weight 400. That is why they read thin and wide
+        where the design is fat and narrow, and it is why the panel's own §8 table could be read
+        as satisfied: the FACE was in the folder and in the build, just not at any call site.
+
+        A complete, correct, unused asset reads exactly like a finished one — the same shape as
+        Gatecrasher's unit row and Elmer's `kneeLabelY`, one level up from a constant to a font.
+
+        **IBM Plex Mono stays.** Call 7 splits the two and this casting's printed numerals, units
+        and on-glass scope legends are its own mono; adding Barlow does not retire it. */
+    inline juce::Typeface::Ptr labelMediumTypeface()
+    {
+        static const juce::Typeface::Ptr t = juce::Typeface::createSystemTypefaceFor (
+            BinaryData::BarlowCondensedMedium_ttf, (size_t) BinaryData::BarlowCondensedMedium_ttfSize);
+        return t;
+    }
+
+    inline juce::Typeface::Ptr labelTypeface()
+    {
+        static const juce::Typeface::Ptr t = juce::Typeface::createSystemTypefaceFor (
+            BinaryData::BarlowCondensedSemiBold_ttf, (size_t) BinaryData::BarlowCondensedSemiBold_ttfSize);
+        return t;
+    }
+
+    inline juce::Typeface::Ptr labelBoldTypeface()
+    {
+        static const juce::Typeface::Ptr t = juce::Typeface::createSystemTypefaceFor (
+            BinaryData::BarlowCondensedBold_ttf, (size_t) BinaryData::BarlowCondensedBold_ttfSize);
+        return t;
+    }
+
     inline juce::Typeface::Ptr monoMediumTypeface()
     {
         static const juce::Typeface::Ptr t = juce::Typeface::createSystemTypefaceFor (
@@ -311,6 +348,48 @@ namespace Font
     inline juce::Font lcd (float cssPx)
     {
         return juce::Font (juce::FontOptions (lcdTypeface()).withPointHeight (cssPx));
+    }
+
+    /*  §8's panel lettering at a CSS px em size — Barlow Condensed 600.
+
+        **FOUR OF §8'S TEN BARLOW ROLES ARE ON THIS FACE, AND SIX ARE NOT.** Enumerated rather than
+        summarised, because "the panel is on Barlow now" is exactly the sentence that would let the
+        other six sit on IBM Plex indefinitely — a rule half-kept looks like a rule kept.
+
+        | On Barlow | Still IBM Plex Mono | Why it was not done in this pass |
+        |---|---|---|
+        | Section pill | Function descriptor | in the header band, beside the wordmark |
+        | Control label — primary | PROGRAM caption | in the header band |
+        | Control label — standard | Version stamp | trivially safe; grouped with the rest |
+        | ALGORITHM caption · corner labels | TANK LIVE | scope column |
+        | | Scope header data | scope column, sits in a measured row |
+        | | Program legend | inside the LCD's own character budget |
+
+        The four converted are the fascia labels that were reported and are all self-sizing: each
+        measures its own text and centres it, so a wider or narrower face cannot overflow anything.
+        The six left are each inside a cell with a width budget — the header band, the scope's
+        header row, the LCD's 49-character budget measured on Share Tech Mono — and changing a
+        face there is a measurement per role, not a substitution.
+
+        **Printed numerals, units and the on-glass scope legends are NOT in this list**: call 7
+        splits the two faces and those stay IBM Plex Mono by design. */
+    inline juce::Font label (float cssPx)
+    {
+        return juce::Font (juce::FontOptions (labelTypeface()).withPointHeight (cssPx));
+    }
+
+    /** §2.2's unselected corner label: Barlow Condensed **500**. */
+    inline juce::Font labelMedium (float cssPx)
+    {
+        return juce::Font (juce::FontOptions (labelMediumTypeface()).withPointHeight (cssPx));
+    }
+
+    /** §2.2's selected corner label: Barlow Condensed **700**. Selection is carried by weight and
+        value BOTH, so drawing this at 600 loses half the encoding even though the colour still
+        moves. */
+    inline juce::Font labelBold (float cssPx)
+    {
+        return juce::Font (juce::FontOptions (labelBoldTypeface()).withPointHeight (cssPx));
     }
 
     inline juce::Font monoMedium (float cssPx)
@@ -818,8 +897,19 @@ namespace Layout
     // Below the rotary's own tick ring, measured off 01-panel.png. It moved with the knob when
     // ALGORITHM's centre went to 275.6, and was left behind at the v1.0 value - which is why the
     // caption vanished off the bottom of column 1 rather than landing somewhere obviously wrong.
-    inline constexpr float algoCaptionY = 336.0f;
-    inline constexpr float algoLabelSize = 10.0f;
+    /*  §2.2's caption: 11 / 13 at .26 em, its box top at 341.5 and centred on **156** — the
+        rotary's own axis, whose body is (104, 223.5) 104 x 104. It was drawn centred in
+        `col1X + col1W`, a box whose centre is 168, so it sat 12 px right of the knob; and at
+        y 336 against a knob bottom of 327.5, an 8.5 px gap where the prototype leaves 14. */
+    inline constexpr float algoCaptionY = 341.5f;
+    inline constexpr float algoCaptionCentre = 156.0f;
+    inline constexpr float algoCaptionLineBox = 13.0f;
+    /*  §2.2: 11 / 13 at .16 em. **Selection is carried by weight AND value both** — 700 /
+        `#332b1e` against 500 / `#5e5440` — and the build encoded it as IBM Plex Mono Medium
+        against Regular, a 500/400 pair in a monospace, which is why the selected label did not
+        read as selected. */
+    inline constexpr float algoLabelSize = 11.0f;
+    inline constexpr float algoLabelTracking = 0.16f;
 
     // Printed scales, GUI-SPEC.md section 7. 10px is the floor for functional text (BRAND.md's
     // Legibility) and these are functional now that the standing readouts are gone - they are the
@@ -827,7 +917,7 @@ namespace Layout
     // "kHz" tells you what the numerals mean, so it is not decoration.
     inline constexpr float scaleNumeralSize = 10.0f;
     inline constexpr float scaleUnitSize = 10.0f;
-    inline constexpr float algoCaptionSize = 9.0f;
+    inline constexpr float algoCaptionSize = 11.0f;
 
     /** Corner label placement. design/README.md section 2 is explicit that the visual arrangement
         is NOT clockwise-sequential - HALL is index 3 at bottom-left, CHAMBER index 2 at
@@ -1072,21 +1162,45 @@ namespace Layout
     inline constexpr float knobReadoutLineHeight = 13.0f;
 
     // --- Section pills (measured centres and tops) ---------------------------
-    inline constexpr float pillHeight = 20.0f;
-    inline constexpr float pillPaddingX = 11.0f;
-    inline constexpr float pillRadius = 3.0f;
-    inline constexpr float pillTextSize = 9.0f;
-    inline constexpr float pillTracking = 0.26f;
+    /*  **Every figure here is the delivered prototype's, read off its DOM rather than a render.**
+        §8's Section pill row is Barlow Condensed 600 at 11 / 13 and .24 em; the build had 9 px at
+        .26 em in IBM Plex Mono, which is a monospace at weight 400 — thin, wide and upright where
+        the design is fat and narrow.
 
-    inline constexpr float tankPillY = 221.0f;
+        The box: 21 tall, and 12.31 px of padding each side of the ink. That padding is not a round
+        number because it is not authored — it is what the prototype's four pills measure, to the
+        same hundredth on all four (77.17-52.55, 106.13-81.50, 93.53-68.91, 71.09-46.47, each over
+        two). Rounding it to 12 would move every pill edge by a third of a pixel for tidiness. */
+    inline constexpr float pillHeight = 21.0f;
+    inline constexpr float pillPaddingX = 12.31f;
+    inline constexpr float pillRadius = 3.0f;
+    inline constexpr float pillTextSize = 11.0f;
+    inline constexpr float pillTracking = 0.24f;
+
+    inline constexpr float tankPillY = 218.5f;
     inline constexpr float characterPillY = 360.0f;
-    inline constexpr float outputPillY = 137.0f;
+    inline constexpr float outputPillY = 134.0f;
+
+    /*  **THE PILLS SIT ON THEIR COLUMN'S CONTENT AXIS, NOT ITS BOX CENTRE — and column 4 is the
+        one that shows it.** This file already carries that distinction for column 1, named
+        `col1GeometricCentre` with the reasoning beside it, and then computed the other three as
+        `colX + colW / 2` anyway. Column 4's box centre is 1234 where its content sits on 1246.9
+        (STEREO WIDTH, MIX and OUTPUT TRIM all centre there in the prototype, to two decimals), so
+        the OUTPUT pill drew **13 px left** of the knobs it names.
+
+        These are the prototype's own pill centres. They sit within a pixel of each column's label
+        midpoint, the residue being that a shrink-to-fit box is symmetric about its ink and the
+        pill is symmetric about its box. */
+    inline constexpr float dampingPillCentre   = 156.0f;
+    inline constexpr float tankPillCentre      = 462.0f;
+    inline constexpr float characterPillCentre = 877.5f;
+    inline constexpr float outputPillCentre    = 1246.0f;
 
     // The horizontal rule inside col 1, separating ALGORITHM from DAMPING (section 1: y 269,
     // x 18 -> 300).
     // DAMPING is a section PILL in v1.1, on column 1's content axis - not the 9px label set to the
     // left of the pair that v1.0 had. Measured at y 383, centre 158.
-    inline constexpr float dampingPillY = 383.0f;
+    inline constexpr float dampingPillY = 383.5f;
 
     // **Measured at 368, not section 1's stated 269.** The rotary's body spans y 224..328, so 269
     // draws this rule straight through the middle of the ALGORITHM knob - which is what it did.
@@ -1306,10 +1420,19 @@ namespace Paint
     /** A section header pill: REVERB TANK / CHARACTER / OUTPUT all share it. */
     inline void drawSectionPill (juce::Graphics& g, const juce::String& text, float centreX, float top)
     {
-        const auto font = Font::mono (Layout::pillTextSize);
+        const auto font = Font::label (Layout::pillTextSize);
         const float tracking = Font::trackingPx (Layout::pillTracking, Layout::pillTextSize);
+        /*  **CSS's box carries the TRAILING letter-space and `trackedWidth` does not.**
+            `letter-spacing` puts a gap after every character including the last, so a shrink-to-fit
+            box is `n` gaps wide where `trackedWidth` counts `n - 1`. One tracking is 2.64 px here,
+            and all four pills measured exactly that narrow against the prototype — 74 against
+            77.17, 103 against 106.13, 91 against 93.53, 68 against 71.09.
+
+            The ink stays centred on `centreX` rather than being pushed left by half the trailing
+            space, because the prototype's own boxes are symmetric about their ink to a hundredth
+            of a pixel (12.31 px of padding on each side of all four). */
         const float textWidth = Text::trackedWidth (text, font, tracking);
-        const float width = textWidth + Layout::pillPaddingX * 2.0f;
+        const float width = textWidth + tracking + Layout::pillPaddingX * 2.0f;
 
         const juce::Rectangle<float> r { centreX - width * 0.5f, top, width, Layout::pillHeight };
 

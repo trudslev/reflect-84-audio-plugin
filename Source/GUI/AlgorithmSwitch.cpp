@@ -43,8 +43,10 @@ void AlgorithmSwitch::layOutLabels()
     const auto centre = knobCentre();
     const float r = Layout::algoRadius;
 
-    const auto font = Font::mono (Layout::algoLabelSize);
-    const float tracking = Font::trackingPx (0.18f, Layout::algoLabelSize);
+    // Laid out at the SELECTED weight so a label's box does not change size when it is picked —
+    // Bold is the widest of the two, so measuring at Medium would clip the one that is lit.
+    const auto font = Font::labelBold (Layout::algoLabelSize);
+    const float tracking = Font::trackingPx (Layout::algoLabelTracking, Layout::algoLabelSize);
 
     for (size_t i = 0; i < Layout::algorithmCorners.size(); ++i)
     {
@@ -131,21 +133,27 @@ void AlgorithmSwitch::paint (juce::Graphics& g)
 
     // --- Corner labels -------------------------------------------------------
     {
-        const float tracking = Font::trackingPx (0.18f, Layout::algoLabelSize);
+        const float tracking = Font::trackingPx (Layout::algoLabelTracking, Layout::algoLabelSize);
 
         for (size_t i = 0; i < Layout::algorithmCorners.size(); ++i)
         {
             const auto& corner = Layout::algorithmCorners[i];
             const auto& hit = labelHits[i];
 
-            // Selected/unselected is encoded TWICE - value and weight - per GUI-SPEC.md section 4.
-            // Value alone is what put the unselected labels at 2.04:1; they now clear the flavour
-            // floor and stay visibly secondary because 500 reads heavier than 400 at the same tone.
-            // BRAND.md: hierarchy comes from size and weight, never from opacity.
+            /*  Selected/unselected is encoded TWICE — value and weight — per §2.2, which states
+                the pair outright: **700 / `#332b1e` selected against 500 / `#5e5440` unselected**.
+
+                It was IBM Plex Mono **Medium against Regular**: a 500/400 pair, in a monospace, at
+                a size §2.2 does not give. Two weights of a mono one step apart are nearly the same
+                colour on the panel, so the weight half of the encoding carried almost nothing and
+                the selected label did not read as selected — which is exactly how it was reported.
+
+                Barlow Condensed 700 was not in this casting's folder; only SemiBold had ever been
+                delivered. See `design-asks/OPEN.md`. */
             const bool isSelected = corner.index == selected;
             const auto colour = isSelected ? Colour::labelSelected : Colour::textTertiary;
-            const auto font = isSelected ? Font::monoMedium (Layout::algoLabelSize)
-                                         : Font::mono (Layout::algoLabelSize);
+            const auto font = isSelected ? Font::labelBold (Layout::algoLabelSize)
+                                         : Font::labelMedium (Layout::algoLabelSize);
 
             const bool onLeft = corner.corner == Layout::Corner::topLeft
                              || corner.corner == Layout::Corner::bottomLeft;
