@@ -146,6 +146,22 @@ anything onto a stereo pair. Same shape as Elmer's ring reading its ticks by nam
 by position: two call sites disagreeing about what an index means, with each one internally
 coherent.
 
+**A DECAYING IMPULSE RESPONSE IS NOT STABILITY, and the standard instrument could not see the
+reported bug at the reported settings.** Driven with one impulse and 12 s of silence, Chamber at
+QUIET VIOLENCE's own values measures **0.0045** with the defect fully present — a textbook decay.
+Driven with 20 s of continuous noise at the identical values it reaches **4.2e20**, and is already
+peaking at 2.14 off a ±0.25 input inside the first two seconds.
+
+**A rank-collapsed feedback network can ring down from a single excitation and still accumulate
+under a continuous one**, because the collapse adds coherently only where two lines are
+simultaneously carrying signal. So the two arms ask different questions, and the one every reverb
+test in this suite asks — *does the tail decay* — is the one that answers wrong here.
+
+That is why `ReverbEngineTests` carries **both**, and why the continuous arm is the one that
+reproduces the report rather than merely neighbouring it. Same shape as this file's own warning
+about a metric whose axis does not survive the question: an impulse tail is a projection that keeps
+*decay* and discards *accumulation*.
+
 **The Program was the REPORT, not the subject.** QUIET VIOLENCE's own dampLF of 300 Hz sits just
 inside the stable side of the edge — its arm passes even with the defect in place. An arm pinning
 only the reported Program would have gone green on a plugin that still ran away at its default and

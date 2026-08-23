@@ -448,6 +448,42 @@ public:
                 logMessage (row);
             }
 
+            /*  **CONTINUOUSLY DRIVEN, at the Program's own values and nothing else's.** The
+                impulse arm above is how a tail is normally measured and it is the wrong instrument
+                for this report: it excites the network once and then asks whether the ring-down
+                decays, where the reported symptom is a plugin with music going through it. A
+                collapsed-rank feedback network that decays from one impulse can still accumulate
+                under continuous excitation, so the two arms are asking different questions. */
+            {
+                auto engine = makeEngine();
+                juce::AudioBuffer<float> buffer (2, testBlockSize);
+                juce::Random rng (20260823);
+                float early = 0.0f, late = 0.0f;
+
+                const int blocks = (int) (20.0 * testSampleRate / testBlockSize);
+                for (int b = 0; b < blocks; ++b)
+                {
+                    for (int ch = 0; ch < 2; ++ch)
+                        for (int i = 0; i < testBlockSize; ++i)
+                            buffer.setSample (ch, i, rng.nextFloat() * 0.5f - 0.25f);
+
+                    engine.process (buffer, 2, p, 0.0f);
+                    const float m = buffer.getMagnitude (0, testBlockSize);
+
+                    if (b < blocks / 10) early = juce::jmax (early, m);
+                    if (b > blocks - blocks / 10) late = juce::jmax (late, m);
+                }
+
+                logMessage ("  CHAMBER, 20 s of noise    early " + juce::String (early, 6)
+                            + "  late " + juce::String (late, 6)
+                            + "  ratio " + juce::String (early > 0.0f ? late / early : 0.0f, 4));
+
+                expect (late < early * 4.0f,
+                        "CHAMBER at QUIET VIOLENCE's values grows under continuous input — "
+                        "last tenth peaks at " + juce::String (late, 6)
+                        + " against " + juce::String (early, 6) + " in the first");
+            }
+
             /*  **Three assertions, because the Program was the REPORT and not the subject.**
                 QUIET VIOLENCE's own values sat just inside the stable side of the edge — it was
                 the *default* 120 Hz that diverged — so an arm pinning only the reported Program
