@@ -1,48 +1,51 @@
 # Fonts
 
-**This folder holds the build's font binaries.** It used to open with the line *"This folder
-intentionally contains no font binaries"* — written when the two families below were fetched at
-build time and true until bundle 2 landed Share Tech Mono and Barlow Condensed SemiBold here on
-2026-08-17. It said the opposite of the truth for six days, in the file a reader opens to find out
-what is in the folder.
+**`ABSENT.md` is the register for this directory** — it arrived with bundle 3 export 14 and states
+the five delivered faces with their weights, glyph counts and licences. This file records the one
+thing it does not: **which build target reads which file.**
 
-| File | Weight | Used for | Source |
+| File | Weight | Read by | For |
 |---|---|---|---|
-| `jost/Jost-500-Medium.ttf` | 500 | the wordmark, and nothing else | Google Fonts, OFL |
-| `ibm-plex-mono/IBMPlexMono-Regular.ttf` | 400 | printed numerals, units, on-glass scope legends | Google Fonts, OFL |
-| `ibm-plex-mono/IBMPlexMono-Medium.ttf` | 500 | — see the note below | Google Fonts, OFL |
-| `ShareTechMono-Regular.ttf` | 400 | everything on glass — the suite's LCD face | design bundle 2 |
-| `BarlowCondensed-Medium.ttf` | 500 | §2.2's UNSELECTED ALGORITHM corner label | Google Fonts, OFL — see below |
-| `BarlowCondensed-SemiBold.ttf` | 600 | §8's panel lettering | design bundle 2 |
-| `BarlowCondensed-Bold.ttf` | 700 | §2.2's SELECTED ALGORITHM corner label | Google Fonts, OFL — see below |
+| `BarlowCondensed-Medium.ttf` | 500 | `Font::labelMedium` | §2.2's unselected ALGORITHM corner label |
+| `BarlowCondensed-SemiBold.ttf` | 600 | `Font::label` | §8's panel lettering — pills, control labels, ALGORITHM caption |
+| `BarlowCondensed-Bold.ttf` | 700 | `Font::labelBold` | §2.2's selected corner label |
+| `Jost-Medium.ttf` | 500 | `Font::wordmark` | the wordmark, and nothing else |
+| `IBMPlexMono-Regular.ttf` | 400 | `Font::mono` | model line, printed numerals, units, on-glass scope legends |
+| `ShareTechMono-Regular.ttf` | 400 | `Font::lcd` | everything on glass |
 
-## Medium and Bold were fetched, not delivered
+Every one of the six is named in `CMakeLists.txt`. **There is no seventh file and no unread file** —
+which is the state this directory has not previously been in.
 
-§2.2 states ALGORITHM's selection as **weight and value both — 700 / `#332b1e` selected against
-500 / `#5e5440` unselected**. Only SemiBold has ever been delivered to this casting, so the build
-encoded that pair as IBM Plex Mono Medium against Regular: 500 against 400, in a monospace, which
-is nearly the same colour on the panel. The selected algorithm did not read as selected.
+## What export 14 changed here, and what it corrected
 
-The two missing weights were fetched from the OFL source this file already prescribes — *"fetch
-them from source rather than taking them from a design bundle, so the build owns its own font
-provenance."* `BarlowCondensed-OFL.txt` sits beside them.
+This file said, for one day, *"Medium and Bold were fetched, not delivered"* and described the
+directory as mixing a 680-glyph SemiBold with a 694-glyph fetched pair. **Both halves are now
+wrong**, and the second was wrong about the wrong thing:
 
-**The Bold comes back byte-identical to the one the designers delivered to Fifth Member**, which is
-what confirms the source rather than merely making it plausible. The SemiBold already here is an
-earlier cut — 680 glyphs against the fetched pair's 694 — so this casting mixes two cuts of one
-family. Same 1000 upem, so em sizes are consistent; the difference is glyph coverage, none of it
-on this panel.
+- Export 13 **delivered** Medium and Bold, so nothing here is fetched.
+- The delivered pair is the **680-glyph cut**, byte-identical to the Medium already shipping in
+  gatecrasher and taperot. So this casting runs **one cut across all three weights**, which is
+  better than the mixture the earlier note accepted.
 
-`design-asks/OPEN.md` carries the ask for both weights to be delivered properly, which is what
-would retire this section.
+The 694-glyph files that briefly sat here were a real fetch of a real cut — the figure was measured,
+not invented — but they were **a different cut from the one the suite ships**, and reading the
+delivered files rather than a report is what settled it.
 
-## IBM Plex Mono 500 has no consumer
+Export 14 then delivered `Jost-Medium.ttf` and `IBMPlexMono-Regular.ttf`, which this build had been
+sourcing for itself into nested `jost/` and `ibm-plex-mono/` folders. **Those were different files,
+not just different paths** — Plex 1033 glyphs against the delivered 1028, Jost 102240 bytes against
+61652 — so leaving both would have meant the build drawing an undelivered face beside a delivered
+one nothing read. The self-fetched copies are removed and `CMakeLists.txt` names the delivered ones.
 
-It was the *selected* corner label until the weights above landed, and `Font::monoMedium` is now
-unreferenced. Left in place rather than removed in the same pass: retiring a face is its own change
-and wants its own check that nothing else reaches for it.
+**Adopting them was measured, not assumed**: captured before and after, the only part of the panel
+that moved is the wordmark, by at most 2.5 sum-RGB of 765 across a 12 px block — antialiasing. Every
+printed numeral, unit, model line and scope legend is unchanged, which is what says the delivered
+Plex renders identically to the fetched one at these sizes.
+
+`IBMPlexMono-Medium.ttf` went with them. It was §2.2's selected corner label until Barlow 700
+arrived, and `ABSENT.md` records that no weight of Plex other than 400 is drawn here.
 
 ## Do not install a design bundle over `design/`
 
-A bundle is a **reference package, not a tree to sync**. It has no claim on `design/fonts/` or
-anything else the build owns. Nothing in a bundle should ever delete a build asset.
+A bundle is a **reference package, not a tree to sync**. Merge it additively; nothing in a bundle
+should ever delete a build asset.

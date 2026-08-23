@@ -133,6 +133,15 @@ tick 0.55° counter-clockwise of the detent it marks.
 algorithms sit right, the two physical ones left. Do not "correct" it. Selection is carried by
 **weight and value both**: 700 / `#332b1e` selected against 500 / `#5e5440` unselected.
 
+**Both weights are Barlow Condensed and both are now delivered** (export 13). The build had
+encoded this pair as **IBM Plex Mono Medium against Regular** — 500 against 400, in a monospace,
+at 10 px where this section says 11. **Two weights of one mono a single step apart are nearly the
+same colour on a panel**, so the weight half of a deliberately redundant encoding carried almost
+nothing and the selected algorithm did not read as selected; it was reported from outside as the
+selected label not being fat enough. **The prototype never substituted** — it has drawn Barlow
+Condensed at 500 / 700 with these two inks at 11 px throughout, so no artwork moves and the
+contrast ratios in §6 are unaffected.
+
 ---
 
 ## 3 · TANK LIVE scope
@@ -392,7 +401,8 @@ that call bites**: three blocks previously had no pinned line-height and the can
 | Section pill | Barlow Condensed 600 | 11 / 13 | .24 em | `#d8c18a` |
 | Control label — primary | Barlow Condensed 600 | 12 / 14 | .20 em | `#332b1e` |
 | Control label — standard | Barlow Condensed 600 | 11 / 14 | .16 em | `#3e3527` |
-| ALGORITHM caption · corner labels | Barlow Condensed 600 / 700 | 11 / 13 | .26 / .16 em | `#3e3527` · see 2.2 |
+| ALGORITHM caption | Barlow Condensed 600 | 11 / 13 | .26 em | `#3e3527` |
+| ALGORITHM corner labels | Barlow Condensed **500** unselected / **700** selected | 11 / 13 | .16 em | see 2.2 |
 | TANK LIVE | Barlow Condensed 600 | 12 / 14 | .26 em | `#332b1e` |
 | Scope header data | Barlow Condensed 600 | 10 / 13 | .18 em | `#3e3527` |
 | Printed numeral · unit | IBM Plex Mono | 10 / 12 | .02 / .14 em | `#3e3527` |
@@ -420,7 +430,7 @@ changelog is a gap by construction, not an omission.
 | **3's signature class** | **already conformed.** ALGORITHM is a four-detent selector at Ø104 with the only dark cap on the panel — material as well as diameter. |
 | **5** — code-drawn, cached, no filmstrips | **already conformed.** Ticks and numerals were always placed from rotation fractions; there were no sheets to retire. `setBufferedToImage` is the build's to add. |
 | **6** — plates export at 3× | **checked, and it stays plateless.** The fascia is a gradient plus a procedural scanline and corner wash; nothing wants baking, so call 6's per-casting permission applies. If texture is added it becomes a plate and the call binds. |
-| **7's split** | **already conformed.** Panel lettering was Barlow Condensed; the wordmark is the nameplate metaphor; numerals, units and screen legends stay in the casting's own mono. |
+| **7's split** | **conformed on the panel, and was breached in the build until export 13** — §2.2's corner labels were drawn in IBM Plex Mono at two weights instead of Barlow Condensed at 500 / 700. Call 7 splits the two faces by role, and a *selection* encoding is panel lettering, not a numeral. Originally recorded as: **already conformed.** Panel lettering was Barlow Condensed; the wordmark is the nameplate metaphor; numerals, units and screen legends stay in the casting's own mono. |
 | **§4B shoes** | **not applicable, checked.** No two- or three-state shoe exists on this panel — ALGORITHM is a detented selector and the Program list is a Component. |
 | **Registration** | **cannot apply** — no mixed-class row exists (§2). |
 | **List construction** | **the catalogue agrees with this panel rather than the reverse.** The 26 px rows, 22 px caption, 9 px separator, 3 px lit bar and 20 px chevron bands are the only list in the suite built and verified against a running panel, and they are carried unchanged. |

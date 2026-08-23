@@ -256,11 +256,11 @@ namespace Font
 {
     // Function-local statics so each face is created once, lazily, and thread-safely.
     // NOTE: JUCE's binary-data name mangling STRIPS non-alphanumeric characters rather than
-    // converting them to underscores, so Jost-500-Medium.ttf becomes Jost500Medium_ttf.
+    // converting them to underscores, so Jost-Medium.ttf becomes JostMedium_ttf.
     inline juce::Typeface::Ptr wordmarkTypeface()
     {
         static const juce::Typeface::Ptr t = juce::Typeface::createSystemTypefaceFor (
-            BinaryData::Jost500Medium_ttf, (size_t) BinaryData::Jost500Medium_ttfSize);
+            BinaryData::JostMedium_ttf, (size_t) BinaryData::JostMedium_ttfSize);
         return t;
     }
 
@@ -325,12 +325,12 @@ namespace Font
         return t;
     }
 
-    inline juce::Typeface::Ptr monoMediumTypeface()
-    {
-        static const juce::Typeface::Ptr t = juce::Typeface::createSystemTypefaceFor (
-            BinaryData::IBMPlexMonoMedium_ttf, (size_t) BinaryData::IBMPlexMonoMedium_ttfSize);
-        return t;
-    }
+    /*  **`monoMediumTypeface` / `monoMedium` are GONE, and the face with them.** IBM Plex Mono
+        Medium existed for one job — §2.2's SELECTED corner label — and it did that job badly,
+        because 500 against 400 in one monospace is barely a weight difference. Barlow Condensed
+        700 does it now, and export 14's `fonts/ABSENT.md` states that no weight of Plex other
+        than 400 is drawn on this panel. Removed rather than left declared: an accessor for a face
+        nobody draws is the same fossil as a constant nobody reads. */
 
     /** Builds a font whose em size equals the design doc's CSS px value.
 
@@ -390,11 +390,6 @@ namespace Font
     inline juce::Font labelBold (float cssPx)
     {
         return juce::Font (juce::FontOptions (labelBoldTypeface()).withPointHeight (cssPx));
-    }
-
-    inline juce::Font monoMedium (float cssPx)
-    {
-        return juce::Font (juce::FontOptions (monoMediumTypeface()).withPointHeight (cssPx));
     }
 
     inline juce::Font wordmark (float cssPx)

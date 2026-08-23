@@ -56,9 +56,18 @@ FetchContent_MakeAvailable(NeonFoundryCore)
 # Jost_500_Medium_ttf. Check the generated BinaryData.h before assuming a symbol name.
 juce_add_binary_data(Reflect84BinaryData
     SOURCES
-        design/fonts/jost/Jost-500-Medium.ttf
-        design/fonts/ibm-plex-mono/IBMPlexMono-Regular.ttf
-        design/fonts/ibm-plex-mono/IBMPlexMono-Medium.ttf
+        # **THE DELIVERED FILES, flat in `design/fonts/`, as of bundle 3 export 14.** Jost and
+        # IBM Plex Mono were the two faces this casting sourced for itself under the old
+        # `design/fonts/README.md` policy, in nested `jost/` and `ibm-plex-mono/` folders. Export
+        # 14 delivers both, and its `fonts/ABSENT.md` states the directory's five files as the
+        # complete set — so the self-fetched copies are superseded and are removed rather than
+        # left beside them. They were DIFFERENT files, not just different paths: Plex 1033 glyphs
+        # against the delivered 1028, Jost 102240 bytes against 61652.
+        #
+        # `IBMPlexMono-Medium.ttf` is gone with them. It was §2.2's selected corner label until
+        # Barlow 700 arrived, and `ABSENT.md` records that no other weight of Plex is drawn here.
+        design/fonts/Jost-Medium.ttf
+        design/fonts/IBMPlexMono-Regular.ttf
         # The two shared faces, landed with design bundle 2 (2026-08-17). Share Tech Mono is the
         # suite's LCD face (HEADER-PART call 2) and Barlow Condensed SemiBold is panel lettering
         # (call 7). IBM Plex Mono STAYS: call 7 splits them, and this casting's printed numerals,
