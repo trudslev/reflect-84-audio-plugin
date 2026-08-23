@@ -116,6 +116,49 @@ nearly clean and the decay gets progressively coarser as it dies. That is exactl
 TANK LIVE scope draws. Move `GrainStage` to the output and the plugin still makes a noise, but the
 display stops telling the truth about it.
 
+### THE ONE PLACE THAT HAS ACTUALLY BITTEN: a "channel" that was a LINE
+
+Fixed `649e051`, reported from outside as **"Chamber goes into feedback no matter what I do"**.
+
+`GrainStage::process (int channel, float x)` holds one value per channel and advances its hold
+counter on the last one. `FdnTank` called it as **`grain.process (i % 2, ...)` with `i` the LINE
+index**, against a 2-slot array — so an FDN-4's lines 0 and 2 shared one held slot and 1 and 3
+shared the other, and Hall folded eight lines onto the same two.
+
+**During a hold each shared pair returns the same value.** Four independent state variables collapse
+onto two identical ones, the Householder matrix sums two copies of one signal coherently, and the
+orthogonality argument that bounds the loop gain stops applying. The counter also advanced at `i==1`
+*and* `i==3`, so the hold ran at twice the intended rate for Chamber and four times for Hall.
+
+| Chamber, QUIET VIOLENCE's values, dampLF at its default 120 Hz | |
+|---|---|
+| grain 0.00 · 0.05 | ratio 0.0240 · 0.0000 — **stable** |
+| grain 0.15 · 0.35 · 0.60 | **1e35** |
+
+**Both stable ends are the two cases where no sharing is possible** — grain 0 is a passthrough, and
+0.05 has `holdPeriod` 1 so every position captures its own input. Across the low-cut range Chamber
+failed 40..200 Hz inclusive and Hall at 40 Hz. `PlateTank` and `DigitalRoomTank` have their own call
+sites, genuinely pass 0/1, and were never wrong — which is why the report named Chamber.
+
+**Nothing in `GrainStage` looked wrong, and nothing in `FdnTank` did either.** The parameter is
+named `channel`, the call site had a line index to hand, and `i % 2` is the idiom for mapping
+anything onto a stereo pair. Same shape as Elmer's ring reading its ticks by name and its numerals
+by position: two call sites disagreeing about what an index means, with each one internally
+coherent.
+
+**The Program was the REPORT, not the subject.** QUIET VIOLENCE's own dampLF of 300 Hz sits just
+inside the stable side of the edge — its arm passes even with the defect in place. An arm pinning
+only the reported Program would have gone green on a plugin that still ran away at its default and
+everywhere below it, which is why `ReverbEngineTests` asserts three things: the Program, the grain
+sweep at 120 Hz, and the whole low-cut range on all four algorithms.
+
+**And the first attempt to show the arm could fail was an invalid control.** Reverting `i % 2` alone
+left `prepare (cfg.numLines)` in place, so `channel == channels - 1` was never true, the counter
+never advanced, and the sample-and-hold was **off** — a third state, stable for a reason unrelated
+to the fix, which reads exactly like "the arm cannot fail". **A partial revert of a two-part fix is
+not a control**: reverting both halves reproduces 1e35. This is the root file's *name the line the
+control shares with the arm it controls for*, arriving in a revert rather than in a fixture.
+
 `Source/DSP/GrainSpec.h` is the single interpretation of the DIGITAL GRAIN parameter, compiled into
 both the processor and the editor. The scope takes `levels` and `stepPx` from it (transcribed
 verbatim from `design/README.md` §6); the audio path takes the same `levels`, scaled by the named
