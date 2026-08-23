@@ -130,8 +130,11 @@ void TankScope::paintHeader (juce::Graphics& g, float decaySeconds)
     }
 
     // TANK LIVE
+    // §8's TANK LIVE row is Barlow Condensed 600, not this casting's mono. It is one of the six
+    // Barlow roles the type pass enumerated as outstanding, and it converts here because the
+    // caption was being rebuilt anyway.
     Text::drawTracked (g, "TANK LIVE",
-                       Font::mono (Layout::ledLabelSize),
+                       Font::label (Layout::ledLabelSize),
                        Font::trackingPx (Layout::ledLabelTracking, Layout::ledLabelSize),
                        { Layout::ledLabelX - (float) getX(), 0.0f, 200.0f, Layout::scopeHeaderH },
                        juce::Justification::centredLeft, Colour::textPrimary);

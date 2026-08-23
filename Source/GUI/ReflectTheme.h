@@ -1211,13 +1211,31 @@ namespace Layout
     inline constexpr float dampingLabelSize = 9.0f;
     inline constexpr float dampingLabelTracking = 0.24f;
 
-    // --- TANK LIVE scope (measured: screen border box x 407..953, y 174..344) -
+    /*  --- TANK LIVE scope ---
+
+        **`ledLabelX` WAS 427 AND THE CAPTION WAS NEVER ON SCREEN.** `TankScope` draws it at
+        `ledLabelX - getX()`, and its own component starts at 632 — so the text box began 205 px
+        left of the component's origin and was clipped away entirely. The panel showed a lamp with
+        nothing beside it, which is what "does the LIVE LED ever turn on" was looking at: the lamp
+        works, and the word that says so was not drawn.
+
+        **The comment on that line was correct and the value was stale.** It says *11px gap after
+        the lamp*, and 11 px after the lamp is exactly right — the prototype puts the lamp at 630
+        and the caption at 656, and 630 + 15 + 11 = 656. The figure was 427 because the section
+        header above it still measures *screen border box x 407..953*, the SUPERSEDED canvas where
+        the scope began at 407: 407 + 15 + 5 was that canvas's version of the same relationship.
+        The lamp moved to the new column and the caption did not.
+
+        That is the *preserved relationship against a moved base* shape this file already records
+        for Chorus-60's `modLabelRowY` — except here the relationship was not even preserved, only
+        described. The bezel below reads 632 and the lamp 632; the prototype has both at 630, a
+        2 px difference left alone as a separate question. */
     inline constexpr float ledX = 632.0f;
     inline constexpr float ledY = 136.6f;
     inline constexpr float ledSize = 15.0f;
     inline constexpr float ledGlowRadius = 26.0f;
-    inline constexpr float ledLabelX = 427.0f;              // 11px gap after the lamp
-    inline constexpr float ledLabelSize = 11.0f;
+    inline constexpr float ledLabelX = 656.0f;              // 11px gap after the lamp
+    inline constexpr float ledLabelSize = 12.0f;            // §8's TANK LIVE row: 12 / 14
     inline constexpr float ledLabelTracking = 0.26f;
     inline constexpr float scopeHeaderY = 136.6f;
     inline constexpr float scopeHeaderH = 15.0f;
