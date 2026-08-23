@@ -52,7 +52,7 @@ void FdnTank::prepare (const juce::dsp::ProcessSpec& spec)
             (int) std::ceil (msToSamples (cfg.lineMs[(size_t) i] + cfg.modDepthMs * 2.0f, sampleRate)) + 8);
 
     lfo.prepare (sampleRate, cfg.seed);
-    grain.prepare (2);
+    grain.prepare (cfg.numLines);   // one held slot per LINE - see GrainStage::process
 
     reset();
 }
@@ -207,7 +207,7 @@ void FdnTank::process (juce::AudioBuffer<float>& buffer, const TankParameters& p
 
             // Grain closes each line's loop, so the truncation compounds once per circulation
             // and the tail's envelope steps down rather than gliding.
-            lines[s].write (grain.process (i % 2, diffused + read[s]));
+            lines[s].write (grain.process (i, diffused + read[s]));
         }
 
         // Alternate lines feed alternate outputs, which decorrelates the two channels without

@@ -34,8 +34,21 @@ public:
         counter = 0;
     }
 
-    /** Call once per sample per channel, from inside the feedback loop. Channels must be visited
-        in order 0..n-1 within a sample, because the hold counter advances on the last one. */
+    /** Call once per sample per LOOP POSITION, from inside the feedback loop. Positions must be
+        visited in order 0..n-1 within a sample, because the hold counter advances on the last one.
+
+        **A position is a delay line, not an audio channel, and conflating the two made Chamber
+        diverge.** `FdnTank` called this as `process (i % 2, ...)` with `i` the LINE index, so an
+        FDN-4's lines 0 and 2 shared one held slot and 1 and 3 shared the other. During a hold each
+        pair returns the SAME value, collapsing four independent state variables onto two identical
+        ones - and an orthogonal mixing matrix summing two copies of one signal adds them
+        coherently, so the energy bound that makes the loop stable stops applying. The counter also
+        advanced twice per sample, four times for Hall, running the hold at the wrong rate.
+
+        Measured before the fix, Chamber at QUIET VIOLENCE's values with dampLF 120: grain 0.00 and
+        0.05 stable, 0.15 / 0.35 / 0.60 all diverging past 1e35. Both stable ends are exactly the
+        cases where no sharing can occur - grain 0 is a passthrough, and 0.05 has holdPeriod 1, so
+        every position captures its own input on every sample and never reads a neighbour's. */
     float process (int channel, float x) noexcept
     {
         if (! spec.active)
@@ -66,7 +79,7 @@ public:
 
 private:
     GrainSpec spec {};
-    std::array<float, 2> held {};
+    std::array<float, 8> held {};   // one per loop position; FDN-8 is the widest consumer
     int channels = 2;
     int holdPeriod = 1;
     int counter = 0;

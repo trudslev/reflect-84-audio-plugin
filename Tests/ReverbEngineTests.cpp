@@ -317,6 +317,168 @@ public:
             }
         }
 
+        /*  **QUIET VIOLENCE — reported from outside as "Chamber goes into feedback no matter
+            what I do".** Driven at that Program's own stored values rather than at anything
+            convenient, because the report named it and a named case is the cheapest known case
+            there is.
+
+            The arms are a sweep, not one run: the Program, then each of its distinguishing values
+            moved back toward the defaults one at a time. A tail that grows is a tail that grows
+            whatever the cause, so the arm that reports it is `peak after` against `peak during`.  */
+        beginTest ("QUIET VIOLENCE — the reported Chamber case, driven at its own values");
+        {
+            /*  The stored 0-1 values put through `Parameters.h`'s own laws. Written out rather
+                than included, because including that header makes `numAlgorithms` ambiguous
+                against the one already in scope here — and the four conversions are one line
+                each:
+                    sizeScale     0.2 + v * 0.8                 0.5625 -> 0.65
+                    decaySeconds  0.4 + v * 7.6                 0.3684 -> 3.20 s
+                    dampHFHz      2000 * 8   ^ v                0.4406 -> 5000 Hz
+                    dampLFHz      40   * 12.5 ^ v               0.7978 ->  300 Hz
+                which is exactly what `FactoryPrograms.h` annotates the row with. */
+            TankParameters p;
+            p.sizeScale    = 0.65f;
+            p.decaySeconds = 3.20f;
+            p.density01    = 0.8000f;
+            p.dampHFHz     = 5000.0f;
+            p.dampLFHz     = 300.0f;
+            p.mod01        = 0.1500f;
+            p.grain01      = 0.3500f;
+
+            logMessage ("  size " + juce::String (p.sizeScale, 3)
+                        + "  decay " + juce::String (p.decaySeconds, 2) + " s"
+                        + "  density " + juce::String (p.density01, 2)
+                        + "  dampHF " + juce::String (juce::roundToInt (p.dampHFHz)) + " Hz"
+                        + "  dampLF " + juce::String (juce::roundToInt (p.dampLFHz)) + " Hz"
+                        + "  mod " + juce::String (p.mod01, 2)
+                        + "  grain " + juce::String (p.grain01, 2));
+
+            const auto run = [this] (int algo, TankParameters params, const char* label)
+            {
+                auto engine = makeEngine();
+                juce::AudioBuffer<float> buffer (2, testBlockSize);
+                float during = 0.0f, after = 0.0f;
+
+                // 0.5 s of impulse-fed tail, then 12 s of silence: an RT60 of 3.2 s should be
+                // 60 dB down well inside that, so anything still growing is not a tail.
+                const int fed  = (int) (0.5 * testSampleRate / testBlockSize);
+                const int rest = (int) (12.0 * testSampleRate / testBlockSize);
+
+                for (int b = 0; b < fed; ++b)
+                {
+                    buffer.clear();
+                    if (b == 0) for (int ch = 0; ch < 2; ++ch) buffer.setSample (ch, 0, 1.0f);
+                    engine.process (buffer, algo, params, 0.0f);
+                    during = juce::jmax (during, buffer.getMagnitude (0, testBlockSize));
+                }
+                for (int b = 0; b < rest; ++b)
+                {
+                    buffer.clear();
+                    engine.process (buffer, algo, params, 0.0f);
+                    after = juce::jmax (after, buffer.getMagnitude (0, testBlockSize));
+                }
+                logMessage (juce::String ("  ") + label
+                            + "  during " + juce::String (during, 6)
+                            + "  after "  + juce::String (after, 6)
+                            + "  ratio "  + juce::String (during > 0.0f ? after / during : 0.0f, 4));
+                return during > 0.0f ? after / during : 0.0f;
+            };
+
+            const float chamber = run (2, p, "CHAMBER, as stored     ");
+
+            // Each distinguishing value moved back alone, to localise by parameter rather than
+            // by construction — a stage bisection partitions, a hypothesis only ever refutes.
+            auto q = p; q.density01 = 0.7f;      run (2, q, "  density 0.80 -> 0.70 ");
+            q = p; q.dampLFHz = 120.0f;          run (2, q, "  dampLF  -> 120 Hz    ");
+            q = p; q.dampHFHz = 9000.0f;         run (2, q, "  dampHF  -> 9000 Hz   ");
+            q = p; q.grain01 = 0.0f;             run (2, q, "  grain   -> 0         ");
+            q = p; q.mod01 = 0.3f;               run (2, q, "  mod     -> 0.30      ");
+            q = p; q.sizeScale = 0.7f;           run (2, q, "  size    -> 0.70      ");
+            q = p; q.decaySeconds = 2.0f;        run (2, q, "  decay   -> 2.0 s     ");
+
+            // Controls: the same values on the other three networks.
+            run (0, p, "PLATE, same values     ");
+            run (1, p, "DIGITAL ROOM, same     ");
+            run (3, p, "HALL, same values      ");
+
+            // **Pre-stated**: if GRAIN is the source — a sample-and-hold quantiser closing each
+            // line's loop — then at dampLF 120 grain 0 is stable and grain > 0 diverges. If it
+            // diverges either way, grain is exonerated and the loop gain itself is the subject.
+            logMessage ("  --- grain at dampLF 120 Hz, CHAMBER ---");
+            float worstGrain = 0.0f, worstGrainAt = 0.0f;
+            for (float g : { 0.0f, 0.05f, 0.15f, 0.35f, 0.60f, 1.0f })
+            {
+                auto v = p; v.dampLFHz = 120.0f; v.grain01 = g;
+                const float r = run (2, v, juce::String ("  grain " + juce::String (g, 2)
+                                                         + "        ").toRawUTF8());
+                if (r > worstGrain) { worstGrain = r; worstGrainAt = g; }
+            }
+
+            // Where is the edge? dampLF sweeps 40..500 Hz across its whole range, on all four.
+            logMessage ("  --- dampLF sweep, ratio after/during ---");
+            float worstSweep = 0.0f, worstSweepHz = 0.0f;
+            int   worstSweepAlgo = -1;
+            for (int algo = 0; algo < 4; ++algo)
+            {
+                juce::String row ("  algo " + juce::String (algo) + " ");
+                for (float hz : { 40.0f, 60.0f, 90.0f, 120.0f, 160.0f, 200.0f, 250.0f, 300.0f, 400.0f, 500.0f })
+                {
+                    auto v = p; v.dampLFHz = hz;
+                    auto engine = makeEngine();
+                    juce::AudioBuffer<float> buffer (2, testBlockSize);
+                    float during = 0.0f, after = 0.0f;
+                    for (int b = 0; b < (int) (0.5 * testSampleRate / testBlockSize); ++b)
+                    {
+                        buffer.clear();
+                        if (b == 0) for (int ch = 0; ch < 2; ++ch) buffer.setSample (ch, 0, 1.0f);
+                        engine.process (buffer, algo, v, 0.0f);
+                        during = juce::jmax (during, buffer.getMagnitude (0, testBlockSize));
+                    }
+                    for (int b = 0; b < (int) (8.0 * testSampleRate / testBlockSize); ++b)
+                    {
+                        buffer.clear();
+                        engine.process (buffer, algo, v, 0.0f);
+                        after = juce::jmax (after, buffer.getMagnitude (0, testBlockSize));
+                    }
+                    const float r = during > 0.0f ? after / during : 0.0f;
+                    if (r > worstSweep) { worstSweep = r; worstSweepAlgo = algo; worstSweepHz = hz; }
+                    row << juce::String (juce::roundToInt (hz)) << ":"
+                        << (r > 1.0f ? juce::String ("DIVERGES") : juce::String (r, 3)) << "  ";
+                }
+                logMessage (row);
+            }
+
+            /*  **Three assertions, because the Program was the REPORT and not the subject.**
+                QUIET VIOLENCE's own values sat just inside the stable side of the edge — it was
+                the *default* 120 Hz that diverged — so an arm pinning only the reported Program
+                would have gone green on a plugin that still ran away everywhere else. */
+
+            expect (chamber < 0.5f,
+                    "CHAMBER at QUIET VIOLENCE's values is louder after 12 s of silence than "
+                    "it ever was while being fed — ratio "
+                    + juce::String (chamber, 4) + ", which is a network that is not decaying");
+
+            /*  The mechanism, pinned at the value that showed it. Before the fix this read
+                0.00 / 0.00 / DIVERGES / DIVERGES / DIVERGES / 0.00 across the six grain settings:
+                `GrainStage` held two slots while `FdnTank` drove it with a LINE index, so during a
+                hold lines 0 and 2 returned one value and 1 and 3 another, and the FDN's four
+                independent states collapsed onto two identical pairs that the orthogonal mixing
+                matrix then summed coherently. Both stable ends are the two cases where no sharing
+                is possible — a passthrough, and holdPeriod 1. */
+            expect (worstGrain < 0.5f,
+                    "CHAMBER runs away at GRAIN " + juce::String (worstGrainAt, 2)
+                    + " with dampLF at its default 120 Hz — ratio "
+                    + juce::String (worstGrain, 4));
+
+            /*  And the whole low-cut range on all four, because "no matter what I do" is a claim
+                about the range rather than about a point. Chamber failed 40..200 Hz inclusive and
+                Hall failed at 40. */
+            expect (worstSweep < 0.5f,
+                    "algorithm " + juce::String (worstSweepAlgo) + " runs away at dampLF "
+                    + juce::String (juce::roundToInt (worstSweepHz)) + " Hz — ratio "
+                    + juce::String (worstSweep, 4));
+        }
+
         beginTest ("the tank reports energy for the lamp, and it decays");
         {
             auto engine = makeEngine();
