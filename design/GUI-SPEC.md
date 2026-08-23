@@ -487,3 +487,42 @@ changelog is a gap by construction, not an omission.
   clamp, format at both ends, sign convention). Its fourth item, the propagation process, is
   already written and does not wait.
 - **`shared/BRAND-AMENDMENT-BYPASS.md`** — two one-line changes here if adopted (§7.4).
+
+
+---
+
+## 11 · The About part — this casting's material
+
+**Shared contract: `../shared/ABOUT-PART.md` revision 2.** Nothing here restates its geometry; these
+are the five figures that are **this casting's** and the two coordinates that depend on its canvas.
+**Fitted in the prototype, change set 38.**
+
+### 11.1 The tab
+
+| | |
+|---|---|
+| Placement | **in flow**, not absolute — see `../shared/ABOUT-PART.md` §2d. Nominal right edge **1302** · bottom edge **628** (canvas height 648 − 20), height **24**, width shrink-to-fit on padding 10 |
+| Well face | `#1b2334 → #232c40` |
+| Ink | `#dfe6ef` — **11.09:1** on the well's lighter stop |
+| Face | IBM Plex Mono **10 / 13**, this casting's own mono |
+| Hover | well one step lighter, ink to `#5ce07a` |
+
+**The ink is measured against the well, not the fascia** — `../shared/CONTRAST-CEILING.md` §1: no ink
+reaches 7:1 on a ground of luminance 0.100–0.300, and a mid-value fascia is exactly that. The recess
+is a surface this casting chooses.
+
+### 11.2 The box
+
+| | |
+|---|---|
+| Position | **230, 54** — x from §4's law, y = (648 − 540) / 2 |
+| Surface | `#060a11`, this casting's display glass — **a screen, not a plate** |
+| Body ink | `#f2e6c2` — **15.93:1** |
+| Dim ink | `#a89f86` — **7.52:1** |
+| Accent / links | `#5ce07a` — **11.70:1** |
+| Repository | `github.com/trudslev/reflect-84-audio-plugin` |
+
+**Typeface credits, embedded faces only:** Barlow Condensed, IBM Plex Mono, Share Tech Mono and **Jost**, all under the SIL Open Font License.
+
+**The dim ink is the tight one across the suite** — TapeRot's 7.12 is the narrowest margin, so **no
+casting may darken its dim ink to taste.**

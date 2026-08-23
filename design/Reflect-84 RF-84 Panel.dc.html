@@ -10,8 +10,14 @@
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
+
+  @font-face { font-family: 'Barlow Condensed'; font-weight: 500; src: url('fonts/BarlowCondensed-Medium.ttf') format('truetype'); font-display: block; }
+  @font-face { font-family: 'Barlow Condensed'; font-weight: 600; src: url('fonts/BarlowCondensed-SemiBold.ttf') format('truetype'); font-display: block; }
+  @font-face { font-family: 'Barlow Condensed'; font-weight: 700; src: url('fonts/BarlowCondensed-Bold.ttf') format('truetype'); font-display: block; }
+  @font-face { font-family: 'Share Tech Mono'; src: url('fonts/ShareTechMono-Regular.ttf') format('truetype'); font-display: block; }
+  @font-face { font-family: 'IBM Plex Mono'; src: url('fonts/IBMPlexMono-Regular.ttf') format('truetype'); font-display: block; }
+  @font-face { font-family: 'Jost'; font-weight: 500; src: url('fonts/Jost-Medium.ttf') format('truetype'); font-display: block; }
   body { margin: 0; background: #201d19; }
   a { color: #b99a4e; }
   a:hover { color: #d9bd75; }
@@ -26,7 +32,7 @@
   <div style="position: relative; z-index: 2; width: 1308px; height: 104px; box-sizing: border-box; background: linear-gradient(#22304c, #1a2740 55%, #142036); border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12), inset 0 -3px 8px rgba(0,0,0,.45), 0 2px 4px rgba(60,45,20,.35);">
 
     <div style="position: absolute; left: 22px; top: 14px; width: 303px; height: 84px;">
-      <div style="font-family: 'Jost', sans-serif; font-weight: 500; font-size: 42px; line-height: 40px; letter-spacing: .10em; color: #f0e2ba; text-shadow: 0 1px 0 rgba(0,0,0,.65), 0 -1px 0 rgba(255,255,255,.18), 0 2px 10px rgba(0,0,0,.4);">REFLECT-84</div>
+      <div onClick="{{ aboutOpen }}" title="About" style="font-family: 'Jost', sans-serif; font-weight: 500; font-size: 42px; line-height: 40px; letter-spacing: .10em; color: #f0e2ba; text-shadow: 0 1px 0 rgba(0,0,0,.65), 0 -1px 0 rgba(255,255,255,.18), 0 2px 10px rgba(0,0,0,.4);;cursor:help">REFLECT-84</div>
     </div>
     <div style="position: absolute; left: 22px; top: 62px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; line-height: 13px; letter-spacing: .30em; color: #b7c2d8;">REVERB PROCESSOR</div>
     <div style="position: absolute; left: 22px; top: 79px; font-size: 11px; line-height: 13px; letter-spacing: .30em; color: #b7c2d8;">MODEL RF-84 · STEREO</div>
@@ -272,12 +278,35 @@
           <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; line-height: 14px; letter-spacing: .16em; text-indent: .16em; color: #3e3527;">{{ k.label }}</div>
         </div>
       </sc-for>
-      <div style="align-self: flex-end; margin-top: auto; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 10px; line-height: 13px; letter-spacing: .1em; color: #5e5440;">{{ versionStamp }}</div>
+      <div onClick="{{ aboutOpen }}" title="About" style="align-self: flex-end; margin-top: auto; display:inline-flex;align-items:center;height:24px;box-sizing:border-box;padding:0 10px;border-radius:2px;background:linear-gradient(180deg,#1b2334,#232c40);box-shadow:inset 0 0 0 1px #141a28, inset 0 1px 3px rgba(0,0,0,.55);cursor:help;font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 10px; line-height: 13px; letter-spacing: .1em; color: #dfe6ef;" style-hover="background:linear-gradient(180deg,#232c40,#2b354c);color:#5ce07a;">{{ versionStamp }}</div>
     </div>
   </div>
+  <sc-if value="{{ aboutIsOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ aboutClose }}" style="position:absolute;inset:0;z-index:60;background:rgba(8,9,11,.72);cursor:default;"></div>
+    <div style="position:absolute;z-index:61;left:230px;top:54px;width:880px;height:540px;box-sizing:border-box;border-radius:3px;background:linear-gradient(#060a11,#04070c);box-shadow:inset 0 0 0 1px #1f2b44, 0 24px 60px rgba(0,0,0,.7);">
+      <div style="position:absolute;left:40px;top:40px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:34px;line-height:40px;letter-spacing:.10em;color:#f2e6c2;">REFLECT-84</div>
+      <div style="position:absolute;left:40px;top:84px;font-family:'IBM Plex Mono',monospace;font-size:18px;line-height:24px;letter-spacing:.14em;color:#5ce07a;">MODEL RF-84 &nbsp;&middot;&nbsp; VERSION 1.0.0</div>
+      <div style="position:absolute;left:40px;top:120px;width:800px;height:1px;background:rgba(242,245,246,.18);"></div>
+      <div style="position:absolute;left:40px;top:144px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:20px;line-height:26px;letter-spacing:.20em;color:#f2e6c2;">NEON FOUNDRY</div>
+      <div style="position:absolute;left:40px;top:174px;font-family:'IBM Plex Mono',monospace;font-size:18px;line-height:24px;letter-spacing:.14em;color:#5ce07a;">SUITE RELEASE 1.2.1</div>
+      <div style="position:absolute;left:40px;top:210px;width:800px;height:1px;background:rgba(242,245,246,.18);"></div>
+      <div style="position:absolute;left:40px;top:234px;width:150px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:18px;line-height:24px;letter-spacing:.22em;color:#a89f86;">LICENCE</div>
+      <div style="position:absolute;left:200px;top:234px;font-family:'IBM Plex Mono',monospace;font-size:18px;line-height:24px;letter-spacing:.10em;color:#f2e6c2;">AGPLv3 &nbsp;&middot;&nbsp; SOURCE AVAILABLE</div>
+      <div style="position:absolute;left:40px;top:270px;width:150px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:18px;line-height:24px;letter-spacing:.22em;color:#a89f86;">REPOSITORY</div>
+      <a href="https://github.com/trudslev/reflect-84-audio-plugin" target="_blank" rel="noopener" style="position:absolute;left:200px;top:270px;font-family:'IBM Plex Mono',monospace;font-size:18px;line-height:24px;letter-spacing:.10em;color:#5ce07a;text-decoration:none;border-bottom:1px solid #5ce07a80;" style-hover="color:#8aeda1;border-bottom-color:#8aeda1;">github.com/trudslev/reflect-84-audio-plugin</a>
+      <div style="position:absolute;left:40px;top:306px;width:150px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:18px;line-height:24px;letter-spacing:.22em;color:#a89f86;">FOUNDRY</div>
+      <a href="https://neonfoundry.io" target="_blank" rel="noopener" style="position:absolute;left:200px;top:306px;font-family:'IBM Plex Mono',monospace;font-size:18px;line-height:24px;letter-spacing:.10em;color:#5ce07a;text-decoration:none;border-bottom:1px solid #5ce07a80;" style-hover="color:#8aeda1;border-bottom-color:#8aeda1;">neonfoundry.io</a>
+      <div style="position:absolute;left:40px;top:342px;width:800px;height:1px;background:rgba(242,245,246,.18);"></div>
+      <div style="position:absolute;left:40px;top:366px;width:150px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:18px;line-height:24px;letter-spacing:.22em;color:#a89f86;">TYPEFACES</div>
+      <div style="position:absolute;left:200px;top:366px;width:640px;font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:18px;line-height:24px;letter-spacing:.04em;color:#f2e6c2;text-wrap:pretty;">Barlow Condensed, IBM Plex Mono, Share Tech Mono and Jost, all under the SIL Open Font License.</div>
+      <div style="position:absolute;left:40px;top:426px;width:800px;font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:16px;line-height:21px;letter-spacing:.04em;color:#a89f86;text-wrap:pretty;">Full licence text ships as THIRD-PARTY-LICENCES.txt in this bundle&rsquo;s Resources.</div>
+      <div onClick="{{ aboutClose }}" style="position:absolute;left:744px;top:470px;width:96px;height:30px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:3px;background:linear-gradient(180deg,#232c40,#1b2334);box-shadow:inset 0 0 0 1px #1f2b44;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:16px;line-height:20px;letter-spacing:.22em;text-indent:.22em;color:#f2e6c2;" style-hover="color:#5ce07a;">CLOSE</div>
+    </div>
+  </sc-if>
 </div>
+
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1352,&quot;height&quot;:660},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5ce07a&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#5ce07a&quot;,&quot;#ffb02e&quot;,&quot;#4ec9ff&quot;,&quot;#ff5c5c&quot;],&quot;section&quot;:&quot;Identity&quot;},&quot;algorithm&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;PLATE&quot;,&quot;options&quot;:[&quot;PLATE&quot;,&quot;DIGITAL ROOM&quot;,&quot;CHAMBER&quot;,&quot;HALL&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;State&quot;},&quot;digitalGrain&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:46,&quot;min&quot;:0,&quot;max&quot;:100,&quot;step&quot;:1,&quot;unit&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;State&quot;},&quot;bypassed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;State&quot;},&quot;inValue&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;-3.2&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Meters&quot;},&quot;outValue&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;-0.8&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Meters&quot;},&quot;versionStamp&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;v1.2&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Identity&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1352,&quot;height&quot;:660},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5ce07a&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#5ce07a&quot;,&quot;#ffb02e&quot;,&quot;#4ec9ff&quot;,&quot;#ff5c5c&quot;],&quot;section&quot;:&quot;Identity&quot;},&quot;algorithm&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;PLATE&quot;,&quot;options&quot;:[&quot;PLATE&quot;,&quot;DIGITAL ROOM&quot;,&quot;CHAMBER&quot;,&quot;HALL&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;State&quot;},&quot;digitalGrain&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:46,&quot;min&quot;:0,&quot;max&quot;:100,&quot;step&quot;:1,&quot;unit&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;State&quot;},&quot;bypassed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;State&quot;},&quot;inValue&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;-3.2&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Meters&quot;},&quot;outValue&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;-0.8&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Meters&quot;},&quot;versionStamp&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;v1.0.0&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Identity&quot;}}">
 // Call 3's three classes. Ø104 signature (ALGORITHM, dark cap) is laid out in the
 // template; the two brass classes are geometry here. Numerals: 5 max on Ø76,
 // 3 max on Ø56 — minors carry the resolution the retired numerals used to.
@@ -289,7 +318,7 @@ const GEOM = {
 class Component extends DCLogic {
   constructor(p) {
     super(p);
-    this.state = {
+    this.state = { aboutOpen: false,
       vals: { size: 0.55, decay: 0.58, predly: 0.22, density: 0.72, hf: 0.42, lf: 0.28, mod: 0.34, grain: null, width: 0.7, mix: 0.55, trim: 0.5 },
       algo: null, phase: 0, program: 0, bank: 'FACT',
       users: [], menuOpen: false, live: null, dirty: false, naming: false, nameDraft: ''
@@ -301,6 +330,8 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
+    this._esc = (e) => { if (e.key === 'Escape') this.setState({ aboutOpen: false }); };
+    window.addEventListener('keydown', this._esc);
     let last = performance.now();
     const loop = (t) => {
       if (t - last > 40) { last = t; this.setState(s => ({ phase: (s.phase + 0.016) % 1 })); }
@@ -517,6 +548,9 @@ class Component extends DCLogic {
     const even = (labels) => labels.map((t, i) => [i / (labels.length - 1), t]);
 
     return {
+      aboutIsOpen: !!this.state.aboutOpen,
+      aboutOpen: () => this.setState({ aboutOpen: true }),
+      aboutClose: () => this.setState({ aboutOpen: false }),
       gridV: Array.from({ length: 11 }, (_, i) => ({ x: ((i + 1) * (W / 12)).toFixed(1) })),
       gridH: Array.from({ length: 3 }, (_, i) => ({ y: (TOP + (i + 1) * (FS / 4)).toFixed(1) })),
       bypassDisplay: this.bypassed ? 'block' : 'none',
@@ -532,7 +566,7 @@ class Component extends DCLogic {
       grainState: g > 0.03 ? 'GRAIN ' + Math.round(g * 100) + ' · ' + levels + ' STEP' : 'GRAIN OFF · SMOOTH',
       inValue: this.props.inValue ?? '\u221299.0',
       outValue: this.props.outValue ?? '\u221299.0',
-      versionStamp: this.props.versionStamp ?? 'v1.2',
+      versionStamp: this.props.versionStamp ?? 'v1.0.0',
 
       algoRot: 'rotate(' + (-45 + ai * 90) + 'deg)',
       algoTicks: [-45, 45, 135, 225].map(a => ({ rot: 'rotate(' + a + 'deg)' })),
