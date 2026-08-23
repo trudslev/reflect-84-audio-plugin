@@ -22,7 +22,8 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
         Colour::aboutGlass, Colour::aboutBody, Colour::aboutDim, Colour::aboutAccent,
         Colour::aboutRing,
         Colour::aboutWellTop, Colour::aboutWellBottom, Colour::aboutWellInk,
-        Font::labelTypeface(), Font::labelMediumTypeface(), Font::monoTypeface()
+        Font::labelTypeface(), Font::labelMediumTypeface(), Font::monoTypeface(),
+        Cursor::help()
     };
 
     const nf::AboutContent aboutContent {
@@ -35,9 +36,20 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
     };
 
     aboutBox = std::make_unique<nf::AboutBox> (aboutMaterials, aboutContent);
-    aboutTab = std::make_unique<nf::AboutTab> (aboutMaterials, juce::String ("v") + NF_VERSION_SHORT,
+
+    /*  §2: the tab takes the STAMP'S OWN face. §8 row 412 gives the version stamp as **Barlow
+        Condensed 600** at 10 / 13 / .10 em — the panel drew it in `Font::mono`, a divergence from
+        this casting's own spec that predates the About part and is corrected here rather than
+        carried into the tab. */
+    aboutTab = std::make_unique<nf::AboutTab> (aboutMaterials, Font::labelTypeface(),
+                                               juce::String ("v") + NF_VERSION_SHORT,
                                                Layout::versionSize, Layout::versionTracking);
     aboutTab->onClick = [this] { aboutBox->open(); };
+
+    // §2a: the wordmark is the PRIMARY affordance. It draws nothing — the panel already draws the
+    // wordmark; this claims HeaderGeometry's nameplate zone, 303 x 84, shared by all six.
+    aboutWordmark = std::make_unique<nf::AboutWordmarkHit> (Cursor::help());
+    aboutWordmark->onClick = [this] { aboutBox->open(); };
 
     setSize ((int) Layout::canvasWidth, (int) Layout::canvasHeight);
 
@@ -154,7 +166,9 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
         the tab under `panelBackground` — drawn, correct, and invisible in the capture. The box
         needs to be above everything for the same reason: its veil covers the whole canvas. */
     aboutTab->layoutFor (getHeight());
+    aboutWordmark->setBounds (nf::AboutWordmarkHit::zone());
     aboutBox->setBounds (getLocalBounds());
+    addAndMakeVisible (*aboutWordmark);
     addAndMakeVisible (*aboutTab);
     addChildComponent (*aboutBox);
 }

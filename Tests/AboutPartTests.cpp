@@ -48,14 +48,24 @@ public:
 
         nf::AboutTab* tab = nullptr;
         nf::AboutBox* box = nullptr;
+        nf::AboutWordmarkHit* mark = nullptr;
         for (int i = 0; i < content->getNumChildComponents(); ++i)
         {
             auto* c = content->getChildComponent (i);
             if (auto* t = dynamic_cast<nf::AboutTab*> (c)) tab = t;
             if (auto* b = dynamic_cast<nf::AboutBox*> (c)) box = b;
+            if (auto* w = dynamic_cast<nf::AboutWordmarkHit*> (c)) mark = w;
         }
         expect (tab != nullptr, "no AboutTab on the panel");
         expect (box != nullptr, "no AboutBox on the panel");
+        expect (mark != nullptr, "no AboutWordmarkHit — §2a's PRIMARY affordance");
+
+        // §2a: the hit box is the nameplate ZONE, not the letterforms — one figure for six
+        // castings, and immune to the artwork-versus-text difference that ruled the wordmark out.
+        expect (mark->getBounds() == nf::HeaderGeometry::nameplate(),
+                "the wordmark hit box is " + mark->getBounds().toString()
+                    + ", §2a says the nameplate zone " + nf::HeaderGeometry::nameplate().toString());
+        expect (mark->getWidth() == 303 && mark->getHeight() == 84, "§2a states 303 x 84");
 
         const int canvasH = (int) Layout::canvasHeight;
 
@@ -93,8 +103,16 @@ public:
         // §6's affordance, exercised through the tab's own callback rather than a synthetic click:
         // there is no windowed peer here for an event to arrive through.
         expect (tab->onClick != nullptr, "the tab opens nothing");
+        expect (mark->onClick != nullptr, "the wordmark opens nothing");
+
+        // §2a: BOTH affordances open the same box. The wordmark is primary and is checked first.
+        mark->onClick();
+        expect (box->isVisible(), "the wordmark did not open the box");
+        box->close();
+        expect (! box->isVisible(), "close() did not hide the box");
+
         tab->onClick();
-        expect (box->isVisible(), "the box did not open");
+        expect (box->isVisible(), "the tab did not open the box");
 
         expect (nf::testing::writeComponentPng (*content, dir.getChildFile ("reflect-84-about.png")),
                 "could not write the open box");

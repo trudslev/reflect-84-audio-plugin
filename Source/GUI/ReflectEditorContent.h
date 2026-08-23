@@ -51,6 +51,7 @@ private:
         canvas and is invisible until opened. Neither touches a parameter and neither serialises —
         §6: the box is not a state of the plugin and is closed on every load. */
     std::unique_ptr<nf::AboutTab> aboutTab;
+    std::unique_ptr<nf::AboutWordmarkHit> aboutWordmark;
     std::unique_ptr<nf::AboutBox> aboutBox;
 
     std::array<std::unique_ptr<ReflectKnob>, ReflectTheme::Layout::knobs.size()> knobs;
