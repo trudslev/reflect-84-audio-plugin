@@ -1,6 +1,7 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <nf/AboutPart.h>
 
 #include "AlgorithmSwitch.h"
 #include "PanelBackground.h"
@@ -45,6 +46,12 @@ private:
     // Declaration order is z-order for equally-positioned children added in sequence: the static
     // background first, then the controls, then the mouse-transparent live layers on top.
     PanelBackground panelBackground;
+
+    /*  `ABOUT-PART.md`. The tab replaces the drawn version stamp; the box is added over the whole
+        canvas and is invisible until opened. Neither touches a parameter and neither serialises —
+        §6: the box is not a state of the plugin and is closed on every load. */
+    std::unique_ptr<nf::AboutTab> aboutTab;
+    std::unique_ptr<nf::AboutBox> aboutBox;
 
     std::array<std::unique_ptr<ReflectKnob>, ReflectTheme::Layout::knobs.size()> knobs;
     std::array<std::unique_ptr<APVTS::SliderAttachment>, ReflectTheme::Layout::knobs.size()> knobAttachments;

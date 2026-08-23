@@ -199,16 +199,18 @@ void PanelBackground::paintSectionLabels (juce::Graphics& g)
     // no room above them; giving damping its own column in v1.1 removed that constraint, so it now
     // reads as the section it always was.
 
-    // Version stamp, bottom-right of the OUTPUT column - BRAND.md's "came with a printed manual"
-    // detail.
-    {
-        const auto font = Font::mono (Layout::versionSize);
-        const float tracking = Font::trackingPx (Layout::versionTracking, Layout::versionSize);
+    /*  **The version stamp is no longer drawn here.** `ABOUT-PART.md` §2 promotes it to a recessed
+        tab, which is `nf::AboutTab` — a component, because it is now an affordance and needs a hit
+        region, and shared because §1 makes the affordance and its position identical in all six.
 
-        Text::drawTracked (g, "v" NF_VERSION_SHORT, font, tracking,
-                           { Layout::versionRight - 100.0f, Layout::versionY, 100.0f, 13.0f },
-                           juce::Justification::right, Colour::textTertiary);
-    }
+        It also re-inks: this casting's stamp was flavour class at 4.71 against the fascia, which was
+        right for a stamp nobody had to read and is not right for a tab that opens something. §9.2's
+        ink is `#dfe6ef` at **11.09 against the WELL** — the tab is a recess with its own face, so
+        the well is the second colour the requirement names. Against the fascia no ink reaches 7:1
+        on two of the six castings.
+
+        **This is the only change the About part makes to a resting panel**, and it is not
+        optional. */
 }
 
 void PanelBackground::paintKnobLabels (juce::Graphics& g)

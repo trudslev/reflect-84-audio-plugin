@@ -171,7 +171,10 @@ target_compile_definitions(Reflect84 PUBLIC
     JUCE_VST3_CAN_REPLACE_VST2=0
     NF_COMPANY_NAME="${REFLECT84_COMPANY_NAME}"
     NF_PRODUCT_NAME="${REFLECT84_PRODUCT_NAME}"
-    NF_VERSION_SHORT="${REFLECT84_VERSION_SHORT}")
+    NF_VERSION_SHORT="${REFLECT84_VERSION_SHORT}"
+    # ABOUT-PART.md §1: the box prints semver, which the major.minor short form cannot
+    # carry. Both are defined because they are different strings for different places.
+    NF_VERSION="${PROJECT_VERSION}")
 
 target_link_libraries(Reflect84
     PRIVATE

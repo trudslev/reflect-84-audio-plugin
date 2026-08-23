@@ -6,6 +6,7 @@ target_sources(Reflect84Tests PRIVATE
     NumericalRobustnessTests.cpp
     LockContentionTests.cpp
     InvarianceTests.cpp
+    AboutPartTests.cpp
     AutomationLatencyTests.cpp
     ChannelLayoutTests.cpp
     PendingProgramLockTests.cpp
@@ -70,7 +71,10 @@ target_compile_definitions(Reflect84Tests PRIVATE
     JUCE_USE_CURL=0
     NF_COMPANY_NAME="${REFLECT84_COMPANY_NAME}"
     NF_PRODUCT_NAME="${REFLECT84_PRODUCT_NAME}"
-    NF_VERSION_SHORT="${REFLECT84_VERSION_SHORT}")
+    NF_VERSION_SHORT="${REFLECT84_VERSION_SHORT}"
+    # ABOUT-PART.md §1: the box prints semver, which the major.minor short form cannot
+    # carry. Both are defined because they are different strings for different places.
+    NF_VERSION="${PROJECT_VERSION}")
 
 # Reflect84BinaryData, because DisplayBudgetTests measures against ReflectTheme.h and the theme
 # header includes BinaryData.h for the embedded faces. Linking the real generated header rather

@@ -12,9 +12,45 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
 {
     setLookAndFeel (&lookAndFeel);
 
+    /*  `ABOUT-PART.md`. §9's materials and §1's five strings are everything this casting supplies —
+        the geometry, the type, the row order, the dismissal set and the link treatment are all
+        `nf::AboutPart`'s, held once so they cannot drift apart across six panels.
+
+        §8: the credits name the faces this casting EMBEDS, not the ones it draws with. All four are
+        OFL, which is why the line is one sentence. */
+    const nf::AboutMaterials aboutMaterials {
+        Colour::aboutGlass, Colour::aboutBody, Colour::aboutDim, Colour::aboutAccent,
+        Colour::aboutRing,
+        Colour::aboutWellTop, Colour::aboutWellBottom, Colour::aboutWellInk,
+        Font::labelTypeface(), Font::labelMediumTypeface(), Font::monoTypeface()
+    };
+
+    const nf::AboutContent aboutContent {
+        "REFLECT-84", "RF-84",
+        NF_VERSION,                 // semver, from PROJECT_VERSION - never a literal
+        nf::suiteRelease,           // §1: a separate string, and neither derives from the other
+        "github.com/trudslev/reflect-84-audio-plugin",
+        "Barlow Condensed, IBM Plex Mono, Share Tech Mono and Jost, "
+        "all under the SIL Open Font License."
+    };
+
+    aboutBox = std::make_unique<nf::AboutBox> (aboutMaterials, aboutContent);
+    aboutTab = std::make_unique<nf::AboutTab> (aboutMaterials, juce::String ("v") + NF_VERSION_SHORT,
+                                               Layout::versionSize, Layout::versionTracking);
+    aboutTab->onClick = [this] { aboutBox->open(); };
+
     setSize ((int) Layout::canvasWidth, (int) Layout::canvasHeight);
 
     panelBackground.setBounds (getLocalBounds());
+
+    /*  §2's law places the tab from the canvas height; §4's places the box. Both are core's, so a
+        panel that changes height moves them without either being restated here.
+
+        **Added LAST, and that is not tidiness.** JUCE paints children in the order they were added,
+        so registering the tab beside its construction at the top of this constructor put it under
+        `panelBackground` — drawn, correct, and invisible. The box has to be above everything for
+        the same reason, and its veil covers the whole canvas. */
+
     addAndMakeVisible (panelBackground);
 
     for (size_t i = 0; i < Layout::knobs.size(); ++i)
@@ -109,6 +145,18 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
     addChildComponent (programList);      // added hidden; the header shows it
     programList.toFront (false);
     programHeader.setProgramList (&programList);
+
+    /*  §2's law places the tab from the canvas height; §4's places the box. Both are core's, so a
+        panel that changes height moves them without either being restated here.
+
+        **Registered LAST, and that is not tidiness.** JUCE paints children in the order they were
+        added, so registering these beside their construction at the top of this constructor put
+        the tab under `panelBackground` — drawn, correct, and invisible in the capture. The box
+        needs to be above everything for the same reason: its veil covers the whole canvas. */
+    aboutTab->layoutFor (getHeight());
+    aboutBox->setBounds (getLocalBounds());
+    addAndMakeVisible (*aboutTab);
+    addChildComponent (*aboutBox);
 }
 
 void ReflectEditorContent::paintOverChildren (juce::Graphics& g)

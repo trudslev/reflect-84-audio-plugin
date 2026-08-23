@@ -71,6 +71,26 @@ namespace Colour
     // textMuted labels the ALGORITHM section. Flavour is for text that can be missed.
     // contrast: 7.12-9.05:1 vs fasciaTop,fasciaMid,fasciaBottom [functional]
     inline const juce::Colour textTertiary     { 0xFF413A2C };
+
+    /*  **§9's About materials.** The box is this casting's own display GLASS, not its fascia —
+        glass is the surface these panels already use for dense small text at high contrast, and a
+        reader already knows text on glass is meant to be read. It also keeps the About veil and the
+        bypass veil from competing: a grey multiply over a dark screen stays a grey wash.
+
+        Every ratio is §9's, computed against the worst-case stop rather than the mean. The DIM
+        column is the tight one suite-wide, so it may not be darkened to taste. */
+    inline const juce::Colour aboutGlass      { 0xFF060A11 };   // §9.1
+    inline const juce::Colour aboutBody       { 0xFFF2E6C2 };   // 15.93 on glass
+    inline const juce::Colour aboutDim        { 0xFFA89F86 };   //  7.52
+    inline const juce::Colour aboutAccent     { 0xFF5CE07A };   // 11.70
+    inline const juce::Colour aboutRing       { 0xFF1F2B44 };   // glass lightened to ~18 %
+
+    /*  **§9.2's tab well, and the ink is measured against IT rather than against the fascia.**
+        This casting's stamp was `#5e5440` at **4.71** — correct while it was flavour ink nobody had
+        to read, and not correct for a tab that opens something. 11.09 on the well below. */
+    inline const juce::Colour aboutWellTop    { 0xFF1B2334 };
+    inline const juce::Colour aboutWellBottom { 0xFF232C40 };
+    inline const juce::Colour aboutWellInk    { 0xFFDFE6EF };   // 11.09 on the well
     // contrast: 7.12-9.05:1 vs fasciaTop,fasciaMid,fasciaBottom [functional]
     inline const juce::Colour textMuted        { 0xFF413A2C };
     // textFaint (#9a8e74, 2.04:1) is RETIRED. It carried the unselected algorithm labels - text
@@ -1333,6 +1353,12 @@ namespace Layout
     // y 619.2, so the 13px line it is drawn in starts at 613. It had been left at the v1.0
     // coordinates, which on the wider panel put it beside OUTPUT TRIM's label rather than in the
     // panel's own bottom-right corner.
+    /*  **§2 promotes the version stamp to a recessed tab, and this constant no longer places it.**
+        `nf::AboutGeometry` does: right edge 1302 — the meter row's, closing the header block's own
+        22 px left padding — bottom edge canvasHeight - 20, height 24, width shrink-to-fit. Kept
+        because the OLD stamp's right edge is what a reader comparing captures will look for, and
+        1320 against 1302 is an 18 px move somebody should meet an explanation for rather than
+        rediscover. */
     inline constexpr float versionRight = 1320.0f;
     inline constexpr float versionY = 613.0f;
     inline constexpr float versionSize = 10.0f;
