@@ -118,7 +118,10 @@ display stops telling the truth about it.
 
 ### THE ONE PLACE THAT HAS ACTUALLY BITTEN: a "channel" that was a LINE
 
-Fixed `649e051`, reported from outside as **"Chamber goes into feedback no matter what I do"**.
+Fixed `649e051`, reported from outside as **"Chamber goes into feedback no matter what I do"**,
+and **confirmed fixed by ear in Logic** on the rebuilt AU — which is the evidence that closes
+it. The fixture arms are what localised the mechanism; a plugin that stops feeding back in the
+host that found it is what says the mechanism was the right one.
 
 `GrainStage::process (int channel, float x)` holds one value per channel and advances its hold
 counter on the last one. `FdnTank` called it as **`grain.process (i % 2, ...)` with `i` the LINE
