@@ -46,8 +46,12 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
         Condensed 600** at 10 / 13 / .10 em — the panel drew it in `Font::mono`, a divergence from
         this casting's own spec that predates the About part and is corrected here rather than
         carried into the tab. */
+    /*  **Full semver, not `NF_VERSION_SHORT`.** Every delivered prototype that spells its tab's
+        version literally prints the patch field, and §1 states the plugin version as semver.
+        The short form is right for a panel stamp — which is what this string was before §2
+        promoted it — and wrong for the box's own identity line. */
     aboutTab = std::make_unique<nf::AboutTab> (aboutMaterials, Font::labelTypeface(),
-                                               juce::String ("v") + NF_VERSION_SHORT,
+                                               juce::String ("v") + NF_VERSION,
                                                Layout::versionSize, Layout::versionTracking);
     aboutTab->onClick = [this] { aboutBox->open(); };
 
