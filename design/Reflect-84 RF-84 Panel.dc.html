@@ -31,8 +31,8 @@
 
   <div style="position: relative; z-index: 2; width: 1308px; height: 104px; box-sizing: border-box; background: linear-gradient(#22304c, #1a2740 55%, #142036); border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12), inset 0 -3px 8px rgba(0,0,0,.45), 0 2px 4px rgba(60,45,20,.35);">
 
-    <div onClick="{{ aboutOpen }}" title="About" style="cursor:pointer;position: absolute; left: 22px; top: 14px; width: 303px; height: 84px;">
-      <div style="font-family: 'Jost', sans-serif; font-weight: 500; font-size: 42px; line-height: 40px; letter-spacing: .10em; color: #f0e2ba; text-shadow: 0 1px 0 rgba(0,0,0,.65), 0 -1px 0 rgba(255,255,255,.18), 0 2px 10px rgba(0,0,0,.4);;cursor:pointer">REFLECT-84</div>
+    <div style="position: absolute; left: 22px; top: 14px; width: 303px; height: 84px;">
+      <div onClick="{{ aboutOpen }}" title="About" style="font-family: 'Jost', sans-serif; font-weight: 500; font-size: 42px; line-height: 40px; letter-spacing: .10em; color: #f0e2ba; text-shadow: 0 1px 0 rgba(0,0,0,.65), 0 -1px 0 rgba(255,255,255,.18), 0 2px 10px rgba(0,0,0,.4);;cursor:help">REFLECT-84</div>
     </div>
     <div style="position: absolute; left: 22px; top: 62px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; line-height: 13px; letter-spacing: .30em; color: #b7c2d8;">REVERB PROCESSOR</div>
     <div style="position: absolute; left: 22px; top: 79px; font-size: 11px; line-height: 13px; letter-spacing: .30em; color: #b7c2d8;">MODEL RF-84 · STEREO</div>
@@ -278,7 +278,7 @@
           <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 11px; line-height: 14px; letter-spacing: .16em; text-indent: .16em; color: #3e3527;">{{ k.label }}</div>
         </div>
       </sc-for>
-      <div onClick="{{ aboutOpen }}" title="About" style="align-self: flex-end; margin-top: auto; flex-shrink:0; display:inline-flex;align-items:center;height:24px;box-sizing:border-box;padding:0 10px;border-radius:2px;background:linear-gradient(180deg,#1b2334,#232c40);box-shadow:inset 0 0 0 1px #141a28, inset 0 1px 3px rgba(0,0,0,.55);cursor:pointer;font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 10px; line-height: 13px; letter-spacing: .10em; color: #dfe6ef;" style-hover="background:linear-gradient(180deg,#232c40,#2b354c);color:#5ce07a;">{{ versionStamp }}</div>
+      <div onClick="{{ aboutOpen }}" title="About" style="align-self: flex-end; margin-top: auto; display:inline-flex;align-items:center;height:24px;box-sizing:border-box;padding:0 10px;border-radius:2px;background:linear-gradient(180deg,#1b2334,#232c40);box-shadow:inset 0 0 0 1px #141a28, inset 0 1px 3px rgba(0,0,0,.55);cursor:help;font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 10px; line-height: 13px; letter-spacing: .1em; color: #dfe6ef;" style-hover="background:linear-gradient(180deg,#232c40,#2b354c);color:#5ce07a;">{{ versionStamp }}</div>
     </div>
   </div>
   <sc-if value="{{ aboutIsOpen }}" hint-placeholder-val="{{ false }}">
