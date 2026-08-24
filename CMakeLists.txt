@@ -66,9 +66,6 @@ juce_add_binary_data(Reflect84BinaryData
         #
         # `IBMPlexMono-Medium.ttf` is gone with them. It was §2.2's selected corner label until
         # Barlow 700 arrived, and `ABSENT.md` records that no other weight of Plex is drawn here.
-        # ABOUT-PART.md §2b's cursor. JUCE has no help cursor in StandardCursorType, so the
-        # delivered asset is embedded and a MouseCursor is built from it.
-        design/assets/about-cursor-2x.png
         design/fonts/Jost-Medium.ttf
         design/fonts/IBMPlexMono-Regular.ttf
         # The two shared faces, landed with design bundle 2 (2026-08-17). Share Tech Mono is the
