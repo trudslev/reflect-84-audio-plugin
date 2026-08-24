@@ -18,6 +18,8 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
 
         §8: the credits name the faces this casting EMBEDS, not the ones it draws with. All four are
         OFL, which is why the line is one sentence. */
+    constexpr int frameOriginX = 0;   // no rack ears: the frame IS the window
+
     const nf::AboutMaterials aboutMaterials {
         Colour::aboutGlass, Colour::aboutBody, Colour::aboutDim, Colour::aboutAccent,
         Colour::aboutRing,
@@ -35,7 +37,10 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
         "all under the SIL Open Font License."
     };
 
-    aboutBox = std::make_unique<nf::AboutBox> (aboutMaterials, aboutContent);
+    /*  §4's law is FRAME-local. This casting's frame starts at the window's left edge, so its
+        origin is 0 - written out rather than defaulted, because the one casting that is not 0 is
+        the one nobody would remember to change. */
+    aboutBox = std::make_unique<nf::AboutBox> (aboutMaterials, aboutContent, frameOriginX);
 
     /*  §2: the tab takes the STAMP'S OWN face. §8 row 412 gives the version stamp as **Barlow
         Condensed 600** at 10 / 13 / .10 em — the panel drew it in `Font::mono`, a divergence from
@@ -165,8 +170,8 @@ ReflectEditorContent::ReflectEditorContent (Reflect84AudioProcessor& processor)
         added, so registering these beside their construction at the top of this constructor put
         the tab under `panelBackground` — drawn, correct, and invisible in the capture. The box
         needs to be above everything for the same reason: its veil covers the whole canvas. */
-    aboutTab->layoutFor (getHeight());
-    aboutWordmark->setBounds (nf::AboutWordmarkHit::zone());
+    aboutTab->layoutFor (getHeight(), frameOriginX);
+    aboutWordmark->setBounds (nf::AboutWordmarkHit::zone (frameOriginX));
     aboutBox->setBounds (getLocalBounds());
     addAndMakeVisible (*aboutWordmark);
     addAndMakeVisible (*aboutTab);
