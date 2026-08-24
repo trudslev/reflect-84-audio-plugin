@@ -123,6 +123,19 @@ set(REFLECT84_VERSION_SHORT "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
 # and reduce the step count, because bloom turns to mush below 48px (design/README.md, "Product
 # icon"). JUCE only consumes these two, but the smaller cuts are kept as the source of truth for
 # anywhere an icon is placed by hand.
+# **Local builds install into the user's plugin folders; CI must not.**
+#
+# A runner has no DAW to load them into, so the copy is pure waste there — but the reason it is an
+# option rather than a tidy-up is the other direction. On a machine that DOES have those folders, a
+# build overwrites what is installed, and this repository has already paid for that: a
+# defect-causing run copied a deliberately broken AU over the user's working one, minutes after the
+# fix was committed, with the tree clean and the remote up to date. Every signal said done.
+#
+# Defaults ON because the local loop depends on it — build, then load in the DAW. CI passes
+# -DNF_COPY_PLUGIN_AFTER_BUILD=OFF.
+option(NF_COPY_PLUGIN_AFTER_BUILD
+       "Install the built plugin into the user's plugin folders after building" ON)
+
 juce_add_plugin(Reflect84
     PRODUCT_NAME "${REFLECT84_PRODUCT_NAME}"
     COMPANY_NAME "${REFLECT84_COMPANY_NAME}"
@@ -148,7 +161,7 @@ juce_add_plugin(Reflect84
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
-    COPY_PLUGIN_AFTER_BUILD TRUE
+    COPY_PLUGIN_AFTER_BUILD ${NF_COPY_PLUGIN_AFTER_BUILD}
     ${REFLECT84_EXTRA_ARGS})
 
 target_sources(Reflect84 PRIVATE
