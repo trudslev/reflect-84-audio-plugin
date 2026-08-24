@@ -76,7 +76,7 @@ public:
 
                 auto* param = p.apvts.getParameter (ParamIDs::trim);
 
-                spec.fillInput = [&param, sweep] (juce::AudioBuffer<float>& buffer, int blockIndex)
+                spec.fillInput = [&param, sweep, fs] (juce::AudioBuffer<float>& buffer, int blockIndex)
                 {
                     if (sweep && param != nullptr)
                         param->setValueNotifyingHost ((blockIndex % 2) == 0 ? 0.15f : 0.85f);
