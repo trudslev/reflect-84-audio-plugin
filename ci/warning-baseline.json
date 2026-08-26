@@ -10,7 +10,6 @@
   "linux": {
     "-Wdeprecated-declarations": 1,
     "-Wfloat-equal": 3,
-    "-Woverloaded-virtual": 26,
     "-Wshadow": 7,
     "-Wunused-variable": 2
   },
