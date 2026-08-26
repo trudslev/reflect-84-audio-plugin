@@ -1,0 +1,21 @@
+{
+  "macos": {
+    "-Wdeprecated-declarations": 2,
+    "-Wfloat-equal": 2,
+    "-Wshadow-uncaptured-local": 4,
+    "-Wunused-const-variable": 4,
+    "-Wunused-lambda-capture": 2,
+    "-Wunused-variable": 4
+  },
+  "linux": {
+    "-Wdeprecated-declarations": 1,
+    "-Wfloat-equal": 3,
+    "-Woverloaded-virtual": 26,
+    "-Wshadow": 7,
+    "-Wunused-variable": 2
+  },
+  "windows": {
+    "C4189": 2,
+    "C4458": 5
+  }
+}
