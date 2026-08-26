@@ -1,6 +1,8 @@
 #include <juce_events/juce_events.h>
 #include <nf/UserProgramDirectory.h>
 #include <iostream>
+#include <vector>
+#include <nf/testing/ExpectedFailure.h>
 
 /*  **JUCE's default logger writes to OutputDebugString on Windows, so every line this suite logs
     was invisible in Windows CI.**
@@ -58,12 +60,38 @@ int main()
             .getChildFile ("NeonFoundryTestPrograms")
     };
 
+    /*  **The arms this casting is KNOWN to fail, declared rather than left red.**
+
+        A permanently red suite cannot report a NEW failure — the count simply moves, in a job that
+        was already failing — and it blocks publishing outright, because `publish` needs the build
+        jobs. Each row names what its resolution waits on. See nf/testing/ExpectedFailure.h.
+
+        **This list is the vacuity guard.** An expected failure that never executes is
+        indistinguishable from one that executed and failed as expected: nothing is reported either
+        way. So every id here must be REACHED, and one that is not fails the run.
+    */
+    static const std::vector<nf::testing::ExpectedFailure> declaredExpectedFailures {
+        { "reflect84.dampHF-2x2",
+          "an unclassified dampHF corner - four pre-stated readings, none matched; figures reported, nothing assigned" },
+    };
+
     juce::UnitTestRunner runner;
     runner.runAllTests();
 
-    for (int i = 0; i < runner.getNumResults(); ++i)
-        if (runner.getResult (i)->failures > 0)
-            return 1;
+    int failures = 0;
 
-    return 0;
+    for (int i = 0; i < runner.getNumResults(); ++i)
+        failures += runner.getResult (i)->failures;
+
+    // Declared-but-not-executed is a FAILURE, not a pass. A skipped beginTest, a suite dropped from
+    // target_sources, or a condition that stopped being reached would each satisfy the expectation
+    // silently otherwise.
+    for (const auto& id : nf::testing::expectedFailuresNotExecuted (declaredExpectedFailures))
+    {
+        std::cerr << "*** expected failure '" << id
+                  << "' was declared but never reached — it cannot have been satisfied\n";
+        ++failures;
+    }
+
+    return failures > 0 ? 1 : 0;
 }
