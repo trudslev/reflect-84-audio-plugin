@@ -76,6 +76,28 @@ public:
 
                 auto* param = p.apvts.getParameter (ParamIDs::trim);
 
+                /*  **DO NOT DELETE `fs` FROM THIS CAPTURE, whatever Clang says about it.**
+
+                    Clang emits `-Wunused-lambda-capture`: *"lambda capture 'fs' is not required to
+                    be captured for this use"*. It is right about the standard — `fs` is a
+                    `constexpr double`, so reading it is not an odr-use and no capture is needed.
+                    Acting on that warning breaks the Linux build.
+
+                    Measured, not reasoned:
+
+                      * the ubuntu-22.04 runner's GCC **errors** without it —
+                        `error: 'fs' is not captured; note: the lambda has no capture-default`
+                      * Clang compiles without it, and warns with it
+                      * GCC **16**, locally, compiles both forms cleanly and warns about neither
+
+                    So this is older-GCC behaviour rather than a standard requirement, and the
+                    warning is carried deliberately in `ci/warning-baseline.json`.
+
+                    **The commit that added this capture (`GCC is right and Clang was lenient`) gave
+                    the wrong reason twice**: it called `fs` a `const double&` and called the read an
+                    odr-use. Neither is true — there is one `fs` in this file and it is `constexpr`.
+                    The change was correct and the explanation was not, which is why it is corrected
+                    here, beside the code, rather than left in a message nobody re-reads.  */
                 spec.fillInput = [&param, sweep, fs] (juce::AudioBuffer<float>& buffer, int blockIndex)
                 {
                     if (sweep && param != nullptr)
