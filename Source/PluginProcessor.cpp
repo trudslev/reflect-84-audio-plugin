@@ -9,7 +9,7 @@ Reflect84AudioProcessor::Reflect84AudioProcessor()
     : AudioProcessor (BusesProperties()
                           .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                           .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "PARAMETERS", createReflect84ParameterLayout())
+      apvts (*this, nullptr, ParamIDs::stateTreeType, createReflect84ParameterLayout())
 {
     bypassParam = dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::bypass));
     jassert (bypassParam != nullptr);
